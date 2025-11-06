@@ -1,0 +1,88 @@
+import React from 'react';
+import Icon from '../../../components/AppIcon';
+
+const TransactionSummary = ({ lineItems, taxRate = 8.25, discountAmount = 0 }) => {
+  const subtotal = lineItems?.reduce((sum, item) => sum + item?.total, 0);
+  const discountTotal = discountAmount;
+  const taxableAmount = subtotal - discountTotal;
+  const taxAmount = (taxableAmount * taxRate) / 100;
+  const grandTotal = taxableAmount + taxAmount;
+
+  const summaryItems = [
+    { label: 'Subtotal', value: subtotal, icon: 'Calculator' },
+    { label: 'Discount', value: -discountTotal, icon: 'Percent', isDiscount: true },
+    { label: `Tax (${taxRate}%)`, value: taxAmount, icon: 'Receipt' },
+    { label: 'Total', value: grandTotal, icon: 'DollarSign', isTotal: true }
+  ];
+
+  return (
+    <div className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="px-4 py-3 bg-muted border-b border-border">
+        <h3 className="font-semibold text-foreground flex items-center space-x-2">
+          <Icon name="FileText" size={18} />
+          <span>Transaction Summary</span>
+        </h3>
+      </div>
+      <div className="p-4 space-y-3">
+        {summaryItems?.map((item, index) => (
+          <div
+            key={index}
+            className={`flex items-center justify-between py-2 ${
+              item?.isTotal ? 'border-t border-border pt-3' : ''
+            }`}
+          >
+            <div className="flex items-center space-x-2">
+              <Icon 
+                name={item?.icon} 
+                size={16} 
+                className={`${
+                  item?.isTotal 
+                    ? 'text-primary' 
+                    : item?.isDiscount 
+                    ? 'text-success' :'text-muted-foreground'
+                }`} 
+              />
+              <span className={`${
+                item?.isTotal 
+                  ? 'font-semibold text-foreground' 
+                  : 'text-muted-foreground'
+              }`}>
+                {item?.label}
+              </span>
+            </div>
+            <span className={`font-medium ${
+              item?.isTotal 
+                ? 'text-lg text-primary' 
+                : item?.isDiscount 
+                ? 'text-success' :'text-foreground'
+            }`}>
+              {item?.isDiscount && item?.value !== 0 ? '-' : ''}${Math.abs(item?.value)?.toFixed(2)}
+            </span>
+          </div>
+        ))}
+      </div>
+      {lineItems?.length > 0 && (
+        <div className="px-4 pb-4">
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+            <div className="flex items-center space-x-2 text-primary">
+              <Icon name="TrendingUp" size={16} />
+              <span className="text-sm font-medium">
+                {lineItems?.length} item{lineItems?.length !== 1 ? 's' : ''} • 
+                Total Qty: {lineItems?.reduce((sum, item) => sum + item?.quantity, 0)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+      {lineItems?.length === 0 && (
+        <div className="p-8 text-center">
+          <Icon name="ShoppingCart" size={48} className="text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">No items added to sale</p>
+          <p className="text-sm text-muted-foreground mt-1">Add products to see transaction summary</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default TransactionSummary;
