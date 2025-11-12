@@ -1,8 +1,8 @@
-import { ApiError } from "../utils/ApiError.js"
-import { Table } from "../models/table.models.js"
+import { ApiError } from "../utils/ApiError.ts"
+import { Table } from "../models/table.models.ts"
 import jwt from 'jsonwebtoken'
-import { asyncHandler } from "../utils/asyncHandler.js"
-import { User } from "../models/user.models.js"
+import { asyncHandler } from "../utils/asyncHandler.ts"
+import { User } from "../models/user.models.ts"
 
 const verifyAuth = asyncHandler(async(req, res, next)=>{
     const accessToken = req.cookies?.accessToken || req.header("authorization")?.split(" ")[1]
@@ -35,11 +35,11 @@ const verifyAuth = asyncHandler(async(req, res, next)=>{
 const verifyTable = asyncHandler(async (req, res, next) => {
     next()
     // const accessToken = req?.cookies?.accessToken || req?.header("authorization")?.split(" ")[1]
-  
+
     // if (!accessToken){
     //     throw new ApiError(403, "Not authenticated")
     // }
-    
+
     // let tableId
 
     // jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, (err, data)=>{
@@ -47,7 +47,7 @@ const verifyTable = asyncHandler(async (req, res, next) => {
     //         throw new ApiError(err.status || 401, err?.message || "The token is invalid or has expired")
     //     }
     //     tableId = data?._id
-    // })  
+    // })
 
 
     // const table = await Table.findById(tableId)
