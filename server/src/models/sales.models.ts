@@ -1,8 +1,5 @@
 import { Schema, model, Document } from "mongoose";
 
-// =========================
-// SaleItem Subdocument
-// =========================
 export interface ISaleItem {
   productId: string; // fk -> Product.id
   productName: string;

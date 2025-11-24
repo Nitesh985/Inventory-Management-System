@@ -8,6 +8,9 @@ import BusinessDashboard from "./pages/business-dashboard";
 import BusinessSettings from "./pages/business-settings";
 import SalesRecording from "./pages/sales-recording";
 import ExpenseTracking from "./pages/expense-tracking";
+import SignUp from "./pages/SignUp";
+import SignIn from "./pages/SignIn"
+
 
 const Routes = () => {
   return (
@@ -30,6 +33,8 @@ const Routes = () => {
           <Route path="/sales-recording" element={<SalesRecording />} />
           <Route path="/expense-tracking" element={<ExpenseTracking />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/sign-in" element={<SignIn />} />
         </RouterRoutes>
       </ErrorBoundary>
     </BrowserRouter>

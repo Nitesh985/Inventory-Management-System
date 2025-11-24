@@ -1,16 +1,22 @@
-import "dotenv/config";
-import app from "./app.ts";
-import { connectToDB } from "./db/index.ts";
+  import "dotenv/config";
+  import app from "./app.ts";
+  import { connectToDB } from "./db/index.ts";
 
-connectToDB()
-  .then(() => {
-    const port = process.env.PORT || 3000;
-    app.listen(port, () => {
-      console.log(`The app is listening on http://localhost:${port}`);
+  import Shop from './models/shop.models.ts'
+
+  
+  
+  connectToDB()
+    .then(async () => {
+      const shop = await Shop.create({ name: "My shop", useBS: true})
+      const port = process.env.PORT || 3000;
+      app.listen(port, () => {
+        console.log(`The app is listening on http://localhost:${port}`);
+      });
+      
+    })
+    .catch((error) => {
+      console.log("Connection to Mongodb failed ::", error);
     });
-  })
-  .catch((error) => {
-    console.log("Connection to Mongodb failed ::", error);
-  });
-
-console.log("Hello");
+  
+  console.log("Hello");
