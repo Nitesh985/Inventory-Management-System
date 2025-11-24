@@ -16,141 +16,247 @@ type SaleItemInput = {
   totalPrice?: number
 }
 
-export const createSale = asyncHandler(async (req: Request, res: Response) => {
-  const session = await mongoose.startSession()
-  try {
-    const { shopId, clientId, customerId, invoiceNo, items, paidAmount = 0, discount = 0, notes = '' } = req.body
+const createSale = asyncHandler(async (req: Request, res: Response) => {
+  const { customerId, shopId, items, totalAmount, paidAmount = 0, invoiceNo, clientId } = req.body;
 
-    if (!shopId || !clientId || !items || !Array.isArray(items) || items.length === 0) {
-      throw new ApiError(400, 'shopId, clientId and items are required')
-    }
-
-    // transaction
-    let createdSale: any = null
-    await session.withTransaction(async () => {
-      // Validate customer if provided
-      let customer = null
-      if (customerId) {
-        customer = await Customer.findById(customerId).session(session)
-        if (!customer) throw new ApiError(400, 'Customer not found')
-      }
-
-      // Build and validate items, check inventory and perform reserved-first deduction
-      const processedItems: any[] = []
-      let totalAmount = 0
-
-      for (const it of items as SaleItemInput[]) {
-        const { productId, quantity } = it
-        if (!productId || typeof quantity !== 'number' || quantity <= 0) {
-          throw new ApiError(400, 'Each sale item must have productId and positive quantity')
-        }
-
-        const product = await Product.findById(productId).session(session)
-        if (!product) throw new ApiError(400, `Product ${productId} not found`)
-
-        const inventory = await Inventory.findOne({ shopId, productId }).session(session)
-        if (!inventory) throw new ApiError(400, `Inventory record not found for product ${productId} in this shop`)
-
-        const available = (inventory.reserved ?? 0) + (inventory.quantity ?? 0)
-        if (available < quantity) {
-          throw new ApiError(400, `Insufficient stock for product ${product.name || productId}`)
-        }
-
-        // Deduct reserved first
-        let remainingToDeduct = quantity
-        const inventoryUpdates: any = {}
-
-        if ((inventory.reserved ?? 0) > 0) {
-          const fromReserved = Math.min(inventory.reserved!, remainingToDeduct)
-          inventoryUpdates.reserved = (inventory.reserved ?? 0) - fromReserved
-          remainingToDeduct -= fromReserved
-        }
-
-        if (remainingToDeduct > 0) {
-          inventoryUpdates.quantity = (inventory.quantity ?? 0) - remainingToDeduct
-        }
-
-        // Apply updates to inventory (atomic via session)
-        await Inventory.findByIdAndUpdate(inventory._id, { $set: inventoryUpdates }, { session })
-
-        // Determine unitPrice and totalPrice
-        const unitPrice = typeof it.unitPrice === 'number' ? it.unitPrice : product.price ?? 0
-        const totalPrice = (typeof it.totalPrice === 'number') ? it.totalPrice : unitPrice * quantity
-
-        processedItems.push({
-          productId,
-          productName: product.name,
-          quantity,
-          unitPrice,
-          totalPrice
-        })
-
-        totalAmount += totalPrice
-      } // end items loop
-
-      // Apply discount
-      totalAmount = totalAmount - (discount ?? 0)
-      if (totalAmount < 0) totalAmount = 0
-
-      // Create sale
-      const saleDoc = {
-        shopId,
-        clientId,
-        customerId: customerId || null,
-        invoiceNo: invoiceNo || '',
-        items: processedItems,
-        totalAmount,
-        paidAmount,
-        discount,
-        notes
-      }
-
-      createdSale = await Sales.create([saleDoc], { session })
-      createdSale = createdSale[0]
-
-      // Update customer outstandingBalance
-      if (customerId) {
-        const owed = totalAmount - (paidAmount ?? 0)
-        if (owed > 0) {
-          await Customer.findByIdAndUpdate(customerId, { $inc: { outstandingBalance: owed } }, { session })
-        }
-      }
-    }) // end transaction
-
-    session.endSession()
-    return res.status(201).json(new ApiResponse(201, createdSale, 'Sale created'))
-  } catch (err: any) {
-    session.endSession()
-    throw err
+  // --- VALIDATIONS ---
+  const requiredFields = ["customerId", "shopId", "items", "totalAmount", "invoiceNo"] as const;
+  for (const field of requiredFields) {
+    if (!req.body[field]) throw new ApiError(400, `Missing required field: ${field}`);
   }
-})
 
-export const getSales = asyncHandler(async (req: Request, res: Response) => {
+  if (!Array.isArray(items) || items.length === 0)
+    throw new ApiError(400, "Items must be a non-empty array");
+
+  const requiredItemFields = ["productId", "productName", "quantity", "unitPrice", "totalPrice"] as const;
+  items.forEach((item: any, i: number) => {
+    if (!item || typeof item !== "object") throw new ApiError(400, `Item at index ${i} must be an object`);
+    requiredItemFields.forEach((field) => {
+      if (!item[field] && item[field] !== 0)
+        throw new ApiError(400, `Missing required field in items[${i}]: ${field}`);
+    });
+  });
+
+  // -------------------------------------------------------
+  // 1️⃣ CUSTOMER MUST EXIST
+  // -------------------------------------------------------
+  const customer = await Customer.findById(customerId);
+  if (!customer) throw new ApiError(404, "Customer not found");
+
+  // -------------------------------------------------------
+  // 2️⃣ UPDATE INVENTORY (DECREASE STOCK)
+  // -------------------------------------------------------
+  for (const item of items) {
+    const productInv = await Inventory.findOne({productId: item.productId, shopId});
+    if (!productInv) throw new ApiError(404, `Product not found: ${item.productName}`);
+
+    if (productInv.stock < item.quantity)
+      throw new ApiError(400, `Not enough stock for ${item.productName}`);
+
+      productInv.stock -= item.quantity;
+      await productInv.save();
+  }
+
+  // -------------------------------------------------------
+  // 3️⃣ CREATE SALE
+  // -------------------------------------------------------
+  const sale = await Sales.create({
+    customerId,
+    shopId,
+    items,
+    totalAmount,
+    paidAmount,
+    clientId,
+    invoiceNo,
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, sale, "Sale created successfully"));
+});
+
+// GET ALL SALES
+const getSales = asyncHandler(async (req: Request, res: Response) => {
   const { shopId } = req.query
   const filter: any = {}
+
   if (shopId) filter.shopId = shopId
+
   const sales = await Sales.find(filter)
   return res.status(200).json(new ApiResponse(200, sales, 'Sales fetched'))
 })
 
-export const getSale = asyncHandler(async (req: Request, res: Response) => {
+// GET SINGLE SALE
+const getSale = asyncHandler(async (req: Request, res: Response) => {
   const sale = await Sales.findById(req.params.id)
   if (!sale) throw new ApiError(404, 'Sale not found')
+
   return res.status(200).json(new ApiResponse(200, sale, 'Sale fetched'))
 })
 
-// NOTE: update / delete sales are tricky because inventory adjustments must be reversed.
-// Below is a simple update that does NOT reverse inventory changes. For safety, implement reversal logic when needed.
-export const updateSale = asyncHandler(async (req: Request, res: Response) => {
-  const updates = { ...req.body }
-  delete updates._id
-  const sale = await Sales.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true })
-  if (!sale) throw new ApiError(404, 'Sale not found')
-  return res.status(200).json(new ApiResponse(200, sale, 'Sale updated'))
-})
+// UPDATE SALE
+const updateSale = asyncHandler(async (req: Request, res: Response) => {
+  const saleId = req.params.id;
+  const updates = req.body;
 
-export const deleteSale = asyncHandler(async (req: Request, res: Response) => {
-  // WARNING: deleting a sale should ideally restore inventory + adjust customer balance.
-  await Sales.findByIdAndDelete(req.params.id)
-  return res.status(200).json(new ApiResponse(200, {}, 'Sale deleted (note: inventory/customer not restored)'))
-})
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // 1. Fetch old sale
+    const oldSale = await Sales.findById(saleId).session(session);
+    if (!oldSale) throw new ApiError(404, "Sale not found");
+
+    const shopId = oldSale.shopId;
+
+    const oldItemsMap = new Map();
+    oldSale.items.forEach((it: any) => {
+      oldItemsMap.set(it.productId.toString(), it.quantity);
+    });
+
+    const newItems = updates.items || [];
+    const newItemsMap = new Map();
+    newItems.forEach((it: any) => {
+      newItemsMap.set(it.productId.toString(), it.quantity);
+    });
+
+    // 2. Handle item quantity updates
+    for (const [productId, newQty] of newItemsMap.entries()) {
+      const oldQty = oldItemsMap.get(productId) || 0;
+
+      const difference = newQty - oldQty;
+
+      if (difference === 0) continue;
+
+      // If new quantity is greater → reduce stock
+      if (difference > 0) {
+        const updatedInv = await Inventory.findOneAndUpdate(
+          {
+            productId,
+            shopId,
+            stock: { $gte: difference }
+          },
+          {
+            $inc: { stock: -difference }
+          },
+          { new: true, session }
+        );
+
+        if (!updatedInv) {
+          throw new ApiError(
+            400,
+            `Not enough stock for product ${productId}. Need ${difference}.`
+          );
+        }
+      }
+
+      // If new quantity is smaller → restore stock
+      if (difference < 0) {
+        await Inventory.findOneAndUpdate(
+          { productId, shopId },
+          { $inc: { stock: Math.abs(difference) } },
+          { new: true, session }
+        );
+      }
+    }
+
+    // 3. If an item was removed entirely → restore its full quantity
+    for (const [productId, oldQty] of oldItemsMap.entries()) {
+      if (!newItemsMap.has(productId)) {
+
+        await Inventory.findOneAndUpdate(
+          { productId, shopId },
+          { $inc: { stock: oldQty } },
+          { new: true, session }
+        );
+      }
+    }
+
+    
+    // 4. Update sale document
+    updates.totalAmount = updates.items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) ?? updates.totalAmount;
+
+    const updatedSale = await Sales.findByIdAndUpdate(
+      saleId,
+      { $set: updates },
+      { new: true, session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, updatedSale, "Sale updated successfully"));
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    throw err;
+  }
+});
+
+
+// DELETE SALE
+const deleteSale = asyncHandler(async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const saleId = req.params.id;
+
+    // 1. Find the sale
+    const sale = await Sales.findById(saleId).session(session);
+    if (!sale) throw new ApiError(404, "Sale not found");
+
+    const { items, shopId, customerId, totalAmount, paidAmount } = sale;
+    const unpaidAmount = totalAmount - paidAmount;
+
+    // 2. Restore inventory for each item
+    for (const item of items) {
+      const { productId, quantity } = item;
+
+      await Inventory.findOneAndUpdate(
+        { shopId, productId },
+        { $inc: { stock: quantity } }, // restore
+        { session }
+      );
+    }
+
+    // 3. Restore customer outstanding balance
+    if (customerId) {
+      await Customer.findByIdAndUpdate(
+        customerId,
+        { $inc: { outstandingBalance: -unpaidAmount } },
+        { session }
+      );
+    }
+
+    // 4. Delete the sale
+    await Sales.findByIdAndDelete(saleId).session(session);
+
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {},
+        "Sale deleted and inventory/customer balance restored"
+      )
+    );
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new ApiError(500, "Failed to delete sale with restoration");
+  }
+});
+
+
+export {
+  createSale,
+  getSales,
+  getSale,
+  updateSale,
+  deleteSale
+}

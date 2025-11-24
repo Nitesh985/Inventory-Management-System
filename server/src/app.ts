@@ -25,12 +25,21 @@ app.use(cookieParser())
 
 
 // routes
+import customerRouter from './routes/customer.routes.ts'
+import expenseRouter from './routes/expense.routes.ts'
+import inventoryRouter from './routes/inventory.routes.ts'
+import productRouter from './routes/product.routes.ts'
+import salesRouter from './routes/sales.routes.ts'
+import shopRouter from './routes/shop.routes.ts'
 
-import userRouter from './routes/user.routes.ts'
+app.use("/customers", customerRouter)
+app.use("/expenses", expenseRouter)
+app.use("/inventory", inventoryRouter)
+app.use("/products", productRouter)
+app.use("/sales", salesRouter)
+app.use("/shops", shopRouter)
 
 
-
-app.use("/api/users", userRouter)
 app.post("/api/v1/test", (req, res)=>{
     console.log(req.body)
     return res.status(201).json({data:"hi"})

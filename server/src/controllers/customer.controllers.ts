@@ -5,7 +5,7 @@ import { ApiResponse } from '../utils/ApiResponse.ts'
 import Customer from '../models/customer.models.ts'
 import Sales from '../models/sales.models.ts'
 
-export const createCustomer = asyncHandler(async (req: Request, res: Response) => {
+const createCustomer = asyncHandler(async (req: Request, res: Response) => {
   const { shopId, clientId, name, phone, address } = req.body
 
   if (!shopId || !clientId || !name) {
@@ -32,7 +32,7 @@ export const createCustomer = asyncHandler(async (req: Request, res: Response) =
   return res.status(201).json(new ApiResponse(201, customer, "Customer created"))
 })
 
-export const getCustomers = asyncHandler(async (req: Request, res: Response) => {
+const getCustomers = asyncHandler(async (req: Request, res: Response) => {
   const { shopId, clientId } = req.query
   const filter: any = { deleted: false }
   if (shopId) filter.shopId = shopId
@@ -41,13 +41,13 @@ export const getCustomers = asyncHandler(async (req: Request, res: Response) => 
   return res.status(200).json(new ApiResponse(200, customers, 'Customers fetched'))
 })
 
-export const getCustomer = asyncHandler(async (req: Request, res: Response) => {
+const getCustomer = asyncHandler(async (req: Request, res: Response) => {
   const customer = await Customer.findById(req.params.id)
   if (!customer || customer.deleted) throw new ApiError(404, 'Customer not found')
   return res.status(200).json(new ApiResponse(200, customer, 'Customer fetched'))
 })
 
-export const updateCustomer = asyncHandler(async (req: Request, res: Response) => {
+const updateCustomer = asyncHandler(async (req: Request, res: Response) => {
   const updates = { ...req.body }
   delete updates._id
   const customer = await Customer.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true })
@@ -55,7 +55,7 @@ export const updateCustomer = asyncHandler(async (req: Request, res: Response) =
   return res.status(200).json(new ApiResponse(200, customer, 'Customer updated'))
 })
 
-export const deleteCustomer = asyncHandler(async (req: Request, res: Response) => {
+const deleteCustomer = asyncHandler(async (req: Request, res: Response) => {
   // soft delete
   const customer = await Customer.findByIdAndUpdate(req.params.id, { $set: { deleted: true } }, { new: true })
   if (!customer) throw new ApiError(404, 'Customer not found')
@@ -63,8 +63,7 @@ export const deleteCustomer = asyncHandler(async (req: Request, res: Response) =
 })
 
 
-
-export const getCustomerOutstanding = asyncHandler(
+const getCustomerOutstanding = asyncHandler(
   async (req: Request, res: Response) => {
     const { customerId, shopId } = req.params;
 
@@ -127,3 +126,13 @@ export const getCustomerOutstanding = asyncHandler(
       .json(new ApiResponse(200, data[0], "Customer outstanding fetched successfully"));
   }
 );
+
+
+export {
+  createCustomer,
+  getCustomer,
+  getCustomers,
+  updateCustomer,
+  deleteCustomer,
+  getCustomerOutstanding,
+}

@@ -6,7 +6,7 @@ import Product from '../models/product.models.ts'
 import Shop from '../models/shop.models.ts'
 import mongoose from 'mongoose'
 
-export const createProduct = asyncHandler(async (req: Request, res: Response) => {
+const createProduct = asyncHandler(async (req: Request, res: Response) => {
   const { shopId, clientId, sku, name, category, unit, price, cost, reorderLevel } = req.body
 
   if (!shopId || !clientId || !sku || !name) {
@@ -35,7 +35,7 @@ export const createProduct = asyncHandler(async (req: Request, res: Response) =>
   return res.status(201).json(new ApiResponse(201, product, 'Product created'))
 })
 
-export const getProducts = asyncHandler(async (req: Request, res: Response) => {
+const getProducts = asyncHandler(async (req: Request, res: Response) => {
   const { shopId } = req.query
   const filter: any = {}
   if (shopId) filter.shopId = shopId
@@ -44,13 +44,13 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   return res.status(200).json(new ApiResponse(200, products, 'Products fetched'))
 })
 
-export const getProduct = asyncHandler(async (req: Request, res: Response) => {
+const getProduct = asyncHandler(async (req: Request, res: Response) => {
   const product = await Product.findById(req.params.id)
   if (!product || product.deleted) throw new ApiError(404, 'Product not found')
   return res.status(200).json(new ApiResponse(200, product, 'Product fetched'))
 })
 
-export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
+const updateProduct = asyncHandler(async (req: Request, res: Response) => {
   const updates = { ...req.body }
   delete updates._id
   const product = await Product.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true })
@@ -58,8 +58,17 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
   return res.status(200).json(new ApiResponse(200, product, 'Product updated'))
 })
 
-export const softDeleteProduct = asyncHandler(async (req: Request, res: Response) => {
+const softDeleteProduct = asyncHandler(async (req: Request, res: Response) => {
   const product = await Product.findByIdAndUpdate(req.params.id, { $set: { deleted: true } }, { new: true })
   if (!product) throw new ApiError(404, 'Product not found')
   return res.status(200).json(new ApiResponse(200, product, 'Product soft-deleted'))
 })
+
+
+export {
+  createProduct,
+  getProducts,
+  getProduct,
+  updateProduct,
+  softDeleteProduct
+}
