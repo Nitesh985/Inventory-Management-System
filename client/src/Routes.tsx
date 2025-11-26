@@ -9,7 +9,9 @@ import BusinessSettings from "./pages/business-settings";
 import SalesRecording from "./pages/sales-recording";
 import ExpenseTracking from "./pages/expense-tracking";
 import SignUp from "./pages/SignUp";
-import SignIn from "./pages/SignIn"
+import SignIn from "./pages/SignIn";
+import LandingPage from './pages/landing-page/index'
+
 
 
 const Routes = () => {
@@ -19,6 +21,7 @@ const Routes = () => {
         <ScrollToTop />
         <RouterRoutes>
           {/* Define your route here */}
+          <Route path="/welcome" element={<LandingPage />} />
           <Route path="/" element={<BusinessDashboard />} />
           <Route
             path="/inventory-management"
