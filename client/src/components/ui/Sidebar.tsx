@@ -36,6 +36,11 @@ const Sidebar = ({ isCollapsed = false, onToggle, syncStatus = "online" }) => {
           path: "/expense-tracking",
           icon: "Receipt",
         },
+       {
+          label: "Customer Khata",
+          path: "/customer-khata",
+          icon: "Users",
+        }, 
       ],
     },
     {

@@ -10,6 +10,7 @@ import RegistrationProgress from './components/RegistrationProgress';
 import TrustSignals from './components/TrustSignals';
 import { RegisterFormData, RegistrationStep } from './types';
 
+
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -126,84 +127,95 @@ const RegisterPage = () => {
         />
 
         {/* Main Content */}
-        <main className="flex-1 flex items-center justify-center px-4 py-8">
-          <div className="w-full max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left Column - Progress & Trust Signals */}
-              <div className="lg:col-span-1 space-y-6">
-                {/* Welcome Section */}
-                <div className="text-center lg:text-left">
-                  <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                    Start Your Digital Journey
-                  </h1>
-                  <p className="text-muted-foreground">
-                    Transform your business with our comprehensive management platform designed for modern entrepreneurs.
-                  </p>
-                </div>
+        <main className="flex-1 flex items-center justify-center px-4 py-10">
+  <div className="w-full max-w-6xl mx-auto">
 
-                {/* Registration Progress */}
-                <RegistrationProgress 
-                  steps={registrationSteps}
-                  className="hidden lg:block"
-                />
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
 
-                {/* Trust Signals */}
-                <TrustSignals />
+      {/* LEFT SIDE CONTENT */}
+      <div className="space-y-8">
 
-                {/* Connectivity Status */}
-                <ConnectivityIndicator 
-                  position="inline"
-                  showLabel={true}
-                  className="justify-center lg:justify-start"
-                />
-              </div>
+        {/* Welcome */}
+        <div className="text-center lg:text-left space-y-3">
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">
+            Start Your Digital Journey
+          </h1>
+          <p className="text-muted-foreground text-base leading-relaxed">
+            Transform your business with our modern & easy-to-use management platform.
+          </p>
+        </div>
 
-              {/* Right Column - Registration Form */}
-              <div className="lg:col-span-2">
-                <div className="bg-card border border-border rounded-lg shadow-elevation-2 p-6 lg:p-8">
-                  {/* Form Header */}
-                  <div className="text-center mb-6">
-                    <h2 className="text-xl font-semibold text-foreground mb-2">
-                      Create Your Business Account
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Join thousands of businesses already using Digital Khata
-                    </p>
-                  </div>
+        {/* Progress (Desktop) */}
+        <RegistrationProgress
+          steps={registrationSteps}
+          layout="vertical"
+          className="hidden lg:block"
+        />
 
-                  {/* Error Message */}
-                  {registrationError && (
-                    <FormValidationFeedback
-                      type="error"
-                      message={registrationError}
-                      className="mb-6"
-                    />
-                  )}
+        {/* Trust Signals */}
+        <TrustSignals />
 
-                  {/* Offline Warning */}
-                  {!isOnline && (
-                    <FormValidationFeedback
-                      type="warning"
-                      message="You're currently offline. Account creation requires an internet connection. Your form data will be saved locally."
-                      className="mb-6"
-                    />
-                  )}
+        {/* Connectivity */}
+        <ConnectivityIndicator 
+          position="inline" 
+          showLabel 
+          className="justify-center lg:justify-start"
+        />
+      </div>
 
-                  {/* Registration Form */}
-                  <RegistrationForm
-                    onSubmit={handleRegistration}
-                    isLoading={isLoading}
-                  />
-                </div>
-              </div>
-            </div>
+      {/* RIGHT SIDE FORM CARD */}
+      <div className="lg:col-span-2">
 
-            {/* Mobile Progress Indicator */}
-            <div className="lg:hidden mt-8">
-              <RegistrationProgress steps={registrationSteps} />
-            </div>
+        <div className="bg-card border border-border rounded-2xl shadow-md p-10 space-y-10">
+
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl lg:text-3xl font-semibold text-foreground">
+              Create Your Business Account
+            </h2>
+            <p className="text-muted-foreground text-sm lg:text-base">
+              Join thousands of businesses already using Digital Khata.
+            </p>
           </div>
-        </main>
+
+          {/* Error */}
+          {registrationError && (
+            <FormValidationFeedback
+              type="error"
+              message={registrationError}
+            />
+          )}
+
+          {/* Offline Warning */}
+          {!isOnline && (
+            <FormValidationFeedback
+              type="warning"
+              message="You're offline. Your form data will be stored locally."
+            />
+          )}
+
+          {/* FORM */}
+          <div className="mt-4">
+            <RegistrationForm
+              onSubmit={handleRegistration}
+              isLoading={isLoading}
+            />
+          </div>
+
+        </div>
+
+        {/* Mobile Progress */}
+        <div className="lg:hidden mt-10">
+          <RegistrationProgress steps={registrationSteps} />
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+
 
         {/* Footer */}
         <AuthenticationFooter currentPage="register" />
