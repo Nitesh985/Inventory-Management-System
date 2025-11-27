@@ -6,10 +6,12 @@ if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI environment variable is not set");
 }
 
-const client = new MongoClient(process.env.MONGODB_URI);
+const client = new MongoClient(`${process.env.MONGODB_URI}/auth`);
 const db = client.db();
 
 export const auth = betterAuth({
+  baseURL: "http://localhost:3000",
+  trustedOrigins: ["http://localhost:5173"],
   database: mongodbAdapter(db, {
     client
   }),

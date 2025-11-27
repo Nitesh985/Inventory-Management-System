@@ -1,11 +1,13 @@
 import { useState } from "react";
 import type { FormEvent } from 'react'
 import { signUp } from "../lib/auth-client"
+import { useNavigate } from 'react-router-dom';
 
 function SignUp() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-
+  const navigate = useNavigate();
+  
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -15,6 +17,13 @@ function SignUp() {
         name: "John Doe",
         email,
         password,
+      }, {
+        onSuccess: () => {
+          navigate('/');
+        },
+        onError: (error) => {
+          console.error("Signup failed:", error);
+        }
       });
       console.log(data)
 

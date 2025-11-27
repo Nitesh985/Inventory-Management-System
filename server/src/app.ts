@@ -8,12 +8,12 @@ import { toNodeHandler } from "better-auth/node";
 
 const app = express()
 
-app.all('/api/auth/*splat', toNodeHandler(auth));
 app.use(cors({
     origin:"http://localhost:5173",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }))
+app.all('/api/auth/*splat', toNodeHandler(auth));
 
 
 app.use(express.json())
