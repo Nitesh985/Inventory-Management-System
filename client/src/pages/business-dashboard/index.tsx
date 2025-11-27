@@ -139,7 +139,7 @@ const BusinessDashboard = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="mb-8">
+          <div className="mb-8 ">
             <QuickActions />
           </div>
 

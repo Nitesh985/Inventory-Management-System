@@ -8,9 +8,10 @@ import BusinessDashboard from "./pages/business-dashboard";
 import BusinessSettings from "./pages/business-settings";
 import SalesRecording from "./pages/sales-recording";
 import ExpenseTracking from "./pages/expense-tracking";
-import SignUp from "./pages/SignUp";
-import SignIn from "./pages/SignIn";
+import SignUp from "./pages/auth/signup/index";
+import SignIn from "./pages/auth/logIn/index";
 import LandingPage from './pages/landing-page/index'
+import CustomerKhata from "./pages/customer-credit";
 
 
 
@@ -35,9 +36,12 @@ const Routes = () => {
           <Route path="/business-settings" element={<BusinessSettings />} />
           <Route path="/sales-recording" element={<SalesRecording />} />
           <Route path="/expense-tracking" element={<ExpenseTracking />} />
+          <Route path="/customer-khata" element={<CustomerKhata />} />
           <Route path="*" element={<NotFound />} />
           <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/register" element={<SignUp />} />
           <Route path="/sign-in" element={<SignIn />} />
+          <Route path="/login" element={<SignIn />} />
         </RouterRoutes>
       </ErrorBoundary>
     </BrowserRouter>

@@ -26,6 +26,13 @@ const QuickActions = () => {
       path: "/inventory-management"
     },
     {
+      label: "Customer Khata",
+      description: "Add Customer Credit",
+      icon: "Users",
+      color: "bg-accent text-accent-foreground",
+      path: "/customer-khata"
+    },
+    {
       label: "View Reports",
       description: "Business insights",
       icon: "BarChart3",
