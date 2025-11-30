@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import CustomerSelector from '../../../components/customer/CustomerSelector';
 import axios from 'axios';
 
 const CreditForm = () => {
   const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState('');
   const [customerId, setCustomerId] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
 
+  const handleAddCustomer = (customer) => {
+    setCustomers(prev => [...prev, customer]);
+  };
+  
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -38,7 +44,15 @@ const CreditForm = () => {
           <label htmlFor="customer" className="block text-sm font-medium text-gray-700">
             Customer
           </label>
-          <select
+          {/* Customer Selection */}
+          <div className="bg-card border border-border rounded-lg p-6">
+            <CustomerSelector
+              selectedCustomer={selectedCustomer}
+              onCustomerSelect={setSelectedCustomer}
+              onAddCustomer={handleAddCustomer}
+            />
+          </div>
+          {/*<select
             id="customer"
             value={customerId}
             onChange={(e) => setCustomerId(e.target.value)}
@@ -50,7 +64,7 @@ const CreditForm = () => {
                 {customer.name}
               </option>
             ))}
-          </select>
+          </select>*/}
         </div>
         <div className="mb-4">
           <label htmlFor="amount" className="block text-sm font-medium text-gray-700">

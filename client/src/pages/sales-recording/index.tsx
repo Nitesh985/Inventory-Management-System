@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import CustomerSelector from './components/CustomerSelector';
+import CustomerSelector from '../../components/customer/CustomerSelector';
 import ProductSelector from './components/ProductSelector';
 import TransactionSummary from './components/TransactionSummary';
 import PaymentMethodSelector from './components/PaymentMethodSelector';
