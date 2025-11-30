@@ -48,19 +48,19 @@ const QuickActions = () => {
   return (
     <div className="bg-card border border-border rounded-lg p-6">
       <h2 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-none lg:grid-cols-5 gap-3">
         {actions?.map((action) => (
           <Button
             key={action?.label}
             variant="outline"
-            className="h-20 flex-col space-y-2 hover:shadow-card transition-all duration-200"
+            className="h-30 flex-col space-y-3 hover:shadow-card transition-all duration-300"
             onClick={() => handleActionClick(action?.path)}
           >
             <div className={`w-8 h-8 rounded-lg ${action?.color} flex items-center justify-center`}>
               <Icon name={action?.icon} size={18} />
             </div>
             <div className="text-center">
-              <div className="font-medium text-sm">{action?.label}</div>
+              <div className="font-medium text-base">{action?.label}</div>
               <div className="text-xs text-muted-foreground">{action?.description}</div>
             </div>
           </Button>
