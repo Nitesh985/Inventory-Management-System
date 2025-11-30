@@ -210,21 +210,21 @@ const BusinessChart = () => {
       </div>
       {/* Chart Summary */}
       <div className="mt-6 pt-4 border-t border-border">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
           <div className="text-center">
-            <div className="text-2xl font-bold text-success">
+            <div className="lg:text-2xl text-lg font-bold text-success">
               ${currentData?.reduce((sum, item) => sum + item?.sales, 0)?.toLocaleString('en-US')}
             </div>
             <div className="text-sm text-muted-foreground">Total Sales</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-error">
+            <div className="lg:text-2xl text-lg font-bold text-error">
               ${currentData?.reduce((sum, item) => sum + item?.expenses, 0)?.toLocaleString('en-US')}
             </div>
             <div className="text-sm text-muted-foreground">Total Expenses</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-primary">
+            <div className="lg:text-2xl text-lg font-bold text-primary">
               ${currentData?.reduce((sum, item) => sum + item?.profit, 0)?.toLocaleString('en-US')}
             </div>
             <div className="text-sm text-muted-foreground">Net Profit</div>

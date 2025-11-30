@@ -139,7 +139,7 @@ const BusinessDashboard = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="mb-8 ">
+          <div className="lg:flex hidden lg:mb-8 ">
             <QuickActions />
           </div>
 
