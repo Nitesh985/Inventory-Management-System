@@ -5,6 +5,7 @@ export interface ICustomer extends Document {
   clientId: string;
   name: string;
   phone: string;
+  email: string;
   address: string;
   outstandingBalance: number;
   notes: string;
@@ -18,6 +19,7 @@ const customerSchema = new Schema<ICustomer>(
     shopId: { type: String, ref: "Shop", required: true },
     clientId: { type: String, ref: "User", required: true },
     name: { type: String, required: true },
+    email: {type: String},
     phone: { type: String },
     address: { type: String },
     outstandingBalance: { type: Number, default: 0 },

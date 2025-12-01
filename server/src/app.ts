@@ -32,12 +32,12 @@ import productRouter from './routes/product.routes.ts'
 import salesRouter from './routes/sales.routes.ts'
 import shopRouter from './routes/shop.routes.ts'
 
-app.use("/customers", customerRouter)
-app.use("/expenses", expenseRouter)
-app.use("/inventory", inventoryRouter)
-app.use("/products", productRouter)
-app.use("/sales", salesRouter)
-app.use("/shops", shopRouter)
+app.use("/api/customers", customerRouter)
+app.use("/api/expenses", expenseRouter)
+app.use("/api/inventory", inventoryRouter)
+app.use("/api/products", productRouter)
+app.use("/api/sales", salesRouter)
+app.use("/api/shops", shopRouter)
 
 
 app.post("/api/v1/test", (req, res)=>{

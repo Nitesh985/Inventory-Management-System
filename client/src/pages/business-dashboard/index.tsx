@@ -8,6 +8,8 @@ import RecentTransactions from './components/RecentTransactions';
 import InventoryAlerts from './components/InventoryAlerts';
 import BusinessChart from './components/BusinessChart';
 import SyncStatus from './components/SyncStatus';
+import Loader from '@/components/Loader';
+
 
 const BusinessDashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -78,6 +80,8 @@ const BusinessDashboard = () => {
       trend: true
     }
   ];
+  
+
 
   return (
     <div className="min-h-screen bg-background">

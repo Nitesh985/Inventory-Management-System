@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Icon from '../AppIcon';
 import Button from '../ui/Button';
 import Select from '../ui/Select';
 import Input from '../ui/Input';
 import { useFetch } from '@/hooks/useFetch';
-import { getCustomers } from '@/api/customers';
+import { createCustomer, getCustomers } from '@/api/customers';
+import { useMutation } from '@/hooks/useMutation';
+import { Loader } from '@/components/Loader';
 
 export interface CustomerSelectorProps {
   selectedCustomer: string | null;
@@ -29,10 +31,32 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
     address: ''
   });
   const {data, loading, error} = useFetch(getCustomers);
-  const [customers, setCustomers] = useState([ {value: 'walk-in', label: 'Walk-in Customer', phone: '', email: '', address: ''}, ...data])
+  const [customers, setCustomers] = useState([ {value: 'walk-in', label: 'Walk-in Customer', phone: '', email: '', address: ''}])
+  // const { data, loading, error, mutate } = useMutation(createCustomer)
   
+  
+  
+  useEffect(() => {
+    if (data && Array.isArray(data)) {
+      console.log(data)
+      const formatted = data.map((c) => ({
+        value: c._id,
+        label: c.name,
+        phone: c.phone,
+        email: c.email ?? "",
+        address: c.address ?? "",
+        raw: c
+      }));
+      
+      setCustomers(prev => [
+        prev[0],
+        ...formatted
+      ]);
+    }
+  }, [data]);
 
-  const handleAddCustomer = () => {
+  
+  const handleAddCustomer = async () => {
     if (newCustomer?.name?.trim()) {
       const customer = {
         value: `cust-${Date.now()}`,
@@ -41,6 +65,9 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
         email: newCustomer?.email,
         address: newCustomer?.address
       };
+      
+      // await mutate(newCustomer)
+      
       onAddCustomer(customer);
       onCustomerSelect(customer?.value);
       setNewCustomer({ name: '', phone: '', email: '', address: '' });
@@ -49,9 +76,13 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
   };
 
   const selectedCustomerData = customers?.find(c => c?.value === selectedCustomer);
-
+  
+  
+  
   return (
-    <div className="space-y-4">
+    <Loader loading={loading} >  
+      <>  
+      <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground">Customer Information</h3>
         <Button
@@ -151,7 +182,9 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
           </div>
         </div>
       )}
-    </div>
+      </div>
+      </>
+    </Loader>
   );
 };
 

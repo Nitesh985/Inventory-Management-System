@@ -6,17 +6,29 @@ import Customer from '../models/customer.models.ts'
 import Sales from '../models/sales.models.ts'
 
 const createCustomer = asyncHandler(async (req: Request, res: Response) => {
-  const { shopId, clientId, name, phone, address } = req.body
+  const { shopId, clientId, name, phone, address, email } = req.body
 
   if (!shopId || !clientId || !name) {
     throw new ApiError(400, 'shopId, clientId and name are required')
   }
 
   // prevent duplicates by phone within same shop+client
-  if (phone) {
-    const existing = await Customer.findOne({ shopId, clientId, phone })
-    if (existing) throw new ApiError(400, 'Customer with this phone already exists')
+  const duplicateQuery: any = { shopId, clientId };
+  
+  if (phone) duplicateQuery.phone = phone;
+  if (email) duplicateQuery.email = email;
+  
+  const existing = await Customer.findOne(duplicateQuery);
+  
+  if (existing) {
+    if (existing.phone === phone) {
+      throw new ApiError(400, 'Customer with this phone already exists');
+    }
+    if (existing.email === email) {
+      throw new ApiError(400, 'Customer with this email already exists');
+    }
   }
+
 
   const customer = await Customer.create({
     shopId,
@@ -24,6 +36,7 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
     name,
     phone: phone || '',
     address: address || '',
+    email: email || '',
     outstandingBalance: 0,
     notes: '',
     deleted: false
