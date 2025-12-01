@@ -16,6 +16,7 @@ const Header = ({ onMenuToggle, syncStatus = "online" }) => {
     { label: "Inventory", path: "/inventory-management", icon: "Package" },
     { label: "Sales", path: "/sales-recording", icon: "ShoppingCart" },
     { label: "Expenses", path: "/expense-tracking", icon: "Receipt" },
+    { label: "Customers", path: "/customer-khata", icon: "Users" },
     { label: "Reports", path: "/ai-reports-dashboard", icon: "BarChart3" },
   ];
 
