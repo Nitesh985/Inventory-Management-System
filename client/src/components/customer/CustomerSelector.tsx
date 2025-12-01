@@ -6,7 +6,7 @@ import Input from '../ui/Input';
 import { useFetch } from '@/hooks/useFetch';
 import { createCustomer, getCustomers } from '@/api/customers';
 import { useMutation } from '@/hooks/useMutation';
-import { Loader } from '@/components/Loader';
+import Loader from '@/components/Loader';
 
 export interface CustomerSelectorProps {
   selectedCustomer: string | null;
