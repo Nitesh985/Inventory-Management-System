@@ -3,6 +3,12 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
+import { useMutation } from '@/hooks/useMutation';
+import { createProduct, type CreateProductDTO } from '@/api/products';
+import { createOrUpdateInventory } from '@/api/inventory';
+
+// TODO: Add reorderLevel
+// TODO: Add reserve section
 
 const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
   const [formData, setFormData] = useState({
@@ -10,17 +16,19 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
     sku: '',
     category: '',
     description: '',
-    currentStock: '',
+    unit: '',
     minStock: '',
     maxStock: '',
-    unitPrice: '',
-    costPrice: '',
+    price: '',
+    cost: '',
     supplier: '',
     location: ''
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const {mutate, loading, error} = useMutation(createProduct)
+  const {mutate:mutateInv, loading:loadingInv, error:errorInv} = useMutation(createOrUpdateInventory)
 
   const categories = [
     { value: 'electronics', label: 'Electronics' },
@@ -58,11 +66,11 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
         sku: product?.sku || '',
         category: product?.category || '',
         description: product?.description || '',
-        currentStock: product?.currentStock?.toString() || '',
+        unit: product?.unit?.toString() || '',
         minStock: product?.minStock?.toString() || '',
         maxStock: product?.maxStock?.toString() || '',
-        unitPrice: product?.unitPrice?.toString() || '',
-        costPrice: product?.costPrice?.toString() || '',
+        price: product?.price?.toString() || '',
+        cost: product?.cost?.toString() || '',
         supplier: product?.supplier || '',
         location: product?.location || ''
       });
@@ -72,11 +80,11 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
         sku: '',
         category: '',
         description: '',
-        currentStock: '',
+        unit: '',
         minStock: '',
         maxStock: '',
-        unitPrice: '',
-        costPrice: '',
+        price: '',
+        cost: '',
         supplier: '',
         location: ''
       });
@@ -113,12 +121,12 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
       newErrors.category = 'Category is required';
     }
 
-    if (!formData?.currentStock || isNaN(formData?.currentStock) || parseInt(formData?.currentStock) < 0) {
-      newErrors.currentStock = 'Valid current stock is required';
+    if (!formData?.unit || isNaN(formData?.unit) || parseInt(formData?.unit) < 0) {
+      newErrors.unit = 'Valid current stock is required';
     }
 
-    if (!formData?.unitPrice || isNaN(formData?.unitPrice) || parseFloat(formData?.unitPrice) <= 0) {
-      newErrors.unitPrice = 'Valid unit price is required';
+    if (!formData?.price || isNaN(formData?.price) || parseFloat(formData?.price) <= 0) {
+      newErrors.price = 'Valid unit price is required';
     }
 
     if (formData?.minStock && (isNaN(formData?.minStock) || parseInt(formData?.minStock) < 0)) {
@@ -133,8 +141,8 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
       newErrors.maxStock = 'Maximum stock must be greater than minimum stock';
     }
 
-    if (formData?.costPrice && (isNaN(formData?.costPrice) || parseFloat(formData?.costPrice) < 0)) {
-      newErrors.costPrice = 'Cost price must be a valid number';
+    if (formData?.cost && (isNaN(formData?.cost) || parseFloat(formData?.cost) < 0)) {
+      newErrors.cost = 'Cost price must be a valid number';
     }
 
     setErrors(newErrors);
@@ -150,23 +158,59 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
 
     setIsSubmitting(true);
 
+    // name: '',
+    // sku: '',
+    // category: '',
+    // description: '',
+    // unit: '',
+    // minStock: '',
+    // maxStock: '',
+    // price: '',
+    // cost: '',
+    // supplier: '',
+    // location: ''
+    
     try {
-      const productData = {
-        ...formData,
-        currentStock: parseInt(formData?.currentStock),
-        minStock: formData?.minStock ? parseInt(formData?.minStock) : null,
-        maxStock: formData?.maxStock ? parseInt(formData?.maxStock) : null,
-        unitPrice: parseFloat(formData?.unitPrice),
-        costPrice: formData?.costPrice ? parseFloat(formData?.costPrice) : null,
-        lastUpdated: new Date()?.toISOString()
-      };
-
-      if (product) {
-        productData.id = product?.id;
+      const productSubmitData:CreateProductDTO = {
+        name: formData.name,
+        sku: formData.sku,
+        category: formData.category,
+        description: formData?.description,
+        unit: parseInt(formData?.unit),
+        price: parseInt(formData?.price),
+        cost: parseInt(formData?.cost),
+        reorderLevel: 10
       }
+      mutate({...productSubmitData})
+        .then(()=>{
+          const inventorySubmitData = {
+            stock: parseInt(formData.unit),
+            reserved: 5
+          }
+          mutateInv({...inventorySubmitData})
+            .then(()=>{
+              
+            })
+        })
+        .then(async ()=>{
+          const productData = {
+            ...formData,
+            unit: parseInt(formData?.unit),
+            minStock: formData?.minStock ? parseInt(formData?.minStock) : null,
+            maxStock: formData?.maxStock ? parseInt(formData?.maxStock) : null,
+            price: parseFloat(formData?.price),
+            cost: formData?.cost ? parseFloat(formData?.cost) : null,
+            lastUpdated: new Date()?.toISOString()
+          };
+    
+          if (product) {
+            productData.id = product?.id;
+          }
+    
+          await onSave(productData);
+          onClose();
+        })
 
-      await onSave(productData);
-      onClose();
     } catch (error) {
       console.error('Error saving product:', error);
     } finally {
@@ -250,9 +294,9 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
                 label="Current Stock"
                 type="number"
                 placeholder="Enter current stock quantity"
-                value={formData?.currentStock}
-                onChange={(e) => handleInputChange('currentStock', e?.target?.value)}
-                error={errors?.currentStock}
+                value={formData?.unit}
+                onChange={(e) => handleInputChange('unit', e?.target?.value)}
+                error={errors?.unit}
                 required
                 min="0"
                 disabled={isSubmitting}
@@ -286,9 +330,9 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
                 label="Unit Price (USD)"
                 type="number"
                 placeholder="Enter selling price"
-                value={formData?.unitPrice}
-                onChange={(e) => handleInputChange('unitPrice', e?.target?.value)}
-                error={errors?.unitPrice}
+                value={formData?.price}
+                onChange={(e) => handleInputChange('price', e?.target?.value)}
+                error={errors?.price}
                 required
                 min="0"
                 step="0.01"
@@ -299,9 +343,9 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
                 label="Cost Price (USD)"
                 type="number"
                 placeholder="Enter cost price (optional)"
-                value={formData?.costPrice}
-                onChange={(e) => handleInputChange('costPrice', e?.target?.value)}
-                error={errors?.costPrice}
+                value={formData?.cost}
+                onChange={(e) => handleInputChange('cost', e?.target?.value)}
+                error={errors?.cost}
                 min="0"
                 step="0.01"
                 disabled={isSubmitting}

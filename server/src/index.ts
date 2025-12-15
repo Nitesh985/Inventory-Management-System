@@ -9,6 +9,12 @@
   // 4. Demo Video
   
   
+  // Another important notes here
+  // 1. On seeing the credit history, there must be option for seeing all customers history grouped by (latest, highest)
+  // 2. There must also be a selector or a way to get credits of individual customer, their history (details) and total
+  // 3. Method for importing products
+  
+  
   connectToDB()
     .then(async () => {
       const port = process.env.PORT || 3000;

@@ -7,14 +7,14 @@ const api = axios.create({
 
 
 export interface CreateOrUpdateInventoryDTO {
-  shopId: string;
-  productId: string;
-  quantity: number;
+  shopId?: string;
+  productId?: string;
+  stock: number;
   reserved?: number;
 }
 
 export interface UpdateInventoryDTO {
-  quantity?: number;
+  stock?: number;
   reserved?: number;
 }
 
@@ -22,7 +22,7 @@ export interface Inventory {
   id: string;
   shopId: string;
   productId: string;
-  quantity: number;
+  stock: number;
   reserved: number;
 }
 

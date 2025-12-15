@@ -7,6 +7,7 @@ import { useFetch } from '@/hooks/useFetch';
 import { createCustomer, getCustomers } from '@/api/customers';
 import { useMutation } from '@/hooks/useMutation';
 import Loader from '@/components/Loader';
+import AddCustomer from './AddCustomer';
 
 export interface CustomerSelectorProps {
   selectedCustomer: string | null;
@@ -32,13 +33,12 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
   });
   const {data, loading, error} = useFetch(getCustomers);
   const [customers, setCustomers] = useState([ {value: 'walk-in', label: 'Walk-in Customer', phone: '', email: '', address: ''}])
-  // const { data, loading, error, mutate } = useMutation(createCustomer)
   
   
   
   useEffect(() => {
     if (data && Array.isArray(data)) {
-      console.log(data)
+      
       const formatted = data.map((c) => ({
         value: c._id,
         label: c.name,
@@ -66,7 +66,6 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
         address: newCustomer?.address
       };
       
-      // await mutate(newCustomer)
       
       onAddCustomer(customer);
       onCustomerSelect(customer?.value);
@@ -130,14 +129,7 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
             />
           </div>
           <div className="flex space-x-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleAddCustomer}
-              disabled={!newCustomer?.name?.trim()}
-            >
-              Add Customer
-            </Button>
+            <AddCustomer handleAddCustomer={handleAddCustomer} newCustomer={newCustomer} />
             <Button
               variant="outline"
               size="sm"

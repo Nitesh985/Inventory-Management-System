@@ -1,7 +1,7 @@
 import { Router } from "express";
+import { mockupData } from "../middlewares/mockup.middlewares.ts";
 
 const router = Router();
-
-// POST /api/users/register
+router.use(mockupData); // POST /api/users/register
 
 export default router;

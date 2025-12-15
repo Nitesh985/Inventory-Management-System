@@ -1,33 +1,102 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
 
-const InventoryStats = ({ products }) => {
-  const calculateStats = () => {
-    const totalProducts = products?.length;
-    const totalValue = products?.reduce((sum, product) => sum + (product?.currentStock * product?.unitPrice), 0);
-    const lowStockCount = products?.filter(product => 
-      product?.minStock && product?.currentStock <= product?.minStock
-    )?.length;
-    const outOfStockCount = products?.filter(product => product?.currentStock === 0)?.length;
-    const categoriesCount = new Set(products.map(product => product.category))?.size;
-
-    return {
-      totalProducts,
-      totalValue,
-      lowStockCount,
-      outOfStockCount,
-      categoriesCount
+const InventoryStats = ({ products }) => {  
+    const calculateStats = () => {
+      // SAFETY: if products is not a valid array, return zeros
+      if (!Array.isArray(products) || products.length === 0) {
+        return {
+          totalProducts: 0,
+          totalValue: 0,
+          lowStockCount: 0,
+          outOfStockCount: 0,
+          categoriesCount: 0
+        };
+      }
+  
+      const totalProducts = products.length || 0;
+  
+      const totalValue = products.reduce((sum, product) => {
+        const stock = product?.currentStock ?? 0;
+        const price = product?.unitPrice ?? 0;
+        return sum + stock * price;
+      }, 0);
+  
+      const lowStockCount = products.filter(product =>
+        product &&
+        product.minStock != null &&
+        product.currentStock <= product.minStock
+      ).length;
+  
+      const outOfStockCount = products.filter(product =>
+        product?.currentStock === 0
+      ).length;
+  
+      const categoriesCount = new Set(
+        products
+          .map(product => product?.category)
+          .filter(Boolean) // remove null/undefined
+      ).size;
+  
+      return {
+        totalProducts,
+        totalValue,
+        lowStockCount,
+        outOfStockCount,
+        categoriesCount
+      };
     };
-  };
+  
+    const stats = calculateStats();
+  
+    const formatCurrency = (amount) => {
+      const safeAmount = Number(amount) || 0;
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(safeAmount);
+    };
+  
+  //   const statCards = [
+  //     {
+  //       title: 'Total Products',
+  //       value: stats.totalProducts?.toLocaleString() ?? "0",
+  //       icon: 'Package',
+  //       color: 'text-primary bg-primary/10',
+  //       description: `${stats.categoriesCount ?? 0} categories`
+  //     },
+  //     {
+  //       title: 'Inventory Value',
+  //       value: formatCurrency(stats.totalValue),
+  //       icon: 'DollarSign',
+  //       color: 'text-success bg-success/10',
+  //       description: 'Total stock value'
+  //     },
+  //     {
+  //       title: 'Low Stock Items',
+  //       value: stats.lowStockCount?.toString() ?? "0",
+  //       icon: 'AlertTriangle',
+  //       color:
+  //         stats.lowStockCount > 0
+  //           ? 'text-warning bg-warning/10'
+  //           : 'text-muted-foreground bg-muted/10',
+  //       description: 'Need restocking'
+  //     },
+  //     {
+  //       title: 'Out of Stock',
+  //       value: stats.outOfStockCount?.toString() ?? "0",
+  //       icon: 'XCircle',
+  //       color:
+  //         stats.outOfStockCount > 0
+  //           ? 'text-error bg-error/10'
+  //           : 'text-muted-foreground bg-muted/10',
+  //       description: 'Unavailable items'
+  //     }
+  //   ];
+  
+  //   return null; // or your UI rendering for cards
+  // };
 
-  const stats = calculateStats();
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    })?.format(amount);
-  };
 
   const statCards = [
     {

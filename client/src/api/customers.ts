@@ -27,10 +27,13 @@ export interface Customer {
   address?: string;
 }
 
-async function createCustomer(data: CreateCustomerDTO) {
-  const res = await api.post("/customers", data);
+async function createCustomer(
+  data: CreateCustomerDTO
+): Promise<Customer> {
+  const res = await api.post<Customer>("/customers", data);
   return res.data;
 }
+
 
 async function getCustomers(params?: {
   shopId?: string;

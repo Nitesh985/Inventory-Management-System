@@ -6,8 +6,10 @@ import {
   updateExpense,
   deleteExpense
 } from '../controllers/expense.controllers.ts'
+import { mockupData } from '../middlewares/mockup.middlewares.ts'
 
 const router = Router()
+router.use(mockupData)
 
 // CREATE EXPENSE
 router.post('/', createExpense)

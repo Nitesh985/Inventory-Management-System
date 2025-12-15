@@ -6,11 +6,12 @@ const api = axios.create({
 
 
 export interface CreateProductDTO {
-  shopId: string;
-  clientId: string;
+  shopId?: string;
+  clientId?: string;
   sku: string;
   name: string;
   category?: string;
+  description?: string;
   unit: number;
   price: number;
   cost: number;

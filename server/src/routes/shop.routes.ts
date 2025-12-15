@@ -6,8 +6,11 @@ import {
   updateShop,
   deleteShop
 } from '../controllers/shop.controllers.ts'
+import { mockupData } from '../middlewares/mockup.middlewares.ts'
+
 
 const router = Router()
+router.use(mockupData)
 
 // CREATE SHOP
 router.post('/', createShop)

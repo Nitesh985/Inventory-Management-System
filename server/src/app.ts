@@ -5,7 +5,6 @@ import { auth } from "./lib/auth.ts";
 import { toNodeHandler } from "better-auth/node";
 
 
-
 const app = express()
 
 app.use(cors({
@@ -40,16 +39,10 @@ app.use("/api/sales", salesRouter)
 app.use("/api/shops", shopRouter)
 
 
-app.post("/api/v1/test", (req, res)=>{
-    console.log(req.body)
-    return res.status(201).json({data:"hi"})
-})
 
-app.use("/api/v1/test", (req,res)=>{
-    return res.status(200).json({
-        message:"Everything is okay",
-        status:200
-    })
+
+app.post("/api/v1/test", (req, res)=>{
+    return res.status(201).json({data:"hi"})
 })
 
 

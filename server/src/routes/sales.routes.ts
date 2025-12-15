@@ -6,8 +6,11 @@ import {
   updateSale,
   deleteSale
 } from '../controllers/sales.controllers.ts'
+import { mockupData } from '../middlewares/mockup.middlewares.ts'
+
 
 const router = Router()
+router.use(mockupData)
 
 // CREATE SALE
 router.post('/', createSale)
