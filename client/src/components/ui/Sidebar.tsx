@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Icon from "../AppIcon";
 import Button from "./Button";
+import Logo from "../../assets/logo.png";
 
-const Sidebar = ({ isCollapsed = false, onToggle, syncStatus = "online" }) => {
+const Sidebar = ({ isCollapsed = false, onToggle, syncStatus = "online", onMobileOpenChange }) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
 
@@ -102,22 +103,31 @@ const Sidebar = ({ isCollapsed = false, onToggle, syncStatus = "online" }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Notify parent component when mobile sidebar state changes
+  useEffect(() => {
+    if (onMobileOpenChange) {
+      onMobileOpenChange(isMobileOpen);
+    }
+  }, [isMobileOpen, onMobileOpenChange]);
+
+  const handleMobileClose = () => {
+    setIsMobileOpen(false);
+  };
+
   const sidebarContent = (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full ">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-            <Icon name="Calculator" size={20} color="white" />
+          <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+      
+            <img src={Logo} alt="Digital Khata" className="w-12 h-12" />
           </div>
           {!isCollapsed && (
             <div>
               <h1 className="text-lg font-semibold text-foreground">
                 Digital Khata
               </h1>
-              <p className="text-xs text-muted-foreground">
-                Business Management
-              </p>
             </div>
           )}
         </div>
@@ -135,7 +145,7 @@ const Sidebar = ({ isCollapsed = false, onToggle, syncStatus = "online" }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-4 space-y-6">
+      <nav className="flex-1 overflow-y-auto p-4  space-y-6">
         {navigationSections?.map((section) => (
           <div key={section?.title}>
             {!isCollapsed && (
@@ -147,19 +157,19 @@ const Sidebar = ({ isCollapsed = false, onToggle, syncStatus = "online" }) => {
               {section?.items?.map((item) => {
                 const isActive = location?.pathname === item?.path;
                 return (
-                  <Button
+                  <Button 
                     key={item?.path}
                     variant={isActive ? "default" : "ghost"}
                     size="sm"
                     className={`w-full justify-start ${isCollapsed ? "px-2" : "px-3"}`}
                     onClick={() => {
                       window.location.href = item?.path;
-                      setIsMobileOpen(false);
+                      handleMobileClose();
                     }}
                   >
                     <Icon
                       name={item?.icon}
-                      size={18}
+                      size={20}
                       className="flex-shrink-0"
                     />
                     {!isCollapsed && (
@@ -202,7 +212,7 @@ const Sidebar = ({ isCollapsed = false, onToggle, syncStatus = "online" }) => {
             variant="ghost"
             size="icon"
             onClick={onToggle}
-            className="w-full mt-2 hidden lg:flex"
+            className="w-full mt-2 hidden lg:flex "
           >
             <Icon name="PanelLeftOpen" size={16} />
           </Button>
@@ -216,7 +226,7 @@ const Sidebar = ({ isCollapsed = false, onToggle, syncStatus = "online" }) => {
       {/* Desktop Sidebar */}
       <aside
         className={`hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:z-100 lg:flex-col lg:bg-card lg:border-r lg:border-border transition-all duration-300 ${
-          isCollapsed ? "lg:w-16" : "lg:w-72"
+          isCollapsed ? "lg:w-20" : "lg:w-72"
         }`}
       >
         {sidebarContent}
@@ -226,27 +236,24 @@ const Sidebar = ({ isCollapsed = false, onToggle, syncStatus = "online" }) => {
         <>
           <div
             className="fixed inset-0 bg-black/50 z-100 lg:hidden"
-            onClick={() => setIsMobileOpen(false)}
+            onClick={handleMobileClose}
           />
           <aside className="fixed inset-y-0 left-0 z-200 w-72 bg-card border-r border-border lg:hidden">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <Icon name="Calculator" size={20} color="white" />
+                <div className="w-12 h-12 flex items-center justify-center">
+                  <img src={Logo} alt="Digital Khata" className="w-12 h-12" />
                 </div>
                 <div>
                   <h1 className="text-lg font-semibold text-foreground">
                     Digital Khata
                   </h1>
-                  <p className="text-xs text-muted-foreground">
-                    Business Management
-                  </p>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsMobileOpen(false)}
+                onClick={handleMobileClose}
               >
                 <Icon name="X" size={20} />
               </Button>

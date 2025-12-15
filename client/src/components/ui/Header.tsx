@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import Icon from "../AppIcon";
 import Button from "./Button";
+import Logo from "../../assets/logo.png";
 
 const Header = ({ onMenuToggle, syncStatus = "online" }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -52,7 +53,7 @@ const Header = ({ onMenuToggle, syncStatus = "online" }) => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-100 bg-card border-b border-border">
-      <div className="flex items-center justify-between h-16 px-4">
+      <div className="flex items-center justify-between h-20 px-4">
         {/* Left Section - Logo and Mobile Menu */}
         <div className="flex items-center space-x-4">
           <Button
@@ -65,10 +66,11 @@ const Header = ({ onMenuToggle, syncStatus = "online" }) => {
           </Button>
 
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Icon name="Calculator" size={20} color="white" />
+            <div className="w-12 h-12 flex items-center justify-center">
+              <img src={Logo} alt="Digital Khata" className="w-12 h-12 sm:hidden" />
             </div>
-            <span className="text-xl font-semibold text-foreground hidden sm:block">
+        
+            <span className="text-xl font-semibold text-foreground sm:hidden">
               Digital Khata
             </span>
           </div>
