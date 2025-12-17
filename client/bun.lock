@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "client",
@@ -18,7 +19,7 @@
         "d3": "^7.9.0",
         "date-fns": "^4.1.0",
         "dotenv": "^16.0.1",
-        "framer-motion": "^10.16.4",
+        "framer-motion": "^10.18.0",
         "lucide-react": "^0.484.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
@@ -39,6 +40,7 @@
         "@tailwindcss/line-clamp": "^0.1.0",
         "@tailwindcss/typography": "^0.5.16",
         "@types/react": "^19.2.2",
+        "@types/react-dom": "^19.2.3",
         "@vitejs/plugin-react": "4.3.4",
         "autoprefixer": "10.4.2",
         "postcss": "8.4.8",
@@ -420,6 +422,8 @@
     "@types/node": ["@types/node@24.10.0", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-qzQZRBqkFsYyaSWXuEHc2WR9c0a0CXwiE5FWUvn7ZM+vdy1uZLfCunD38UzhuB7YN/J11ndbDBcTmOdxJo9Q7A=="],
 
     "@types/react": ["@types/react@19.2.5", "", { "dependencies": { "csstype": "^3.0.2" } }, "sha512-keKxkZMqnDicuvFoJbzrhbtdLSPhj/rZThDlKWCDbgXmUg0rEUFtRssDXKYmtXluZlIqiC5VqkCgRwzuyLHKHw=="],
+
+    "@types/react-dom": ["@types/react-dom@19.2.3", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ=="],
 
     "@types/stack-utils": ["@types/stack-utils@2.0.3", "", {}, "sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw=="],
 

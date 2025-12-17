@@ -29,11 +29,8 @@
     "typescript": "^5"
   },
   "dependencies": {
-<<<<<<< HEAD
     "@faker-js/faker": "^10.1.0",
-=======
     "@google/generative-ai": "^0.24.1",
->>>>>>> refs/remotes/origin/main
     "@types/bcrypt": "^6.0.0",
     "bcrypt": "^6.0.0",
     "better-auth": "^1.3.34",
