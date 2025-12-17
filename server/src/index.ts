@@ -1,32 +1,28 @@
-  import "dotenv/config";
-  import app from "./app.ts";
-  import { connectToDB } from "./db/index.ts";
+import express from "express";
+import cors from "cors";
+import "dotenv/config";
+import { connectToDB } from "./db/index.ts";
+import chatbotRoutes from "./routes/chatbot.routes.ts";
 
-  // Notes
-  // 1. Add some more stuff for shop its reviews, keep the counter of shops joined, transactions with us the admin, 
-  // 2. Migration options (import & export)
-  // 3. Payment options (cancel anytime, 7-day free trial {money back stuff handling})
-  // 4. Demo Video
-  
-  
-  // Another important notes here
-  // 1. On seeing the credit history, there must be option for seeing all customers history grouped by (latest, highest)
-  // 2. There must also be a selector or a way to get credits of individual customer, their history (details) and total
-  // 3. Method for importing products
-  
-  
-  connectToDB()
-    .then(async () => {
-      const port = process.env.PORT || 3000;
-      app.listen(port, () => {
-        console.log(`The app is listening on http://localhost:${port}`);
-      });
-      
-      
-      
-    })
-    .catch((error) => {
-      console.log("Connection to Mongodb failed ::", error);
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Use chatbot routes
+app.use("/api/chatbot", chatbotRoutes);
+
+// Connect to DB and start server
+connectToDB()
+  .then(async () => {
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => {
+      console.log(`The app is listening on http://localhost:${port}`);
     });
-  
-  console.log("Hello");
+  })
+  .catch((error) => {
+    console.log("Connection to Mongodb failed ::", error);
+  });
+
+console.log("Hello");

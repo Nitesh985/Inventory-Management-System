@@ -6,8 +6,9 @@ import SocialProof from './components/SocialProof';
 import CallToAction from './components/CallToAction';
 import TrustSignals from './components/TrustSignals';
 import Icon from '../../components/AppIcon';
+import { Chatbot } from '../../components/Chatbot';
 
-const LandingPage = () => {
+const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
@@ -28,6 +29,7 @@ const LandingPage = () => {
   const handleGetStarted = () => {
     navigate('/register');
   };
+  
 
   const handleTryDemo = () => {
     // For demo purposes, redirect to login with pre-filled credentials
@@ -206,6 +208,9 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Chatbot - will appear as floating button */}
+      <Chatbot />
     </div>
   );
 };
