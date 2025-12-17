@@ -36,7 +36,7 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
     name,
     phone: phone || '',
     address: address || '',
-    email: email || '',
+    email: email.toLowerCase() || '',
     outstandingBalance: 0,
     notes: '',
     deleted: false

@@ -10,7 +10,7 @@ import LowStockAlert from './components/LowStockAlert';
 import BulkImportModal from './components/BulkImportModal';
 import InventoryStats from './components/InventoryStats';
 import { useFetch } from '@/hooks/useFetch';
-import { getProducts } from '@/api/products';
+import { getAllProducts } from '@/api/products';
 
 const InventoryManagement = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -18,7 +18,7 @@ const InventoryManagement = () => {
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   
-  const { data: products = [], loading, error } = useFetch(getProducts); 
+  const { data: products = [], loading, error } = useFetch(getAllProducts); 
   
   const [filters, setFilters] = useState({
     category: '',

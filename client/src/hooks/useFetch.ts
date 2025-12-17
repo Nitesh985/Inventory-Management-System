@@ -5,6 +5,7 @@ export function useFetch<T>(
   deps: any[] = []
 ) {
   const [data, setData] = useState<T | null>(null);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
 
@@ -14,7 +15,8 @@ export function useFetch<T>(
     setLoading(true);
     fetcher()
       .then((res) => {
-        if (isMounted) setData(res);
+        console.log(res.data)
+        if (isMounted) setData(res.data);
       })
       .catch((err) => setError(err))
       .finally(() => setLoading(false));

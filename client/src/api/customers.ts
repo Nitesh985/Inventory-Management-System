@@ -40,7 +40,7 @@ async function getCustomers(params?: {
   clientId?: string;
 }) {
   const res = await api.get("/customers", { params });
-  return res.data.data;
+  return res.data;
 }
 
 async function getCustomerById(customerId: string) {

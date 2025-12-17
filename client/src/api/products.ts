@@ -48,7 +48,7 @@ async function createProduct(data: CreateProductDTO) {
 }
 
 
-async function getProducts(params?: { shopId?: string }) {
+async function getAllProducts(params?: { shopId?: string }) {
   const res = await api.get("/products", { params });
   return res.data;
 }
@@ -74,7 +74,7 @@ async function deleteProduct(productId: string) {
 
 export {
   createProduct,
-  getProducts,
+  getAllProducts,
   getProductById,
   updateProduct,
   deleteProduct,

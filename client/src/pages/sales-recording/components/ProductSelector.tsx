@@ -1,39 +1,67 @@
 import React, { useState } from 'react';
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
-import Select from '../../../components/ui/Select';
-import Input from '../../../components/ui/Input';
+import Icon from '@/components/AppIcon';
+import Button from '@/components/ui/Button';
+import Select from '@/components/ui/Select';
+import Input from '@/components/ui/Input';
+import { useFetch } from '@/hooks/useFetch';
+import { getAllProducts } from '@/api/products';
 
-const ProductSelector = ({ lineItems, onAddLineItem, onUpdateLineItem, onRemoveLineItem }) => {
-  const [selectedProduct, setSelectedProduct] = useState('');
-  const [quantity, setQuantity] = useState(1);
+interface Product {
+  value: string;
+  label: string;
+  price: number;
+  stock: number;
+  category: string;
+}
 
-  const products = [
-    { value: 'prod-001', label: 'iPhone 15 Pro', price: 999.00, stock: 25, category: 'Electronics' },
-    { value: 'prod-002', label: 'Samsung Galaxy S24', price: 899.00, stock: 18, category: 'Electronics' },
-    { value: 'prod-003', label: 'MacBook Air M3', price: 1299.00, stock: 12, category: 'Computers' },
-    { value: 'prod-004', label: 'Dell XPS 13', price: 1199.00, stock: 8, category: 'Computers' },
-    { value: 'prod-005', label: 'AirPods Pro', price: 249.00, stock: 45, category: 'Accessories' },
-    { value: 'prod-006', label: 'Sony WH-1000XM5', price: 399.00, stock: 22, category: 'Accessories' },
-    { value: 'prod-007', label: 'iPad Pro 12.9"', price: 1099.00, stock: 15, category: 'Tablets' },
-    { value: 'prod-008', label: 'Surface Pro 9', price: 999.00, stock: 10, category: 'Tablets' },
-    { value: 'prod-009', label: 'Apple Watch Series 9', price: 399.00, stock: 30, category: 'Wearables' },
-    { value: 'prod-010', label: 'Fitbit Charge 6', price: 159.00, stock: 35, category: 'Wearables' }
-  ];
+interface LineItem {
+  id: number;
+  productId: string;
+  productName: string;
+  price: number;
+  quantity: number;
+  total: number;
+  stock: number;
+}
 
-  const handleAddProduct = () => {
+interface ProductSelectorProps {
+  lineItems: LineItem[];
+  onAddLineItem: (item: LineItem) => void;
+  onUpdateLineItem: (id: number, newQuantity: number) => void;
+  onRemoveLineItem: (id: number) => void;
+}
+
+const ProductSelector: React.FC<ProductSelectorProps> = ({
+  lineItems,
+  onAddLineItem,
+  onUpdateLineItem,
+  onRemoveLineItem,
+}) => {
+  const [selectedProduct, setSelectedProduct] = useState<string>('');
+  const [quantity, setQuantity] = useState<number>(1);
+  const {data} = useFetch(getAllProducts)
+  const products: Product[] = (data ?? []).map(p => ({
+    value: p._id,
+    label: p.name,
+    price: p.price,
+    stock: p.stock ?? 0,
+    category: p.category ?? 'Uncategorized',
+  }));
+
+  const handleAddProduct = (): void => {
     if (selectedProduct && quantity > 0) {
-      const product = products?.find(p => p?.value === selectedProduct);
-      if (product && product?.stock >= quantity) {
-        const lineItem = {
+      const product = products.find(p => p.value === selectedProduct);
+      if (product && product.stock >= quantity) {
+        const lineItem: LineItem = {
           id: Date.now(),
-          productId: product?.value,
-          productName: product?.label,
-          price: product?.price,
-          quantity: quantity,
-          total: product?.price * quantity,
-          stock: product?.stock
+          productId: product.value,
+          productName: product.label,
+          price: product.price,
+          quantity,
+          total: product.price * quantity,
+          stock: product.stock,
         };
+
         onAddLineItem(lineItem);
         setSelectedProduct('');
         setQuantity(1);
@@ -41,13 +69,16 @@ const ProductSelector = ({ lineItems, onAddLineItem, onUpdateLineItem, onRemoveL
     }
   };
 
-  const getStockStatus = (stock) => {
+  const getStockStatus = (
+    stock: number,
+  ): { color: string; label: string } => {
     if (stock === 0) return { color: 'text-error', label: 'Out of Stock' };
     if (stock <= 5) return { color: 'text-warning', label: 'Low Stock' };
     return { color: 'text-success', label: 'In Stock' };
   };
 
-  const selectedProductData = products?.find(p => p?.value === selectedProduct);
+  const selectedProductData: Product | undefined =
+    products.find(p => p.value === selectedProduct);
 
   return (
     <div className="space-y-4">
@@ -169,3 +200,5 @@ const ProductSelector = ({ lineItems, onAddLineItem, onUpdateLineItem, onRemoveL
 };
 
 export default ProductSelector;
+
+

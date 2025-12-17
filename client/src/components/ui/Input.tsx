@@ -1,7 +1,18 @@
 import React from "react";
-import { cn } from "../../utils/cn";
+import { cn } from "@/utils/cn";
 
-const Input = React.forwardRef(
+/* ----------------------------------
+ * Props type
+ * ---------------------------------- */
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  description?: string;
+  error?: string;
+  required?: boolean;
+}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
     {
       className,
@@ -16,7 +27,7 @@ const Input = React.forwardRef(
     ref,
   ) => {
     // Generate unique ID if not provided
-    const inputId = id || `input-${Math.random()?.toString(36)?.substr(2, 9)}`;
+    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
 
     // Base input classes
     const baseInputClasses =

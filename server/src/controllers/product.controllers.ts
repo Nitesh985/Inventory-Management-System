@@ -40,6 +40,7 @@ const getProducts = asyncHandler(async (req: Request, res: Response) => {
   const filter: any = {}
   if (shopId) filter.shopId = shopId
   filter.deleted = false
+  // Get the stock as well
   const products = await Product.find(filter)
   return res.status(200).json(new ApiResponse(200, products, 'Products fetched'))
 })
