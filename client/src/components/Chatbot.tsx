@@ -55,8 +55,7 @@ export const Chatbot: React.FC = () => {
           <div className="bg-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center">
             <div>
               <h3 className="font-semibold text-lg">Digital Khata Assistant</h3>
-              <p className="text-xs text-blue-100">Powered by Gemini AI</p>
-            </div>
+              </div>
             <div className="flex gap-2">
               <button
                 onClick={clearChat}

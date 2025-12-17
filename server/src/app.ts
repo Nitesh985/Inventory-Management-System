@@ -3,6 +3,8 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { auth } from "./lib/auth.ts";
 import { toNodeHandler } from "better-auth/node";
+import chatbotRoutes from "./routes/chatbot.routes.ts";
+
 
 
 const app = express()
@@ -37,6 +39,7 @@ app.use("/api/inventory", inventoryRouter)
 app.use("/api/products", productRouter)
 app.use("/api/sales", salesRouter)
 app.use("/api/shops", shopRouter)
+app.use("/api/chatbot", chatbotRoutes);
 
 
 

@@ -2,16 +2,8 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import { connectToDB } from "./db/index.ts";
-import chatbotRoutes from "./routes/chatbot.routes.ts";
+import app from './app.ts'
 
-const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Use chatbot routes
-app.use("/api/chatbot", chatbotRoutes);
 
 // Connect to DB and start server
 connectToDB()

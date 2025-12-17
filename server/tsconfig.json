@@ -13,7 +13,9 @@
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "noEmit": true,
+    "allowImportingTsExtensions":true
   },
   "ts-node": {
     "esm": true,
