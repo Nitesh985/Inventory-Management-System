@@ -9,6 +9,8 @@ import axios from 'axios';
 
 const CreditHistory = () => {
   const { data: credits, loading } = useFetch(getCredits);
+  // const [credits, setCredits] = useState([])
+  const [creditHistory, setCreditHistory] = useState<any>({});
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   const sortedCredits = useMemo(() => {
@@ -27,11 +29,13 @@ const CreditHistory = () => {
   }, [credits, sortConfig]);
 
   useEffect(()=>{
-    axios.get("/api/customers/outstanding/6942686616d7cfd0d2291b8b")
+    axios.get("/api/customers/outstanding/6944d4a4b9dd57ae6c7855a3")
       .then(res=>{
-        console.log(res.data)
+        setCreditHistory(res.data.data);
+        console.log(res.data.data)
       })
   }, [])
+
   
   const requestSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -50,16 +54,17 @@ const CreditHistory = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-muted/50 text-muted-foreground uppercase text-xs">
-              <tr>
-                <th className="p-4 cursor-pointer hover:text-primary" onClick={() => requestSort('name')}>
-                  Customer {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              <tr >
+                <th className="p-4 px-10 cursor-pointer hover:text-primary" onClick={() => requestSort('name')}>
+                  Date {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </th>
                 <th className="p-4 cursor-pointer hover:text-primary" onClick={() => requestSort('amount')}>
-                  Amount </th>
-                <th className="p-4">Date</th>
-                <th className="p-4">Phone</th>
-              </tr>
+                 Product
+                 </th>
+                <th className="p-4">Amount</th>
+                </tr>
             </thead>
+
             <tbody className="divide-y divide-border">
               {sortedCredits.map((credit: any) => (
                 <tr key={credit._id} className="hover:bg-muted/30 transition-colors">
@@ -81,6 +86,21 @@ const CreditHistory = () => {
                   </td>
                 </tr>
               ))}
+
+              {/* {creditHistory?.itemsTaken?.length > 0 && creditHistory?.itemsTaken?.map((item: any) => (
+                <tr key={item._id} className="hover:bg-muted/30 transition-colors">
+                    <td className="p-4 px-10 text-muted-foreground text-xs">
+                      {new Date(item?.createdAt).toLocaleDateString()}
+                    </td>
+                  <td className="p-4 font-medium">{item.productName}</td>
+                  <td className="p-4">
+                    
+                    <span className={`px-2 py-1 text-xs font-bold text-slate-600`}>
+                      Rs. {item.unpaidAmount}
+                    </span>
+                  </td>
+                </tr>
+              ))} */}
             </tbody>
           </table>
         </div>

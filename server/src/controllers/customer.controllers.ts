@@ -124,6 +124,7 @@ const getCustomerOutstanding = asyncHandler(
       {
         $project: {
           _id: 0,
+          shopId: 1,
           invoiceNo: 1,
           createdAt: 1,
           customerId: 1,
@@ -142,6 +143,7 @@ const getCustomerOutstanding = asyncHandler(
           _id: null,
           itemsTaken: { $push: "$$ROOT" },
           totalOutstanding: { $sum: "$unpaidAmount" },
+          createdAt: { $first: "$createdAt" },
         },
       },
     ]);
