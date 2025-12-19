@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-// import "dotenv/config";
+import "dotenv/config";
 import { DB_NAME } from "../constants.ts";
 
 const connectToDB = async () => {

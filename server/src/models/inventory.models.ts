@@ -1,9 +1,8 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, Types, model, Document } from "mongoose";
 
 export interface IInventory extends Document {
-  id: string;
-  shopId: string;
-  productId: string;
+  shopId: Types.ObjectId;
+  productId: Types.ObjectId;
   stock: number;
   reserved: number;
   createdAt: Date;
@@ -12,8 +11,8 @@ export interface IInventory extends Document {
 
 const inventorySchema = new Schema<IInventory>(
   {
-    shopId: { type: String, ref: "Shop", required: true },
-    productId: { type: String, ref: "Product", required: true },
+    shopId: { type: Schema.Types.ObjectId, ref: "Shop", required: true },
+    productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     stock: { type: Number, required: true },
     reserved: { type: Number, default: 0 },
   },

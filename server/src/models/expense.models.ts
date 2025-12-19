@@ -1,8 +1,8 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, Types, model, Document } from "mongoose";
 
 export interface IExpense extends Document {
-  shopId: string;
-  clientId: string;
+  shopId: Types.ObjectId;
+  clientId: Types.ObjectId; 
   description: string;
   amount: number;
   date: Date;
@@ -14,8 +14,8 @@ export interface IExpense extends Document {
 
 const expenseSchema = new Schema<IExpense>(
   {
-    shopId: { type: String, ref: "Shop", required: true },
-    clientId: { type: String, ref: "User", required: true },
+    shopId: { type: Schema.Types.ObjectId, ref: "Shop", required: true },
+    clientId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     description: { type: String, required: true },
     amount: { type: Number, required: true },
     date: { type: Date, required: true },

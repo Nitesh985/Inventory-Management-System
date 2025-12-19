@@ -35,15 +35,83 @@ const createProduct = asyncHandler(async (req: Request, res: Response) => {
   return res.status(201).json(new ApiResponse(201, product, 'Product created'))
 })
 
+// It is also handled for client having more than one shop
 const getProducts = asyncHandler(async (req: Request, res: Response) => {
-  const { shopId } = req.query
-  const filter: any = {}
-  if (shopId) filter.shopId = shopId
-  filter.deleted = false
-  // Get the stock as well
-  const products = await Product.find(filter)
-  return res.status(200).json(new ApiResponse(200, products, 'Products fetched'))
+  const shopId = req.body.shopId
+  const clientId = req.body.clientId
+
+  const matchStage: any = {
+    clientId,
+    deleted: false
+  }
+
+  
+  if (shopId) {
+    matchStage.shopId = shopId
+  }
+
+  const products = await Product.aggregate([
+    // 1️⃣ Filter by client + shop + not deleted
+    {
+      $match: matchStage
+    },
+
+    // 2️⃣ Join inventory
+    {
+      $lookup: {
+        from: "inventories",
+        localField: "_id",
+        foreignField: "productId",
+        as: "inventory"
+      }
+    },
+
+    // 3️⃣ Flatten inventory (1 product → 1 inventory)
+    {
+      $unwind: {
+        path: "$inventory",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+
+    // 4️⃣ Add computed fields
+    {
+      $addFields: {
+        stock: { $ifNull: ["$inventory.stock", 0] },
+        reserved: { $ifNull: ["$inventory.reserved", 0] },
+        availableStock: {
+          $subtract: [
+            { $ifNull: ["$inventory.stock", 0] },
+            { $ifNull: ["$inventory.reserved", 0] }
+          ]
+        },
+        isLowStock: {
+          $lte: [
+            {
+              $subtract: [
+                { $ifNull: ["$inventory.stock", 0] },
+                { $ifNull: ["$inventory.reserved", 0] }
+              ]
+            },
+            "$reorderLevel"
+          ]
+        }
+      }
+    },
+
+    // 5️⃣ Cleanup
+    {
+      $project: {
+        inventory: 0
+      }
+    }
+  ])
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, products, "Products fetched"))
 })
+
 
 const getProduct = asyncHandler(async (req: Request, res: Response) => {
   const product = await Product.findById(req.params.id)

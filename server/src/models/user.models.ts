@@ -1,9 +1,8 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, Types, model, Document } from "mongoose";
 import bcrypt from 'bcrypt'
 
 export interface IUser extends Document {
-  id: string;
-  shopId: string;
+  shopId: Types.ObjectId;
   name: string;
   email: string;
   phone: string;
@@ -17,7 +16,7 @@ export interface IUser extends Document {
 
 const userSchema = new Schema<IUser>(
   {
-    shopId: { type: String, ref: "Shop", required: true },
+    shopId: { type: Schema.Types.ObjectId, ref: "Shop", required: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     phone: { type: String, required: true },

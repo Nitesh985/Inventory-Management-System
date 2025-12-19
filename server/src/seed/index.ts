@@ -12,17 +12,22 @@ import { seedExpenses } from "./expenses.seed.ts";
 async function seed() {
   await connectToDB();
 
+  const shops = await seedShops(10);
 
-  const [shop] = await seedShops(1);
+  
+  // TODO: change this to actual clientId
+  const clientId = new mongoose.Types.ObjectId();
 
-  const clientId = "FAKE_CLIENT_ID"; // temp until auth exists
+  for (const shop of shops){
+    const customers = await seedCustomers(shop._id, clientId);
+    const products = await seedProducts(shop._id, clientId);
+  
+    await seedInventory(shop._id, products);
+    await seedSales(shop._id, clientId, customers, products);
+    await seedExpenses(shop._id, clientId);
+  }
+  
 
-  const customers = await seedCustomers(shop._id, clientId);
-  const products = await seedProducts(shop._id, clientId);
-
-  await seedInventory(shop._id, products);
-  await seedSales(shop._id, clientId, customers, products);
-  await seedExpenses(shop._id, clientId);
 
   console.log("✅ Database seeded successfully");
 }

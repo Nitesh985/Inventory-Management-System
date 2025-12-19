@@ -3,6 +3,14 @@ import cors from "cors";
 import "dotenv/config";
 import { connectToDB } from "./db/index.ts";
 import app from './app.ts'
+import Product from './models/product.models.ts'
+import Expense from './models/expense.models.ts'
+import Inventory from './models/inventory.models.ts'
+import Shop from './models/shop.models.ts'
+import Customer from './models/customer.models.ts'
+import Sales from './models/sales.models.ts'
+import User from './models/user.models.ts'
+
 
 
 // Connect to DB and start server
@@ -16,5 +24,3 @@ connectToDB()
   .catch((error) => {
     console.log("Connection to Mongodb failed ::", error);
   });
-
-console.log("Hello");
