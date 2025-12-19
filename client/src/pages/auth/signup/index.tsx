@@ -9,16 +9,19 @@ import RegistrationForm from './components/RegistrationForm';
 import RegistrationProgress from './components/RegistrationProgress';
 import TrustSignals from './components/TrustSignals';
 import { RegisterFormData, RegistrationStep } from './types';
+import VerifyForm from './components/VerifyForm';
+import InitialSetupForm from './components/InitialSetupForm';
 
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
   const [registrationError, setRegistrationError] = useState<string>('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   // Registration steps for progress indicator
-  const registrationSteps: RegistrationStep[] = [
+  const [registrationSteps, setRegistrationSteps] = useState<RegistrationStep[]>([
     {
       id: 1,
       title: 'Create Account',
@@ -47,7 +50,7 @@ const RegisterPage = () => {
       isActive: false,
       isCompleted: false
     }
-  ];
+  ]);
 
   // Monitor connectivity status
   useEffect(() => {
@@ -63,7 +66,26 @@ const RegisterPage = () => {
     };
   }, []);
 
+  const handlePageAdd = () => {
+    let nextPage:number
+    setPage(prev => {
+      nextPage = prev + 1
+      return nextPage
+    })
+
+    setRegistrationSteps((regSteps) => {
+     return regSteps.map((step)=> ({...step, isActive: step.id === nextPage, isCompleted: step.id < nextPage}) )
+    } )
+    
+  }
+
+
+
   const handleRegistration = async (formData: RegisterFormData) => {
+    handlePageAdd()
+    if (page !== 4) {
+      return
+    }
     setIsLoading(true);
     setRegistrationError('');
 
@@ -104,6 +126,7 @@ const RegisterPage = () => {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <>
@@ -128,9 +151,9 @@ const RegisterPage = () => {
 
         {/* Main Content */}
         <main className="flex-1 flex items-center justify-center px-4 py-10">
-  <div className="w-full max-w-6xl mx-auto">
+      <div className="w-full max-w-6xl mx-auto">
 
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
 
       {/* LEFT SIDE CONTENT */}
       <div className="space-y-8">
@@ -194,19 +217,33 @@ const RegisterPage = () => {
             />
           )}
 
+
           {/* FORM */}
-          <div className="mt-4">
+          {page===1 && <div className="mt-4">
             <RegistrationForm
               onSubmit={handleRegistration}
               isLoading={isLoading}
             />
-          </div>
+          </div>}
+
+          {page===2 && <div className="mt-4">
+            <VerifyForm 
+              onSubmit={handleRegistration}
+              isLoading={isLoading}
+
+            /> </div>}
+
+          {page===3 && <div className="mt-4">
+            <InitialSetupForm 
+              onSubmit={handleRegistration}
+              isLoading={isLoading}
+              /> </div>}
 
         </div>
 
         {/* Mobile Progress */}
         <div className="lg:hidden mt-10">
-          <RegistrationProgress steps={registrationSteps} />
+          <RegistrationProgress steps={registrationSteps} currentPage={page} />
         </div>
 
       </div>

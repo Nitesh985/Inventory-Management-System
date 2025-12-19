@@ -1,101 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import CustomerSelector from '../../../components/customer/CustomerSelector';
+import React, { useState } from 'react';
 import axios from 'axios';
+import Icon from '@/components/AppIcon';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { useFetch } from '@/hooks/useFetch';
+import { getCustomerOutstanding } from '@/api/customers';
 
-const CreditForm = () => {
-  const [customers, setCustomers] = useState([]);
-  const [selectedCustomer, setSelectedCustomer] = useState('');
-  const [customerId, setCustomerId] = useState('');
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
+interface CreditFormProps {
+  selectedCustomerId: string;
+  onSuccess: () => void;
+}
 
-  const handleAddCustomer = (customer) => {
-    setCustomers(prev => [...prev, customer]);
-  };
+const CreditForm = ({ selectedCustomerId, onSuccess }: CreditFormProps) => {
+  const [type, setType] = useState<'gave' | 'got'>('gave');
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({ amount: '', description: '', date: new Date().toISOString().split('T')[0] });
+  //const {data} = useFetch(getCustomerOutstanding(selectedCustomerId))
   
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const response = await axios.get('/users/customers');
-        setCustomers(response.data.data);
-      } catch (error) {
-        console.error('Error fetching customers:', error);
-      }
-    };
-
-    fetchCustomers();
-  }, []);
-
-  const handleSubmit = async (e) => {
+  
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      await axios.post('/credits', { customerId, amount, description });
-      // Refresh the credit history or show a success message
-    } catch (error) {
-      console.error('Error creating credit:', error);
+      // Logic: GAVE = Positive balance (debt), GOT = Negative balance (payment)
+      const finalAmount = type === 'gave' ? Math.abs(Number(formData.amount)) : -Math.abs(Number(formData.amount));
+      
+      await axios.post('/api/credits', {
+        customerId: selectedCustomerId,
+        amount: finalAmount,
+        description: formData.description,
+        date: formData.date,
+        shopId: '69243c8f00b1f56bd2724e3a' // Example ID
+      });
+
+      setFormData({ ...formData, amount: '', description: '' });
+      onSuccess(); // Refresh parents/siblings
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold mb-4">Add New Credit</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label htmlFor="customer" className="block text-sm font-medium text-gray-700">
-            Customer
-          </label>
-          {/* Customer Selection */}
-          <div className="bg-card border border-border rounded-lg p-6">
-            <CustomerSelector
-              selectedCustomer={selectedCustomer}
-              onCustomerSelect={setSelectedCustomer}
-              onAddCustomer={handleAddCustomer}
-            />
+    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div className={`px-6 py-4 border-b border-slate-100 flex items-center justify-between ${type === 'gave' ? 'bg-red-50/30' : 'bg-green-50/30'}`}>
+        <h3 className="font-bold text-slate-800 flex items-center gap-2">
+          <Icon name={type === 'gave' ? 'ArrowUpRight' : 'ArrowDownLeft'} className={type === 'gave' ? 'text-red-500' : 'text-green-600'} />
+          Record New {type === 'gave' ? 'Credit (Gave)' : 'Payment (Got)'}
+        </h3>
+      </div>
+
+      <div className="p-6">
+        <div className="flex bg-slate-100 p-1 rounded-xl mb-6 max-w-sm">
+          <button onClick={() => setType('gave')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${type === 'gave' ? 'bg-red-500 text-white shadow-md' : 'text-slate-500'}`}>YOU GAVE</button>
+          <button onClick={() => setType('got')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${type === 'got' ? 'bg-green-600 text-white shadow-md' : 'text-slate-500'}`}>YOU GOT</button>
+        </div>
+
+        <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input label="Amount *" type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} required />
+          <Input label="Date *" type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} required />
+          <div className="md:col-span-2">
+            <Input label="Remark / Description" placeholder="Items sold or payment method" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
           </div>
-          {/*<select
-            id="customer"
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          >
-            <option value="">Select a customer</option>
-            {customers.map((customer) => (
-              <option key={customer._id} value={customer._id}>
-                {customer.name}
-              </option>
-            ))}
-          </select>*/}
-        </div>
-        <div className="mb-4">
-          <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-            Amount
-          </label>
-          <input
-            type="number"
-            id="amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-        >
-          Add Credit
-        </button>
-      </form>
+          <Button type="submit" disabled={loading || !formData.amount} className={`md:col-span-2 h-12 font-bold ${type === 'gave' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-600 hover:bg-green-700'}`}>
+            {loading ? 'Processing...' : `Save ${type === 'gave' ? 'Credit' : 'Payment'}`}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };

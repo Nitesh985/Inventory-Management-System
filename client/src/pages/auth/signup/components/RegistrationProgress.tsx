@@ -5,16 +5,17 @@ import { RegistrationStep } from '../types';
 interface RegistrationProgressProps {
   steps: RegistrationStep[];
   className?: string;
-  layout?: 'vertical' | 'horizontal'; // NEW
+  layout?: 'vertical' | 'horizontal';
+  currentPage?: number;
 }
 
-const RegistrationProgress = ({ steps, className = '', layout = 'vertical' }: RegistrationProgressProps) => {
+const RegistrationProgress = ({ steps, className = '', layout = 'vertical', currentPage }: RegistrationProgressProps) => {
   // ---------------- MOBILE HORIZONTAL ----------------
   if (layout === 'horizontal') {
     return (
       <div className={`w-full bg-card border border-border rounded-lg p-4 ${className}`}>
         <div className="flex justify-between items-center">
-          {steps.map((step, index) => (
+          {steps?.map((step, index) => (
             <div key={step.id} className="flex-1 text-center relative">
               
               {/* Step circle */}

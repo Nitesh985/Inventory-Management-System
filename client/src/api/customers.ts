@@ -58,8 +58,8 @@ async function deleteCustomer(customerId: string) {
   return res.data;
 }
 
-async function getCustomerOutstanding(shopId: string, customerId: string) {
-  const res = await api.get(`/customers/outstanding/${shopId}/${customerId}`);
+async function getCustomerOutstanding(customerId: string) {
+  const res = await api.get(`/customers/outstanding/${customerId}`);
   return res.data;
 }
 

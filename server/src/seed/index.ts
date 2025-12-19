@@ -9,14 +9,15 @@ import { seedInventory } from "./inventory.seed.ts";
 import { seedSales } from "./sales.seed.ts";
 import { seedExpenses } from "./expenses.seed.ts";
 
+
+
+
 async function seed() {
   await connectToDB();
 
-  const shops = await seedShops(10);
+  const shops = await seedShops(2);
 
-  
-  // TODO: change this to actual clientId
-  const clientId = new mongoose.Types.ObjectId();
+  const clientId = "client123"; // temp until auth exists
 
   for (const shop of shops){
     const customers = await seedCustomers(shop._id, clientId);
@@ -24,14 +25,13 @@ async function seed() {
   
     await seedInventory(shop._id, products);
     await seedSales(shop._id, clientId, customers, products);
-    await seedExpenses(shop._id, clientId);
+    await seedExpenses(shop._id, clientId);    
   }
-  
 
 
   console.log("✅ Database seeded successfully");
 }
 
-seed().catch(err => {
+seed().catch((err) => {
   console.error(err);
 });
