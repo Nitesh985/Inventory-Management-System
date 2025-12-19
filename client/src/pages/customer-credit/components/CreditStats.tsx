@@ -1,40 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios'
+import Icon from '@/components/AppIcon';
 
 const CreditStats = () => {
-  const [stats, setStats] = useState({ totalCredit: 0, customerCount: 0 });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await axios.get('/credits/stats');
-        setStats(response.data.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching credit stats:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  // Use your actual stats API here
+  const stats = { totalReceivable: 12500, totalReceived: 8400, activeCustomers: 12 };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold mb-4">Credit Stats</h2>
-      <div className="flex justify-between">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-white border border-border p-5 rounded-xl flex items-center gap-4 shadow-sm">
+        <div className="p-3 bg-red-50 text-red-600 rounded-lg"><Icon name="ArrowUpRight" /></div>
         <div>
-          <p className="text-sm text-gray-500">Total Credit</p>
-          <p className="text-2xl font-bold">${stats.totalCredit}</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase">Total Receivable</p>
+          <h3 className="text-2xl font-bold">${stats.totalReceivable.toLocaleString()}</h3>
         </div>
+      </div>
+      <div className="bg-white border border-border p-5 rounded-xl flex items-center gap-4 shadow-sm">
+        <div className="p-3 bg-green-50 text-green-600 rounded-lg"><Icon name="ArrowDownLeft" /></div>
         <div>
-          <p className="text-sm text-gray-500">Customers</p>
-          <p className="text-2xl font-bold">{stats.customerCount}</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase">Total Collected</p>
+          <h3 className="text-2xl font-bold">${stats.totalReceived.toLocaleString()}</h3>
+        </div>
+      </div>
+      <div className="bg-white border border-border p-5 rounded-xl flex items-center gap-4 shadow-sm">
+        <div className="p-3 bg-blue-50 text-blue-600 rounded-lg"><Icon name="Users" /></div>
+        <div>
+          <p className="text-xs text-muted-foreground font-medium uppercase">Active Customers</p>
+          <h3 className="text-2xl font-bold">{stats.activeCustomers}</h3>
         </div>
       </div>
     </div>

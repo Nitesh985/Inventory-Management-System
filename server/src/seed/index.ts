@@ -9,24 +9,29 @@ import { seedInventory } from "./inventory.seed.ts";
 import { seedSales } from "./sales.seed.ts";
 import { seedExpenses } from "./expenses.seed.ts";
 
+
+
+
 async function seed() {
   await connectToDB();
 
+  const shops = await seedShops(2);
 
-  const [shop] = await seedShops(1);
+  const clientId = "client123"; // temp until auth exists
 
-  const clientId = "FAKE_CLIENT_ID"; // temp until auth exists
+  for (const shop of shops){
+    const customers = await seedCustomers(shop._id, clientId);
+    const products = await seedProducts(shop._id, clientId);
+  
+    await seedInventory(shop._id, products);
+    await seedSales(shop._id, clientId, customers, products);
+    await seedExpenses(shop._id, clientId);    
+  }
 
-  const customers = await seedCustomers(shop._id, clientId);
-  const products = await seedProducts(shop._id, clientId);
-
-  await seedInventory(shop._id, products);
-  await seedSales(shop._id, clientId, customers, products);
-  await seedExpenses(shop._id, clientId);
 
   console.log("✅ Database seeded successfully");
 }
 
-seed().catch(err => {
+seed().catch((err) => {
   console.error(err);
 });

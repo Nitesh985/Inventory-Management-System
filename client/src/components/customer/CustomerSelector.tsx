@@ -5,7 +5,7 @@ import Select from '../ui/Select';
 import Input from '../ui/Input';
 import { useFetch } from '@/hooks/useFetch';
 import { createCustomer, getCustomers } from '@/api/customers';
-import { useMutation } from '@/hooks/useMutation';
+// import { useMutation } from '@/hooks/useMutation';
 import Loader from '@/components/Loader';
 import AddCustomer from './AddCustomer';
 

@@ -14,8 +14,10 @@ const PaymentMethodSelector = ({
     { value: 'cash', label: 'Cash', icon: 'Banknote' },
     { value: 'card', label: 'Credit/Debit Card', icon: 'CreditCard' },
     { value: 'digital', label: 'Digital Payment', icon: 'Smartphone' },
-    { value: 'check', label: 'Check', icon: 'FileText' },
-    { value: 'bank_transfer', label: 'Bank Transfer', icon: 'Building2' }
+    { value: 'cheque', label: 'Cheque', icon: 'FileText' },
+    { value: 'bank_transfer', label: 'Bank Transfer', icon: 'Building2' },
+    { value: 'khata', label: 'Khata', icon: 'Book' }
+
   ];
 
   const selectedMethod = paymentMethods?.find(method => method?.value === paymentMethod);

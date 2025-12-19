@@ -3,7 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.ts"
 const mockupData = (req, res, next)=>{
   req.body = {
     ...req.body,
-    shopId:'69243c8f00b1f56bd2724e3a',
+    shopId:"6944bc853f9babde121576fd",
     clientId:'client1234'
   }
 
