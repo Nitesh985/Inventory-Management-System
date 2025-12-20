@@ -1,8 +1,8 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, Types, model, Document } from "mongoose";
 
 export interface ICustomer extends Document {
-  shopId: string;
-  clientId: string;
+  shopId: Types.ObjectId;
+  clientId: Types.ObjectId;
   name: string;
   phone: string;
   email: string;
@@ -16,8 +16,8 @@ export interface ICustomer extends Document {
 
 const customerSchema = new Schema<ICustomer>(
   {
-    shopId: { type: String, ref: "Shop", required: true },
-    clientId: { type: String, ref: "User", required: true },
+    shopId: { type: Schema.Types.ObjectId, ref: "Shop", required: true },
+    clientId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     name: { type: String, required: true },
     email: {type: String},
     phone: { type: String },

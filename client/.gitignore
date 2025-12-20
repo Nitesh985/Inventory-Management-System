@@ -26,3 +26,6 @@ dist-ssr
 
 # Environment variables
 .env
+
+# Project Stuff
+quickTODOs.md

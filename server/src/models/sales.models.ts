@@ -1,7 +1,7 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, Types, model, Document } from "mongoose";
 
 export interface ISaleItem {
-  productId: string; // fk -> Product.id
+  productId: Types.ObjectId; // fk -> Product.id
   productName: string;
   quantity: number;
   unitPrice: number;
@@ -10,7 +10,7 @@ export interface ISaleItem {
 
 const saleItemSchema = new Schema<ISaleItem>(
   {
-    productId: { type: String, ref: "Product", required: true },
+    productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     productName: { type: String, required: true },
     quantity: { type: Number, required: true },
     unitPrice: { type: Number, required: true },

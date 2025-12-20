@@ -13,7 +13,6 @@ import Shop from './models/shop.models.ts'
 
 
 
-
 // Connect to DB and start server
 connectToDB()
   .then(async () => {
@@ -25,5 +24,3 @@ connectToDB()
   .catch((error) => {
     console.log("Connection to Mongodb failed ::", error);
   });
-
-console.log("Hello");

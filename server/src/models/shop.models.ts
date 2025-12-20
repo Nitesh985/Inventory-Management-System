@@ -1,7 +1,6 @@
 import { Schema, model, Document } from "mongoose";
 
 export interface IShop extends Document {
-  id: string;
   name: string;
   useBS: boolean;
   createdAt: Date;

@@ -1,9 +1,8 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, Types, model, Document } from "mongoose";
 
 export interface IProduct extends Document {
-  id: string;
-  shopId: string;
-  clientId: string;
+  shopId: Types.ObjectId;
+  clientId: Types.ObjectId;
   sku: string;
   name: string;
   category: string;
@@ -19,8 +18,8 @@ export interface IProduct extends Document {
 
 const productSchema = new Schema<IProduct>(
   {
-    shopId: { type: String, ref: "Shop", index: true, required: true },
-    clientId: { type: String, ref: "User", required: true },
+    shopId: { type: Schema.Types.ObjectId, ref: "Shop", required: true },
+    clientId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     sku: { type: String },
     name: { type: String, index: true, required: true },
     category: { type: String },
@@ -28,7 +27,7 @@ const productSchema = new Schema<IProduct>(
     unit: { type: Number, required: true },
     price: { type: Number, required: true },
     cost: { type: Number, required: true },
-    reorderLevel: { type: Number, default: 0 },
+    reorderLevel: { type: Number, default: 0 },   // minimum available stock to trigger reorder, calculated based on average sales and supplier delivery time
     deleted: { type: Boolean, default: false },
   },
   { timestamps: true }
