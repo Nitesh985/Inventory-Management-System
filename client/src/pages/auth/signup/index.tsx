@@ -81,52 +81,85 @@ const RegisterPage = () => {
 
 
 
-  const handleRegistration = async (formData: RegisterFormData) => {
-    handlePageAdd()
-    if (page !== 4) {
-      return
-    }
+  // const handleRegistration = async (formData: RegisterFormData) => {
+  //   handlePageAdd()
+  //   if (page !== 4) {
+  //     return
+  //   }
+  //   setIsLoading(true);
+  //   setRegistrationError('');
+
+  //   try {
+  //     // Simulate API call delay
+  //     await new Promise(resolve => setTimeout(resolve, 2000));
+
+  //     // Mock validation - in real app, this would be API validation
+  //     const existingEmails = ['admin@digitalkhata.com', 'test@example.com'];
+      
+  //     if (existingEmails.includes(formData.email.toLowerCase())) {
+  //       throw new Error('An account with this email address already exists. Please use a different email or try signing in.');
+  //     }
+
+  //     // Mock successful registration
+  //     console.log('Registration successful:', formData);
+      
+  //     // Store registration data in localStorage for demo purposes
+  //     localStorage.setItem('registrationData', JSON.stringify({
+  //       businessName: formData.businessName,
+  //       ownerName: formData.ownerName,
+  //       email: formData.email,
+  //       businessType: formData.businessType,
+  //       registeredAt: new Date().toISOString()
+  //     }));
+
+  //     // Navigate to login with success message
+  //     navigate('/login', { 
+  //       state: { 
+  //         message: 'Account created successfully! Please sign in to continue.',
+  //         type: 'success'
+  //       }
+  //     });
+
+  //   } catch (error) {
+  //     setRegistrationError(error instanceof Error ? error.message : 'Registration failed. Please try again.');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+  
+  const handleRegistration = async (formData: any) => {
+  // 1. Move to the next visual step (Start Using)
+  handlePageAdd();
+
+  // 2. Check if we just submitted the Initial Setup (Page 3)
+  // If current page is 3, this is our final submission point
+  if (page === 3) {
     setIsLoading(true);
     setRegistrationError('');
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate API finalization
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Mock validation - in real app, this would be API validation
-      const existingEmails = ['admin@digitalkhata.com', 'test@example.com'];
+      // Mock: Save setup data (currency, etc.) to your state management or backend
+      console.log('Final Setup Data:', formData);
       
-      if (existingEmails.includes(formData.email.toLowerCase())) {
-        throw new Error('An account with this email address already exists. Please use a different email or try signing in.');
-      }
-
-      // Mock successful registration
-      console.log('Registration successful:', formData);
-      
-      // Store registration data in localStorage for demo purposes
-      localStorage.setItem('registrationData', JSON.stringify({
-        businessName: formData.businessName,
-        ownerName: formData.ownerName,
-        email: formData.email,
-        businessType: formData.businessType,
-        registeredAt: new Date().toISOString()
-      }));
-
-      // Navigate to login with success message
-      navigate('/login', { 
-        state: { 
-          message: 'Account created successfully! Please sign in to continue.',
-          type: 'success'
-        }
-      });
+      // 3. Navigate to Inventory Management
+      navigate('/inventory-management');
 
     } catch (error) {
-      setRegistrationError(error instanceof Error ? error.message : 'Registration failed. Please try again.');
+      setRegistrationError('Final setup failed. Please try again.');
+      // If error occurs, you might want to move back to page 3
+      setPage(3); 
     } finally {
       setIsLoading(false);
     }
-  };
-  
+    return;
+  }
+
+  // Handle other steps (1 and 2)
+  console.log(`Step ${page} completed with data:`, formData);
+};
 
   return (
     <>
@@ -238,6 +271,15 @@ const RegisterPage = () => {
               onSubmit={handleRegistration}
               isLoading={isLoading}
               /> </div>}
+
+          
+          {page === 4 && (
+            <div className="flex flex-col items-center justify-center py-10 space-y-4 animate-in fade-in">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <h2 className="text-2xl font-bold text-foreground">Finalizing Your Workspace...</h2>
+              <p className="text-muted-foreground">Preparing your inventory management dashboard.</p>
+            </div>
+          )}    
 
         </div>
 
