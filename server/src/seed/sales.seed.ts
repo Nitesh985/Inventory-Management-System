@@ -1,10 +1,9 @@
-// src/seed/sales.seed.ts
 import Sales from "../models/sales.models.ts";
 import { faker } from "@faker-js/faker";
+import { Types } from "mongoose";
 
 export async function seedSales(
-  shopId: string,
-  clientId: string,
+  shopId: Types.ObjectId,
   customers: any[],
   products: any[],
   count = 40
@@ -13,11 +12,12 @@ export async function seedSales(
 
   for (let i = 0; i < count; i++) {
     const customer = faker.helpers.arrayElement(customers);
+
     const itemCount = faker.number.int({ min: 1, max: 4 });
 
     const items = faker.helpers
       .arrayElements(products, itemCount)
-      .map(product => {
+      .map((product) => {
         const quantity = faker.number.int({ min: 1, max: 5 });
         const unitPrice = product.price;
 
@@ -26,30 +26,41 @@ export async function seedSales(
           productName: product.name,
           quantity,
           unitPrice,
-          totalPrice: quantity * unitPrice,
+          totalPrice: quantity * unitPrice, // ✅ server-calculated
         };
       });
 
-    const totalAmount = items.reduce(
-      (sum, i) => sum + i.totalPrice,
+    const grossAmount = items.reduce(
+      (sum, item) => sum + item.totalPrice,
       0
     );
 
-    const paidAmount = faker.number.int({
-      min: 0,
-      max: totalAmount,
-    });
+    // 30% chance discount applies
+    const discount =
+      faker.datatype.boolean({ probability: 0.3 })
+        ? faker.number.int({ min: 10, max: Math.min(100, grossAmount) })
+        : 0;
+
+    const totalAmount = grossAmount - discount;
+
+    // 50% credit, 50% cash
+    const paymentType = faker.helpers.arrayElement([
+      "CASH",
+      "CREDIT",
+    ]);
 
     sales.push({
       shopId,
-      clientId,
       customerId: customer._id,
-      invoiceNo: `INV-${Date.now()}-${i}`,
+      invoiceNo: `INV-${shopId.toString().slice(-4)}-${Date.now()}-${i}`,
       items,
       totalAmount,
-      paidAmount,
-      discount: 0,
-      notes: faker.lorem.sentence(),
+      discount,
+      paymentType,
+      notes: faker.helpers.maybe(
+        () => faker.lorem.sentence(),
+        { probability: 0.4 } // 40% of sales have notes
+      )
     });
   }
 

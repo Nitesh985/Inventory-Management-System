@@ -12,6 +12,7 @@ import SignUp from "./pages/auth/signup/index";
 import SignIn from "./pages/auth/logIn/index";
 import LandingPage from './pages/landing-page/index'
 import CustomerKhata from "./pages/customer-credit";
+import TestPage from './pages/test-pages/TestPage'
 
 
 
@@ -24,6 +25,7 @@ const Routes = () => {
           {/* Define your route here */}
           <Route path="/welcome" element={<LandingPage />} />
           <Route path="/" element={<BusinessDashboard />} />
+          <Route path="/test" element={<TestPage />} />
           <Route
             path="/inventory-management"
             element={<InventoryManagement />}

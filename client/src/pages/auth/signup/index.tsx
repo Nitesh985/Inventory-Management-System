@@ -16,6 +16,7 @@ import SimpleSignupForm from './components/SimpleSignup';
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  
   const [page, setPage] = useState(1);
   const [registrationError, setRegistrationError] = useState<string>('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);

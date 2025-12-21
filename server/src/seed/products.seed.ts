@@ -4,7 +4,6 @@ import { faker } from "@faker-js/faker";
 
 export async function seedProducts(
   shopId: string,
-  clientId: string,
   count = 30
 ) {
   const products = [];
@@ -15,7 +14,6 @@ export async function seedProducts(
 
     products.push({
       shopId,
-      clientId,
       sku: faker.string.alphanumeric(8).toUpperCase(),
       name: faker.commerce.productName(),
       category: faker.commerce.department(),

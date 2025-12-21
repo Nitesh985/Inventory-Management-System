@@ -23,32 +23,32 @@ const saleItemSchema = new Schema<ISaleItem>(
 // Sales Model
 // =========================
 export interface ISales extends Document {
-  shopId: string; // fk -> Shop.id
-  clientId: string; // fk -> User.id
-  customerId: string; // fk -> Customer.id
+  shopId: Types.ObjectId; // fk -> Shop.id
+  customerId: Types.ObjectId; // fk -> Customer.id
   invoiceNo: string;
   items: ISaleItem[];
   totalAmount: number;
-  paidAmount: number;
+  paymentType: "CASH" | "CREDIT";
   discount: number;
-  notes: string;
+  notes?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const salesSchema = new Schema<ISales>(
   {
-    shopId: { type: String, ref: "Shop", required: true },
-    clientId: { type: String, ref: "User", required: true },
-    customerId: { type: String, ref: "Customer", required: true },
-    invoiceNo: { type: String, required: true, unique: true },
+    shopId: { type: Schema.Types.ObjectId, ref: "Shop", required: true },
+    customerId: { type: Schema.Types.ObjectId, ref: "Customer", required: true },
+    invoiceNo: { type: String, required: true },
     items: { type: [saleItemSchema], required: true },
     totalAmount: { type: Number, required: true },
-    paidAmount: { type: Number, required: true },
+    paymentType: { type: String, enum: ["CASH", "CREDIT"], default: "CASH" },
     discount: { type: Number, default: 0 },
     notes: { type: String },
   },
   { timestamps: true }
 );
+
+salesSchema.index({shopId: 1, invoiceNo:1}, { unique: true })
 
 export default model<ISales>("Sales", salesSchema);
