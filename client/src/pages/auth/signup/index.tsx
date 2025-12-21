@@ -11,7 +11,7 @@ import TrustSignals from './components/TrustSignals';
 import { RegisterFormData, RegistrationStep } from './types';
 import VerifyForm from './components/VerifyForm';
 import InitialSetupForm from './components/InitialSetupForm';
-
+import SimpleSignupForm from './components/SimpleSignup';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -252,12 +252,21 @@ const RegisterPage = () => {
 
 
           {/* FORM */}
-          {page===1 && <div className="mt-4">
+          {/* {page===1 && <div className="mt-4">
             <RegistrationForm
               onSubmit={handleRegistration}
               isLoading={isLoading}
             />
-          </div>}
+          </div>} */}
+
+          {page === 1 && (
+  <div className="mt-4">
+    <SimpleSignupForm
+      onSubmit={handleRegistration}
+      isLoading={isLoading}
+    />
+  </div>
+)}
 
           {page===2 && <div className="mt-4">
             <VerifyForm 
