@@ -2,7 +2,6 @@ import { Schema, Types, model, Document } from "mongoose";
 
 export interface IProduct extends Document {
   shopId: Types.ObjectId;
-  clientId: Types.ObjectId;
   sku: string;
   name: string;
   category: string;
@@ -19,7 +18,6 @@ export interface IProduct extends Document {
 const productSchema = new Schema<IProduct>(
   {
     shopId: { type: Schema.Types.ObjectId, ref: "Shop", required: true },
-    clientId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     sku: { type: String },
     name: { type: String, index: true, required: true },
     category: { type: String },

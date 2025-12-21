@@ -24,7 +24,7 @@
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-helmet": "^6.1.0",
-        "react-hook-form": "^7.55.0",
+        "react-hook-form": "^7.69.0",
         "react-router-dom": "6.0.2",
         "react-router-hash-link": "^2.4.3",
         "recharts": "^2.15.2",
@@ -907,7 +907,7 @@
 
     "react-helmet": ["react-helmet@6.1.0", "", { "dependencies": { "object-assign": "^4.1.1", "prop-types": "^15.7.2", "react-fast-compare": "^3.1.1", "react-side-effect": "^2.1.0" }, "peerDependencies": { "react": ">=16.3.0" } }, "sha512-4uMzEY9nlDlgxr61NL3XbKRy1hEkXmKNXhjbAIOVw5vcFrsdYbH2FEwcNyWvWinl103nXgzYNlns9ca+8kFiWw=="],
 
-    "react-hook-form": ["react-hook-form@7.66.0", "", { "peerDependencies": { "react": "^16.8.0 || ^17 || ^18 || ^19" } }, "sha512-xXBqsWGKrY46ZqaHDo+ZUYiMUgi8suYu5kdrS20EG8KiL7VRQitEbNjm+UcrDYrNi1YLyfpmAeGjCZYXLT9YBw=="],
+    "react-hook-form": ["react-hook-form@7.69.0", "", { "peerDependencies": { "react": "^16.8.0 || ^17 || ^18 || ^19" } }, "sha512-yt6ZGME9f4F6WHwevrvpAjh42HMvocuSnSIHUGycBqXIJdhqGSPQzTpGF+1NLREk/58IdPxEMfPcFCjlMhclGw=="],
 
     "react-is": ["react-is@18.3.1", "", {}, "sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg=="],
 

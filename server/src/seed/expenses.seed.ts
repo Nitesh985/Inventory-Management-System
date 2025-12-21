@@ -4,7 +4,6 @@ import { faker } from "@faker-js/faker";
 
 export async function seedExpenses(
   shopId: string,
-  clientId: string,
   count = 15
 ) {
   const expenses = [];
@@ -12,7 +11,6 @@ export async function seedExpenses(
   for (let i = 0; i < count; i++) {
     expenses.push({
       shopId,
-      clientId,
       description: faker.commerce.productDescription(),
       amount: faker.number.int({ min: 100, max: 5000 }),
       date: faker.date.recent({ days: 60 }),

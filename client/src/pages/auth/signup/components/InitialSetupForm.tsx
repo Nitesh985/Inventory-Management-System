@@ -18,8 +18,8 @@ const InitialSetupForm = ({ onSubmit, isLoading }: InitialSetupFormProps) => {
   });
 
   const currencies = [
-    { value: 'USD', label: 'USD - US Dollar' },
     { value: 'NPR', label: 'NPR - Nepalese Rupee' },
+    { value: 'USD', label: 'USD - US Dollar' },
     { value: 'INR', label: 'INR - Indian Rupee' },
     { value: 'EUR', label: 'EUR - Euro' }
   ];

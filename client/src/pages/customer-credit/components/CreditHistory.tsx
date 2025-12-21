@@ -65,8 +65,60 @@ const CreditHistory = () => {
                 </tr>
             </thead>
 
+            
+            
             <tbody className="divide-y divide-border">
-              {sortedCredits.map((credit: any) => (
+                {Object.entries(
+                  creditHistory?.itemsTaken?.reduce((acc: any, item: any) => {
+                    const date = new Date(item.createdAt).toLocaleDateString();
+                    if (!acc[date]) acc[date] = [];
+                    acc[date].push(item);
+                    return acc;
+                  }, {}) || {}
+                ).map(([date, items]: any) => {
+                  const dayTotal = items.reduce(
+                    (sum: number, i: any) => sum + i.unpaidAmount,
+                    0
+                  );
+              
+                  return (
+                    <tr key={date} className="hover:bg-muted/30 transition-colors align-top">
+                      {/* Date */}
+                      <td className="p-4 px-10 text-muted-foreground text-xs font-medium">
+                        {date}
+                      </td>
+              
+                      {/* Products */}
+                      <td className="p-4 space-y-1">
+                        {items.map((item: any) => (
+                          <div key={item._id} className="text-sm text-foreground">
+                            <span className="font-medium">
+                              {item.productName}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {" "}
+                              (Rs. {item.price}) × {item.quantity}
+                            </span>
+                          </div>
+                        ))}
+                      </td>
+              
+                      {/* Amount (bottom aligned) */}
+                      <td className="p-4">
+                        <div className="flex flex-col h-full justify-end items-end">
+                          <span className="text-xs text-muted-foreground mb-1">
+                            Day Total
+                          </span>
+                          <span className="font-semibold text-sm text-red-600">
+                            Rs. {dayTotal}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+              {/*{sortedCredits.map((credit: any) => (
                 <tr key={credit._id} className="hover:bg-muted/30 transition-colors">
                   <td className="p-4 font-medium">{credit.customerId.name}</td>
                   <td className="p-4">
@@ -85,9 +137,9 @@ const CreditHistory = () => {
                     {new Date(credit.date).toLocaleDateString()}
                   </td>
                 </tr>
-              ))}
+              ))}*/}
 
-              {/* {creditHistory?.itemsTaken?.length > 0 && creditHistory?.itemsTaken?.map((item: any) => (
+               {/*{creditHistory?.itemsTaken?.length > 0 && creditHistory?.itemsTaken?.map((item: any) => (
                 <tr key={item._id} className="hover:bg-muted/30 transition-colors">
                     <td className="p-4 px-10 text-muted-foreground text-xs">
                       {new Date(item?.createdAt).toLocaleDateString()}
