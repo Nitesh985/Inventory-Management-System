@@ -1,6 +1,6 @@
 import React from "react";
 import { Check, Minus } from "lucide-react";
-import { cn } from "../../utils/cn";
+import { cn } from "../../utils/cn.ts";
 
 const Checkbox = React.forwardRef(
   (

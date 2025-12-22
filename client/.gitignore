@@ -29,3 +29,6 @@ dist-ssr
 
 # Project Stuff
 quickTODOs.md
+
+.env.local
+.env.*.local    

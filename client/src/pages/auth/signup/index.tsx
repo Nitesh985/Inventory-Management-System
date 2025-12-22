@@ -1,3 +1,4 @@
+// client/src/pages/auth/signup/index.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
@@ -129,37 +130,36 @@ const RegisterPage = () => {
   // };
   
   const handleRegistration = async (formData: any) => {
-  // 1. Move to the next visual step (Start Using)
-  handlePageAdd();
-
-  // 2. Check if we just submitted the Initial Setup (Page 3)
-  // If current page is 3, this is our final submission point
   if (page === 3) {
     setIsLoading(true);
     setRegistrationError('');
 
     try {
-      // Simulate API finalization
       await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Mock: Save setup data (currency, etc.) to your state management or backend
-      console.log('Final Setup Data:', formData);
       
-      // 3. Navigate to Inventory Management
-      navigate('/inventory-management');
+      // PERSIST DATA: Merge step 1 data with step 3 data
+      const existingData = JSON.parse(localStorage.getItem('registrationData') || '{}');
+      const finalData = { ...existingData, ...formData };
+      localStorage.setItem('registrationData', JSON.stringify(finalData));
+      
+      // Move to visual Step 4 (Finalizing)
+      handlePageAdd();
+
+      // Navigate to dashboard
+      setTimeout(() => {
+        navigate('/inventory-management');
+      }, 2000);
 
     } catch (error) {
       setRegistrationError('Final setup failed. Please try again.');
-      // If error occurs, you might want to move back to page 3
-      setPage(3); 
     } finally {
       setIsLoading(false);
     }
     return;
   }
 
-  // Handle other steps (1 and 2)
-  console.log(`Step ${page} completed with data:`, formData);
+  // Handle Step 1 (Signup) and Step 2 (Verify)
+  handlePageAdd();
 };
 
   return (
