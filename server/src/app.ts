@@ -27,13 +27,16 @@ app.use(cookieParser())
 
 // routes
 import customerRouter from './routes/customer.routes.ts'
+import userRouter from './routes/user.routes.ts'
 import expenseRouter from './routes/expense.routes.ts'
 import inventoryRouter from './routes/inventory.routes.ts'
 import productRouter from './routes/product.routes.ts'
 import salesRouter from './routes/sales.routes.ts'
 import shopRouter from './routes/shop.routes.ts'
 
+
 app.use("/api/customers", customerRouter)
+app.use("/api/users", userRouter)
 app.use("/api/expenses", expenseRouter)
 app.use("/api/inventory", inventoryRouter)
 app.use("/api/products", productRouter)

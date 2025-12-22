@@ -2,9 +2,9 @@ import { Schema, model, Document } from "mongoose";
 
 
 export interface IUser extends Document {
-  name: string;
+  fullName: string;
   email: string;
-  contactNo: string;
+  contactNo?: string;
   lastLoginAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -12,9 +12,9 @@ export interface IUser extends Document {
 
 const userSchema = new Schema<IUser>(
   {
-    name: { type: String, required: true },
+    fullName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    contactNo: { type: String, required: true },
+    contactNo: { type: String },
     lastLoginAt: { type: Date, default: null },
   },
   { timestamps: true }

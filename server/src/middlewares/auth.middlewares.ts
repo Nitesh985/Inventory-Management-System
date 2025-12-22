@@ -2,7 +2,9 @@ import { ApiError } from "../utils/ApiError.ts"
 import { Table } from "../models/table.models.ts"
 import jwt from 'jsonwebtoken'
 import { asyncHandler } from "../utils/asyncHandler.ts"
-import { User } from "../models/user.models.ts"
+import  User  from "../models/user.models.ts"
+import {auth} from "../lib/auth.ts"
+
 
 const verifyAuth = asyncHandler(async(req, res, next)=>{
     const accessToken = req.cookies?.accessToken || req.header("authorization")?.split(" ")[1]
@@ -71,6 +73,19 @@ const verifyAdmin = asyncHandler(async(req, res, next)=>{
     // } else {
     //   next();
     // }
+})
+
+const verifyBetterAuth = asyncHandler(async(req, res, next)=>{
+    const {email, password} = req.body;
+
+const response = await auth.api.signInEmail({
+    body: {
+        email,
+        password
+    },
+    asResponse: true // returns a response object instead of data
+});
+
 })
 
 export { verifyTable, verifyAdmin, verifyAuth }

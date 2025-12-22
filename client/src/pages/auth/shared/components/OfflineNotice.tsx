@@ -1,6 +1,5 @@
-import React from 'react';
-import Icon from '../../../../components/AppIcon';
-import { OfflineNoticeProps } from '../types';
+import Icon from '@/components/AppIcon';
+import type { OfflineNoticeProps } from '../types';
 
 const OfflineNotice = ({ isVisible, className = '' }: OfflineNoticeProps) => {
   if (!isVisible) return null;

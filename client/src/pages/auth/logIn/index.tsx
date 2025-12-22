@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LoginHeader from './components/LoginHeader';
+import LoginHeader from '../shared/components/AuthHeader';
 import LoginForm from './components/LoginForm';
-import TrustSignals from './components/TrustSignals';
-import OfflineNotice from './components/OfflineNotice';
-import LoginFooter from './components/LoginFooter';
-import { LoginFormData, LoginFormErrors } from './types';
+import TrustSignals from '../shared/components/TrustSignals';
+import OfflineNotice from '../shared/components/OfflineNotice';
+import LoginFooter from '../shared/components/AuthFooter';
+import type { LoginFormData, LoginFormErrors } from './types';
 
 const LoginPage = () => {
   const navigate = useNavigate();

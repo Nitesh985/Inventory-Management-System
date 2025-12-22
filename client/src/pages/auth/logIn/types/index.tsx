@@ -18,19 +18,4 @@ export interface LoginFormProps {
   successMessage?: string;
 }
 
-export interface LoginHeaderProps {
-  isOnline: boolean;
-}
 
-export interface LoginFooterProps {
-  className?: string;
-}
-
-export interface TrustSignalsProps {
-  className?: string;
-}
-
-export interface OfflineNoticeProps {
-  isVisible: boolean;
-  className?: string;
-}

@@ -3,11 +3,11 @@ import User from '../models/user.models.ts'
 
 const registerUser = async (req: Request, res: Response) => {
   try {
-    const { email, name, contactNo } = req.body;
+    const { email, fullName, contactNo } = req.body;
 
     const user = await User.create({
       email,
-      name,
+      fullName,
       contactNo
     });
     

@@ -1,9 +1,8 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import Icon from '../../../../components/AppIcon';
-import { LoginFooterProps } from '../types';
+import Icon from '@/components/AppIcon';
+import type { AuthFooterProps } from '../types';
 
-const LoginFooter = ({ className = '' }: LoginFooterProps) => {
+const AuthFooter = ({ className = '' }: AuthFooterProps) => {
   return (
     <div className={`text-center space-y-4 ${className}`}>
       {/* Registration Link */}
@@ -60,4 +59,4 @@ const LoginFooter = ({ className = '' }: LoginFooterProps) => {
   );
 };
 
-export default LoginFooter;
+export default AuthFooter;

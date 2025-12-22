@@ -1,6 +1,5 @@
-import React from 'react';
-import Icon from '../../../../components/AppIcon';
-import { TrustSignalsProps } from '../types';
+import Icon from '@/components/AppIcon';
+import type { TrustSignalsProps } from '../types';
 
 const TrustSignals = ({ className = '' }: TrustSignalsProps) => {
   const trustFeatures = [
