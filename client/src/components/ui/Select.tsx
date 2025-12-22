@@ -1,11 +1,39 @@
 // components/ui/Select.jsx - Shadcn style Select
 import React, { useState } from "react";
 import { ChevronDown, Check, Search, X } from "lucide-react";
-import { cn } from "../../utils/cn";
+import { cn } from "../../utils/cn.ts";
 import Button from "./Button";
 import Input from "./Input";
 
-const Select = React.forwardRef(
+interface SelectOption {
+  label: string;
+  value: string | number;
+  disabled?: boolean;
+  description?: string;
+}
+
+interface SelectProps {
+  className?: string;
+  options?: SelectOption[];
+  value?: string | number | (string | number)[];
+  defaultValue?: string | number | (string | number)[];
+  placeholder?: string;
+  multiple?: boolean;
+  disabled?: boolean;
+  required?: boolean;
+  label?: string;
+  description?: string;
+  error?: string;
+  searchable?: boolean;
+  clearable?: boolean;
+  loading?: boolean;
+  id?: string;
+  name?: string;
+  onChange?: (value: any) => void;
+  onOpenChange?: (isOpen: boolean) => void;
+}
+
+const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
   (
     {
       className,
@@ -59,7 +87,7 @@ const Select = React.forwardRef(
 
       if (multiple) {
         const selectedOptions = options?.filter((opt) =>
-          value?.includes(opt?.value),
+          (value as (string | number)[])?.includes(opt?.value),
         );
         if (selectedOptions?.length === 0) return placeholder;
         if (selectedOptions?.length === 1) return selectedOptions?.[0]?.label;
@@ -81,11 +109,11 @@ const Select = React.forwardRef(
       }
     };
 
-    const handleOptionSelect = (option) => {
+    const handleOptionSelect = (option: SelectOption) => {
       if (multiple) {
-        const newValue = value || [];
+        const newValue = (value as (string | number)[]) || [];
         const updatedValue = newValue?.includes(option?.value)
-          ? newValue?.filter((v) => v !== option?.value)
+          ? newValue?.filter((v: string | number) => v !== option?.value)
           : [...newValue, option?.value];
         onChange?.(updatedValue);
       } else {
@@ -95,24 +123,24 @@ const Select = React.forwardRef(
       }
     };
 
-    const handleClear = (e) => {
+    const handleClear = (e: React.MouseEvent) => {
       e?.stopPropagation();
       onChange?.(multiple ? [] : "");
     };
 
-    const handleSearchChange = (e) => {
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(e?.target?.value);
     };
 
-    const isSelected = (optionValue) => {
+    const isSelected = (optionValue: string | number) => {
       if (multiple) {
-        return value?.includes(optionValue) || false;
+        return (value as (string | number)[])?.includes(optionValue) || false;
       }
       return value === optionValue;
     };
 
     const hasValue = multiple
-      ? value?.length > 0
+      ? Array.isArray(value) && value?.length > 0
       : value !== undefined && value !== "";
 
     return (
@@ -190,7 +218,7 @@ const Select = React.forwardRef(
           {/* Hidden native select for form submission */}
           <select
             name={name}
-            value={value || ""}
+            value={typeof value === "string" || typeof value === "number" ? (value as string) : ""}
             onChange={() => {}} // Controlled by our custom logic
             className="sr-only"
             tabIndex={-1}

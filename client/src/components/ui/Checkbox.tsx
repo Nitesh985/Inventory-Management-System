@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Check, Minus } from "lucide-react";
-import { cn } from "@/utils/cn";
+import { cn } from "../../utils/cn";
 
 export interface CheckboxProps
   extends Omit<

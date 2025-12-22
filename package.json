@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@geoapify/geocoder-autocomplete": "^3.0.1",
+    "@geoapify/react-geocoder-autocomplete": "^3.0.0",
+    "react-google-places-autocomplete": "^4.1.0",
+    "react-phone-input-2": "^2.15.1"
+  }
+}
