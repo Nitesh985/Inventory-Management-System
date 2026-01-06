@@ -8,6 +8,7 @@ const api = axios.create({
 export interface CreateShopDTO {
   name: string;
   useBS?: boolean;
+  businessType: string;
 }
 
 export interface UpdateShopDTO {
@@ -15,10 +16,58 @@ export interface UpdateShopDTO {
   useBS?: boolean;
 }
 
-export interface Shop {
-  id: string;
+export interface ShopProfile {
+  _id: string;
   name: string;
   useBS: boolean;
+  businessType: string;
+  ownerId: string;
+  // Business Profile Fields for Nepal
+  panNumber?: string;
+  vatNumber?: string;
+  currency: string;
+  address?: string;
+  city?: string;
+  district?: string;
+  province?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logo?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateShopProfileDTO {
+  name?: string;
+  useBS?: boolean;
+  businessType?: string;
+  panNumber?: string;
+  vatNumber?: string;
+  currency?: string;
+  address?: string;
+  city?: string;
+  district?: string;
+  province?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logo?: string;
+}
+
+export interface Shop {
+  _id: string;
+  name: string;
+  useBS: boolean;
+  businessType: string;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MyShopsResponse {
+  shops: Shop[];
+  activeShopId: string | null;
 }
 
 
@@ -37,6 +86,30 @@ async function getShopById(shopId: string) {
   return res.data;
 }
 
+// Get all shops owned by the current user
+async function getMyShops(): Promise<{ data: MyShopsResponse }> {
+  const res = await api.get("/shops/my-shops");
+  return res.data;
+}
+
+// Set the active shop for the current user
+async function setActiveShop(shopId: string) {
+  const res = await api.post("/shops/set-active", { shopId });
+  return res.data;
+}
+
+// Get the current active shop profile
+async function getActiveShopProfile(): Promise<{ data: ShopProfile }> {
+  const res = await api.get("/shops/profile");
+  return res.data;
+}
+
+// Update the current active shop profile
+async function updateActiveShopProfile(data: UpdateShopProfileDTO): Promise<{ data: ShopProfile }> {
+  const res = await api.put("/shops/profile", data);
+  return res.data;
+}
+
 async function updateShop(shopId: string, data: UpdateShopDTO) {
   const res = await api.put(`/shops/${shopId}`, data);
   return res.data;
@@ -47,4 +120,14 @@ async function deleteShop(shopId: string) {
   return res.data;
 }
 
-export { createShop, getShops, getShopById, updateShop, deleteShop };
+export { 
+  createShop, 
+  getShops, 
+  getShopById, 
+  getMyShops, 
+  setActiveShop, 
+  getActiveShopProfile,
+  updateActiveShopProfile,
+  updateShop, 
+  deleteShop 
+};

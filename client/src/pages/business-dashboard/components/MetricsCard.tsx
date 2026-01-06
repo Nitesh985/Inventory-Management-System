@@ -1,22 +1,32 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
 
-const MetricsCard = ({ 
+interface MetricsCardProps {
+  title: string;
+  value: string;
+  change?: string;
+  changeType?: 'positive' | 'negative' | 'neutral';
+  icon: string;
+  iconColor?: string;
+  trend?: boolean;
+}
+
+const MetricsCard: React.FC<MetricsCardProps> = ({ 
   title, 
   value, 
   change, 
   changeType, 
   icon, 
   iconColor = "text-primary",
-  trend = null 
+  trend = false 
 }) => {
-  const getChangeColor = () => {
+  const getChangeColor = (): string => {
     if (changeType === 'positive') return 'text-success';
     if (changeType === 'negative') return 'text-error';
     return 'text-muted-foreground';
   };
 
-  const getChangeIcon = () => {
+  const getChangeIcon = (): string => {
     if (changeType === 'positive') return 'TrendingUp';
     if (changeType === 'negative') return 'TrendingDown';
     return 'Minus';

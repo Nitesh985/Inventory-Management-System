@@ -2,9 +2,20 @@ import Button from "@/components/ui/Button"
 import { useMutation } from "@/hooks/useMutation"
 import { createProduct } from "@/api/products"
 
+interface Product {
+  _id?: string;
+  name?: string;
+  [key: string]: unknown;
+}
 
-function AddProduct({handleAddProduct, product, isSubmitting}) {
-  const {mutate, loading, error} = useMutation(createProduct)
+interface AddProductProps {
+  handleAddProduct?: () => void;
+  product?: Product | null;
+  isSubmitting?: boolean;
+}
+
+function AddProduct({ handleAddProduct, product, isSubmitting }: AddProductProps) {
+  const { mutate, loading, error } = useMutation(createProduct)
   
   
   const handleSubmit = async () => {

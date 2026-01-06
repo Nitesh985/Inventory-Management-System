@@ -8,166 +8,205 @@ import ExpenseHistory from './components/ExpenseHistory';
 import BudgetOverview from './components/BudgetOverview';
 import BulkImport from './components/BulkImport';
 import Icon from '../../components/AppIcon';
+import { useFetch } from '@/hooks/useFetch';
+import { useMutation } from '@/hooks/useMutation';
+import { getExpenses, createExpense, updateExpense, deleteExpense } from '@/api/expenses';
+import { getBudgets, upsertBudget, deleteBudget as deleteBudgetApi } from '@/api/budgets';
 
 
 const ExpenseTracking = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('record');
-  const [expenses, setExpenses] = useState([]);
-  const [receipts, setReceipts] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>('record');
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [budgetRefreshKey, setBudgetRefreshKey] = useState<number>(0);
 
-  // Mock data for expenses
-  const mockExpenses = [
-    {
-      id: 1,
-      amount: 125.50,
-      category: 'office-supplies',
-      vendor: 'Amazon Business',
-      date: '2024-11-01',
-      description: 'Office supplies including pens, notebooks, and printer paper for Q4 operations',
-      isTaxRelated: true,
-      receipts: [
-        {
-          id: 1,
-          name: 'amazon_receipt_001.pdf',
-          url: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400',
-          type: 'application/pdf'
-        }
-      ]
-    },
-    {
-      id: 2,
-      amount: 89.25,
-      category: 'travel',
-      vendor: 'Uber for Business',
-      date: '2024-10-30',
-      description: 'Transportation to client meeting downtown',
-      isTaxRelated: true,
-      receipts: []
-    },
-    {
-      id: 3,
-      amount: 245.00,
-      category: 'utilities',
-      vendor: 'Electric Company',
-      date: '2024-10-28',
-      description: 'Monthly electricity bill for office space',
-      isTaxRelated: true,
-      receipts: []
-    },
-    {
-      id: 4,
-      amount: 1250.00,
-      category: 'marketing',
-      vendor: 'Google Ads',
-      date: '2024-10-25',
-      description: 'Digital advertising campaign for product launch',
-      isTaxRelated: true,
-      receipts: []
-    },
-    {
-      id: 5,
-      amount: 75.80,
-      category: 'meals',
-      vendor: 'Downtown Bistro',
-      date: '2024-10-24',
-      description: 'Business lunch with potential client',
-      isTaxRelated: true,
-      receipts: []
-    }
-  ];
+  interface Receipt {
+    id: number;
+    name: string;
+    url: string;
+    type: string;
+  }
 
-  // Mock data for budgets
-  const mockBudgets = [
-    {
-      category: 'office-supplies',
-      categoryName: 'Office Supplies',
-      limit: 500.00
-    },
-    {
-      category: 'travel',
-      categoryName: 'Travel & Transportation',
-      limit: 1000.00
-    },
-    {
-      category: 'utilities',
-      categoryName: 'Utilities',
-      limit: 300.00
-    },
-    {
-      category: 'marketing',
-      categoryName: 'Marketing & Advertising',
-      limit: 2000.00
-    },
-    {
-      category: 'meals',
-      categoryName: 'Meals & Entertainment',
-      limit: 400.00
-    }
-  ];
+  // Backend expense structure
+  interface BackendExpense {
+    _id: string;
+    shopId: string;
+    description: string;
+    amount: number;
+    date: string;
+    category: string;
+    deleted: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }
 
-  useEffect(() => {
-    // Load mock expenses on component mount
-    setExpenses(mockExpenses);
-  }, []);
+  // Frontend expense structure
+  interface Expense {
+    id: string;
+    amount: number;
+    category: string;
+    vendor: string;
+    date: string;
+    description: string;
+    isTaxRelated: boolean;
+    receipts: Receipt[];
+  }
 
-  const handleExpenseSubmit = async (expenseData) => {
-    setIsLoading(true);
+  // Fetch expenses from API
+  const { data: expensesData, loading: isLoading, error } = useFetch(getExpenses, [refreshKey]);
+  
+  // Transform backend data to frontend format
+  const expenses: Expense[] = React.useMemo(() => {
+    const rawExpenses = expensesData || [];
+    if (!Array.isArray(rawExpenses)) return [];
+    
+    return rawExpenses.map((exp: BackendExpense) => ({
+      id: exp._id,
+      amount: exp.amount ?? 0,
+      category: exp.category || 'other',
+      vendor: '', // Not tracked in backend
+      date: exp.date ? new Date(exp.date).toISOString().split('T')[0] : '',
+      description: exp.description || '',
+      isTaxRelated: false, // Not tracked in backend
+      receipts: [] // Not tracked in backend
+    }));
+  }, [expensesData]);
+  
+  // Currency formatter for Nepali Rupees
+  const formatCurrency = (amount: number): string => {
+    return `Rs. ${Math.round(amount || 0).toLocaleString('en-NP')}`;
+  };
+  
+  const { mutate: createExpenseMutation, loading: creating } = useMutation(createExpense);
+  const { mutate: updateExpenseMutation, loading: updating } = useMutation(
+    (data: { id: string; payload: any }) => updateExpense(data.id, data.payload)
+  );
+  const { mutate: deleteExpenseMutation, loading: deleting } = useMutation(deleteExpense);
+  
+  const triggerRefresh = () => setRefreshKey(prev => prev + 1);
+
+  // Fetch budgets from API
+  const { data: budgetsData, loading: budgetsLoading } = useFetch(getBudgets, [budgetRefreshKey]);
+  
+  // Transform backend budget data to frontend format
+  interface Budget {
+    _id?: string;
+    category: string;
+    categoryName: string;
+    limit: number;
+    period?: string;
+  }
+  
+  const budgets: Budget[] = React.useMemo(() => {
+    const rawBudgets = budgetsData || [];
+    if (!Array.isArray(rawBudgets)) return [];
+    
+    return rawBudgets.map((budget: any) => ({
+      _id: budget._id,
+      category: budget.category,
+      categoryName: budget.categoryName,
+      limit: budget.limit,
+      period: budget.period || 'monthly'
+    }));
+  }, [budgetsData]);
+  
+  // Budget mutations
+  const { mutate: upsertBudgetMutation, loading: savingBudget } = useMutation(upsertBudget);
+  const { mutate: deleteBudgetMutation, loading: deletingBudget } = useMutation(deleteBudgetApi);
+  
+  const triggerBudgetRefresh = () => setBudgetRefreshKey(prev => prev + 1);
+  
+  const handleSaveBudget = async (budgetData: Budget): Promise<void> => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newExpense = {
-        ...expenseData,
-        id: Date.now(),
-        receipts: receipts
-      };
-      
-      setExpenses(prev => [newExpense, ...prev]);
-      setReceipts([]);
-      
-      // Show success message (in real app, use toast notification)
-      alert('Expense recorded successfully!');
+      await upsertBudgetMutation({
+        category: budgetData.category,
+        categoryName: budgetData.categoryName,
+        limit: budgetData.limit,
+        period: budgetData.period || 'monthly'
+      });
+      triggerBudgetRefresh();
     } catch (error) {
-      alert('Error recording expense. Please try again.');
-    } finally {
-      setIsLoading(false);
+      console.error('Error saving budget:', error);
+      alert('Error saving budget. Please try again.');
+    }
+  };
+  
+  const handleDeleteBudget = async (budgetId: string): Promise<void> => {
+    if (window.confirm('Are you sure you want to delete this budget?')) {
+      try {
+        await deleteBudgetMutation(budgetId);
+        triggerBudgetRefresh();
+      } catch (error) {
+        console.error('Error deleting budget:', error);
+        alert('Error deleting budget. Please try again.');
+      }
     }
   };
 
-  const handleSaveDraft = (expenseData) => {
+  const handleExpenseSubmit = async (expenseData: Omit<Expense, 'id' | 'receipts'>): Promise<void> => {
+    try {
+      await createExpenseMutation({
+        description: expenseData.description || 'No description',
+        amount: Number(expenseData.amount) || 0,
+        date: expenseData.date,
+        category: expenseData.category
+      });
+      
+      setReceipts([]);
+      triggerRefresh();
+      alert('Expense recorded successfully!');
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      alert('Error recording expense. Please try again.');
+    }
+  };
+
+  const handleSaveDraft = (expenseData: Omit<Expense, 'id' | 'receipts'>): void => {
     // In real app, save to localStorage or draft API
     console.log('Saving draft:', expenseData);
     alert('Expense saved as draft!');
   };
 
-  const handleEditExpense = (expense) => {
+  const handleEditExpense = (expense: Expense): void => {
     // In real app, populate form with expense data
     console.log('Editing expense:', expense);
     setActiveTab('record');
   };
 
-  const handleDeleteExpense = (expenseId) => {
+  const handleDeleteExpense = async (expenseId: string): Promise<void> => {
     if (window.confirm('Are you sure you want to delete this expense?')) {
-      setExpenses(prev => prev?.filter(expense => expense?.id !== expenseId));
+      try {
+        await deleteExpenseMutation(expenseId);
+        triggerRefresh();
+      } catch (error) {
+        console.error('Error deleting expense:', error);
+        alert('Error deleting expense. Please try again.');
+      }
     }
   };
 
-  const handleBulkImport = async (importData) => {
-    setIsLoading(true);
+  const handleBulkImport = async (importData: Expense[]): Promise<void> => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Create expenses one by one (or batch if API supports)
+      for (const expense of importData) {
+        await createExpenseMutation({
+          description: expense.description,
+          amount: expense.amount,
+          date: expense.date,
+          category: expense.category,
+          shopId: 'default-shop-id',
+          clientId: 'default-client-id'
+        });
+      }
       
-      setExpenses(prev => [...importData, ...prev]);
+      triggerRefresh();
       alert(`Successfully imported ${importData?.length} expenses!`);
       setActiveTab('history');
     } catch (error) {
+      console.error('Error importing expenses:', error);
       alert('Error importing expenses. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -224,7 +263,7 @@ const ExpenseTracking = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">This Month</p>
                       <p className="text-xl font-bold text-foreground">
-                        ${expenses?.reduce((sum, exp) => sum + parseFloat(exp?.amount), 0)?.toLocaleString()}
+                        {formatCurrency(expenses?.reduce((sum, exp) => sum + (exp?.amount || 0), 0))}
                       </p>
                     </div>
                   </div>
@@ -237,7 +276,7 @@ const ExpenseTracking = () => {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Total Expenses</p>
-                      <p className="text-xl font-bold text-foreground">{expenses?.length}</p>
+                      <p className="text-xl font-bold text-foreground">{expenses?.length || 0}</p>
                     </div>
                   </div>
                 </div>
@@ -250,7 +289,7 @@ const ExpenseTracking = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">Tax Deductible</p>
                       <p className="text-xl font-bold text-foreground">
-                        ${expenses?.filter(exp => exp?.isTaxRelated)?.reduce((sum, exp) => sum + parseFloat(exp?.amount), 0)?.toLocaleString()}
+                        {formatCurrency(expenses?.filter(exp => exp?.isTaxRelated)?.reduce((sum, exp) => sum + (exp?.amount || 0), 0))}
                       </p>
                     </div>
                   </div>
@@ -264,7 +303,7 @@ const ExpenseTracking = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">With Receipts</p>
                       <p className="text-xl font-bold text-foreground">
-                        {expenses?.filter(exp => exp?.receipts && exp?.receipts?.length > 0)?.length}
+                        {expenses?.filter(exp => exp?.receipts && exp?.receipts?.length > 0)?.length || 0}
                       </p>
                     </div>
                   </div>
@@ -321,8 +360,11 @@ const ExpenseTracking = () => {
 
               {activeTab === 'budget' && (
                 <BudgetOverview
-                  budgets={mockBudgets}
+                  budgets={budgets}
                   expenses={expenses}
+                  onSaveBudget={handleSaveBudget}
+                  onDeleteBudget={handleDeleteBudget}
+                  isLoading={savingBudget || deletingBudget}
                 />
               )}
 

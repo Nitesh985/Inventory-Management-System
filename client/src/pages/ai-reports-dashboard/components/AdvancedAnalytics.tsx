@@ -3,10 +3,39 @@ import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, YAxis
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
-const AdvancedAnalytics = () => {
-  const [activeTab, setActiveTab] = useState('seasonal');
+interface SeasonalData {
+  month: string;
+  sales: number;
+  customers: number;
+  avgOrder: number;
+}
 
-  const seasonalData = [
+interface CustomerSegment {
+  name: string;
+  value: number;
+  color: string;
+  count: number;
+}
+
+interface InventoryTurnover {
+  category: string;
+  turnover: number;
+  stock: number;
+  prediction: string;
+}
+
+interface KeyInsight {
+  title: string;
+  description: string;
+  impact: 'High' | 'Medium' | 'Low';
+  actionable: boolean;
+  icon: string;
+}
+
+const AdvancedAnalytics: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>('seasonal');
+
+  const seasonalData: SeasonalData[] = [
     { month: 'Jan', sales: 42000, customers: 320, avgOrder: 131 },
     { month: 'Feb', sales: 38000, customers: 290, avgOrder: 131 },
     { month: 'Mar', sales: 45000, customers: 340, avgOrder: 132 },
@@ -20,13 +49,13 @@ const AdvancedAnalytics = () => {
     { month: 'Nov', sales: 72000, customers: 520, avgOrder: 138 }
   ];
 
-  const customerSegmentData = [
+  const customerSegmentData: CustomerSegment[] = [
     { name: 'New Customers', value: 35, color: '#1E40AF', count: 182 },
     { name: 'Returning Customers', value: 45, color: '#059669', count: 234 },
     { name: 'VIP Customers', value: 20, color: '#F59E0B', count: 104 }
   ];
 
-  const inventoryTurnoverData = [
+  const inventoryTurnoverData: InventoryTurnover[] = [
     { category: 'Electronics', turnover: 8.5, stock: 45, prediction: 'High demand expected' },
     { category: 'Clothing', turnover: 6.2, stock: 78, prediction: 'Seasonal increase likely' },
     { category: 'Home & Garden', turnover: 4.8, stock: 32, prediction: 'Stable demand' },
@@ -34,7 +63,7 @@ const AdvancedAnalytics = () => {
     { category: 'Books', turnover: 3.2, stock: 67, prediction: 'Slow moving inventory' }
   ];
 
-  const keyInsights = [
+  const keyInsights: KeyInsight[] = [
     {
       title: 'Peak Season Opportunity',
       description: 'November shows 18% higher sales than average. Prepare inventory for December surge.',
@@ -65,7 +94,7 @@ const AdvancedAnalytics = () => {
     }
   ];
 
-  const formatCurrency = (value) => {
+  const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',

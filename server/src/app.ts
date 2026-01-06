@@ -33,6 +33,10 @@ import inventoryRouter from './routes/inventory.routes.ts'
 import productRouter from './routes/product.routes.ts'
 import salesRouter from './routes/sales.routes.ts'
 import shopRouter from './routes/shop.routes.ts'
+import dashboardRouter from './routes/dashboard.routes.ts'
+import dataManagementRouter from './routes/data-management.routes.ts'
+import budgetRouter from './routes/budget.routes.ts'
+import creditRouter from './routes/credit.routes.ts'
 
 
 app.use("/api/customers", customerRouter)
@@ -43,7 +47,10 @@ app.use("/api/products", productRouter)
 app.use("/api/sales", salesRouter)
 app.use("/api/shops", shopRouter)
 app.use("/api/chatbot", chatbotRoutes);
-
+app.use("/api/dashboard", dashboardRouter);
+app.use("/api/data-management", dataManagementRouter);
+app.use("/api/budgets", budgetRouter);
+app.use("/api/credits", creditRouter);
 
 
 

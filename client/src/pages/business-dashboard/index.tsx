@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
@@ -8,78 +8,84 @@ import RecentTransactions from './components/RecentTransactions';
 import InventoryAlerts from './components/InventoryAlerts';
 import BusinessChart from './components/BusinessChart';
 import SyncStatus from './components/SyncStatus';
-import Loader from '@/components/Loader';
+import { useFetch } from '@/hooks/useFetch';
+import { getDashboardMetrics } from '@/api/dashboard';
 
+type SyncStatusType = 'online' | 'syncing' | 'offline';
+type ChangeType = 'positive' | 'negative' | 'neutral';
 
-const BusinessDashboard = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [syncStatus, setSyncStatus] = useState('online');
+interface BusinessMetric {
+  title: string;
+  value: string;
+  change: string;
+  changeType: ChangeType;
+  icon: string;
+  iconColor: string;
+  trend?: boolean;
+}
 
-  useEffect(() => {
-    // Simulate sync status changes for demo
-    const interval = setInterval(() => {
-      const statuses = ['online', 'syncing', 'offline'];
-      const randomStatus = statuses?.[Math.floor(Math.random() * statuses?.length)];
-      setSyncStatus(randomStatus);
-    }, 30000);
+const BusinessDashboard: React.FC = () => {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatusType>('online');
 
-    return () => clearInterval(interval);
-  }, []);
+  // Fetch calculated metrics from API
+  const { data: metricsData, loading } = useFetch(getDashboardMetrics);
 
-  const businessMetrics = [
+  // Build business metrics array from API data
+  const businessMetrics: BusinessMetric[] = metricsData ? [
     {
       title: "Total Revenue",
-      value: "$45,230",
-      change: "+12.5%",
-      changeType: "positive",
+      value: `Rs. ${Math.round(metricsData.revenue.total).toLocaleString()}`,
+      change: metricsData.revenue.change,
+      changeType: metricsData.revenue.changeType,
       icon: "DollarSign",
       iconColor: "text-success",
       trend: true
     },
     {
       title: "Total Expenses",
-      value: "$28,450",
-      change: "+8.2%",
-      changeType: "negative",
+      value: `Rs. ${Math.round(metricsData.expenses.total).toLocaleString()}`,
+      change: metricsData.expenses.change,
+      changeType: metricsData.expenses.changeType,
       icon: "CreditCard",
       iconColor: "text-error",
       trend: true
     },
     {
       title: "Net Profit",
-      value: "$16,780",
-      change: "+18.7%",
-      changeType: "positive",
+      value: `Rs. ${Math.round(metricsData.profit.total).toLocaleString()}`,
+      change: metricsData.profit.change,
+      changeType: metricsData.profit.changeType,
       icon: "TrendingUp",
       iconColor: "text-primary",
       trend: true
     },
     {
       title: "Active Products",
-      value: "1,247",
-      change: "+5 new",
-      changeType: "positive",
+      value: metricsData.products.total.toLocaleString(),
+      change: `${metricsData.products.total} total items`,
+      changeType: "neutral",
       icon: "Package",
       iconColor: "text-accent"
     },
     {
       title: "Low Stock Items",
-      value: "23",
-      change: "Needs attention",
-      changeType: "negative",
+      value: metricsData.products.lowStock.toString(),
+      change: metricsData.products.lowStock > 0 ? `${metricsData.products.lowStock} need restock` : "Stock is healthy",
+      changeType: metricsData.products.lowStock > 0 ? "negative" : "positive",
       icon: "AlertTriangle",
-      iconColor: "text-warning"
+      iconColor: metricsData.products.lowStock > 0 ? "text-warning" : "text-success"
     },
     {
-      title: "Today\'s Sales",
-      value: "$2,340",
-      change: "+15.3%",
-      changeType: "positive",
+      title: "Today's Sales",
+      value: `Rs. ${Math.round(metricsData.todaysSales.total).toLocaleString()}`,
+      change: `${metricsData.todaysSales.change} vs yesterday`,
+      changeType: metricsData.todaysSales.changeType,
       icon: "ShoppingCart",
       iconColor: "text-success",
       trend: true
     }
-  ];
+  ] : [];
   
 
 
@@ -128,18 +134,32 @@ const BusinessDashboard = () => {
 
           {/* Metrics Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {businessMetrics?.map((metric, index) => (
-              <MetricsCard
-                key={index}
-                title={metric?.title}
-                value={metric?.value}
-                change={metric?.change}
-                changeType={metric?.changeType}
-                icon={metric?.icon}
-                iconColor={metric?.iconColor}
-                trend={metric?.trend}
-              />
-            ))}
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="bg-card border border-border rounded-lg p-6 animate-pulse">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-4 bg-muted rounded w-24"></div>
+                    <div className="h-8 w-8 bg-muted rounded"></div>
+                  </div>
+                  <div className="h-8 bg-muted rounded w-32 mb-2"></div>
+                  <div className="h-4 bg-muted rounded w-20"></div>
+                </div>
+              ))
+            ) : (
+              businessMetrics?.map((metric, index) => (
+                <MetricsCard
+                  key={index}
+                  title={metric?.title}
+                  value={metric?.value}
+                  change={metric?.change}
+                  changeType={metric?.changeType}
+                  icon={metric?.icon}
+                  iconColor={metric?.iconColor}
+                  trend={metric?.trend}
+                />
+              ))
+            )}
           </div>
 
           {/* Quick Actions */}

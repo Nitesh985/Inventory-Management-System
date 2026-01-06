@@ -2,9 +2,22 @@ import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
-const LowStockAlert = ({ lowStockProducts, onViewProduct, onDismiss }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [dismissedItems, setDismissedItems] = useState(new Set());
+interface Product {
+  id: string | number;
+  name?: string;
+  currentStock: number;
+  minStock?: number;
+}
+
+interface LowStockAlertProps {
+  lowStockProducts: Product[];
+  onViewProduct: (product: Product) => void;
+  onDismiss: () => void;
+}
+
+const LowStockAlert: React.FC<LowStockAlertProps> = ({ lowStockProducts, onViewProduct, onDismiss }) => {
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [dismissedItems, setDismissedItems] = useState<Set<string | number>>(new Set());
 
   if (!lowStockProducts || lowStockProducts?.length === 0) {
     return null;
@@ -16,15 +29,15 @@ const LowStockAlert = ({ lowStockProducts, onViewProduct, onDismiss }) => {
     return null;
   }
 
-  const handleDismissItem = (productId) => {
+  const handleDismissItem = (productId: string | number): void => {
     setDismissedItems(prev => new Set([...prev, productId]));
   };
 
-  const handleDismissAll = () => {
+  const handleDismissAll = (): void => {
     onDismiss();
   };
 
-  const formatStockStatus = (current, min) => {
+  const formatStockStatus = (current: number, min: number): { text: string; color: string } => {
     if (current === 0) return { text: 'Out of Stock', color: 'text-error bg-error/10' };
     if (current <= min) return { text: 'Low Stock', color: 'text-warning bg-warning/10' };
     return { text: 'In Stock', color: 'text-success bg-success/10' };

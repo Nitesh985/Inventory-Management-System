@@ -1,57 +1,70 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { useFetch } from '@/hooks/useFetch';
+import { getAllProducts } from '@/api/products';
+import Loader from '@/components/Loader';
+
+interface Alert {
+  id: string;
+  type: 'low_stock' | 'out_of_stock' | 'expiring_soon' | 'overstocked';
+  product: string;
+  sku: string;
+  currentStock: number;
+  minStock?: number;
+  expiryDate?: string;
+  category: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  lastUpdated: string;
+}
 
 const InventoryAlerts = () => {
-  const alerts = [
-    {
-      id: "ALERT001",
-      type: "low_stock",
-      product: "Wireless Headphones",
-      sku: "WH-001",
-      currentStock: 3,
-      minStock: 10,
-      category: "Electronics",
-      priority: "high",
-      lastUpdated: "2025-11-03"
-    },
-    {
-      id: "ALERT002",
-      type: "out_of_stock",
-      product: "USB Cables",
-      sku: "USB-C-001",
-      currentStock: 0,
-      minStock: 25,
-      category: "Accessories",
-      priority: "critical",
-      lastUpdated: "2025-11-02"
-    },
-    {
-      id: "ALERT003",
-      type: "low_stock",
-      product: "Phone Cases",
-      sku: "PC-iPhone-001",
-      currentStock: 5,
-      minStock: 15,
-      category: "Accessories",
-      priority: "medium",
-      lastUpdated: "2025-11-03"
-    },
-    {
-      id: "ALERT004",
-      type: "expiring_soon",
-      product: "Screen Protectors",
-      sku: "SP-001",
-      currentStock: 20,
-      expiryDate: "2025-11-15",
-      category: "Accessories",
-      priority: "medium",
-      lastUpdated: "2025-11-01"
-    }
-  ];
+  const { data: products, loading } = useFetch(getAllProducts, []);
 
-  const getPriorityColor = (priority) => {
-    const colors = {
+  const alerts: Alert[] = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    
+    return products
+      .filter((product: any) => {
+        const stock = product.stock ?? product.quantity ?? 0;
+        const minStock = product.minStock ?? product.reorderLevel ?? 10;
+        return stock <= minStock;
+      })
+      .map((product: any) => {
+        const stock = product.stock ?? product.quantity ?? 0;
+        const minStock = product.minStock ?? product.reorderLevel ?? 10;
+        
+        let type: Alert['type'] = 'low_stock';
+        let priority: Alert['priority'] = 'medium';
+        
+        if (stock === 0) {
+          type = 'out_of_stock';
+          priority = 'critical';
+        } else if (stock <= minStock * 0.3) {
+          priority = 'high';
+        }
+        
+        return {
+          id: product._id || `alert-${Date.now()}`,
+          type,
+          product: product.name || 'Unknown Product',
+          sku: product.sku || product._id?.slice(-6) || 'N/A',
+          currentStock: stock,
+          minStock,
+          category: product.category || 'Uncategorized',
+          priority,
+          lastUpdated: product.updatedAt || product.createdAt || new Date().toISOString()
+        };
+      })
+      .sort((a: Alert, b: Alert) => {
+        const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      })
+      .slice(0, 5);
+  }, [products]);
+
+  const getPriorityColor = (priority: string): string => {
+    const colors: Record<string, string> = {
       critical: 'bg-error/10 text-error border-error/20',
       high: 'bg-warning/10 text-warning border-warning/20',
       medium: 'bg-accent/10 text-accent border-accent/20',
@@ -60,8 +73,8 @@ const InventoryAlerts = () => {
     return colors?.[priority] || colors?.medium;
   };
 
-  const getAlertIcon = (type) => {
-    const icons = {
+  const getAlertIcon = (type: string): string => {
+    const icons: Record<string, string> = {
       low_stock: 'AlertTriangle',
       out_of_stock: 'XCircle',
       expiring_soon: 'Clock',
@@ -70,14 +83,14 @@ const InventoryAlerts = () => {
     return icons?.[type] || 'AlertCircle';
   };
 
-  const getAlertMessage = (alert) => {
+  const getAlertMessage = (alert: Alert): string => {
     switch (alert?.type) {
       case 'low_stock':
         return `Only ${alert?.currentStock} units left (Min: ${alert?.minStock})`;
       case 'out_of_stock':
         return `Out of stock - Reorder needed`;
       case 'expiring_soon':
-        return `Expires on ${new Date(alert.expiryDate)?.toLocaleDateString('en-US')}`;
+        return `Expires on ${new Date(alert.expiryDate || '')?.toLocaleDateString('en-US')}`;
       default:
         return 'Attention required';
     }
@@ -88,9 +101,11 @@ const InventoryAlerts = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2">
           <h2 className="text-lg font-semibold text-foreground">Inventory Alerts</h2>
-          <span className="px-2 py-1 bg-error/10 text-error text-xs font-medium rounded-full">
-            {alerts?.length}
-          </span>
+          {!loading && (
+            <span className="px-2 py-1 bg-error/10 text-error text-xs font-medium rounded-full">
+              {alerts?.length}
+            </span>
+          )}
         </div>
         <Button
           variant="outline"
@@ -100,6 +115,7 @@ const InventoryAlerts = () => {
           Manage Inventory
         </Button>
       </div>
+      <Loader loading={loading}>
       <div className="space-y-3">
         {alerts?.map((alert) => (
           <div
@@ -151,7 +167,8 @@ const InventoryAlerts = () => {
           </div>
         ))}
       </div>
-      {alerts?.length === 0 && (
+      </Loader>
+      {alerts?.length === 0 && !loading && (
         <div className="text-center py-8">
           <Icon name="CheckCircle" size={48} className="text-success mx-auto mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">All Good!</h3>

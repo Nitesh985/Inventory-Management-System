@@ -2,7 +2,17 @@ import React from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
-const TransactionActions = ({ 
+interface TransactionActionsProps {
+  onRecordSale: () => void;
+  onSaveAsDraft: () => void;
+  onPrintReceipt: () => void;
+  onClearTransaction: () => void;
+  isValid: boolean;
+  isProcessing?: boolean;
+  hasItems?: boolean;
+}
+
+const TransactionActions: React.FC<TransactionActionsProps> = ({ 
   onRecordSale, 
   onSaveAsDraft, 
   onPrintReceipt, 

@@ -1,10 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import Button from '../../../../components/ui/Button';
 import Input from '../../../../components/ui/Input';
-import { Checkbox } from '../../../../components/ui/Checkbox';
+import Checkbox from '../../../../components/ui/Checkbox';
 import Icon from '../../../../components/AppIcon';
 import FormValidationFeedback from '../../../../components/ui/FormValidationFeedback';
 import type { LoginFormProps, LoginFormData } from '../types';
+
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, errors, isLoading, isOnline, successMessage }) => {
   const [formData, setFormData] = useState<LoginFormData>({
@@ -23,7 +24,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, errors, isLoading, isOn
     []
   );
 
-  const handleSubmit = useCallback(
+  const loginUser = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
       if (!isOnline) return;
@@ -53,7 +54,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, errors, isLoading, isOn
       )}
 
       {/* Login Form */}
-  <form onSubmit={handleSubmit} className="space-y-6">
+  <form onSubmit={loginUser} className="space-y-6">
         {/* Email Field */}
         <Input
           type="email"

@@ -1,52 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import Icon from '../../../components/AppIcon';
+import { getChartData, type ChartDataPoint, type ChartData } from '../../../api/dashboard';
 
+type ChartType = 'line' | 'area' | 'bar';
+type TimeRange = '7days' | '30days' | '90days';
 
-const BusinessChart = () => {
-  const [chartType, setChartType] = useState('line');
-  const [timeRange, setTimeRange] = useState('7days');
+interface ChartTypeOption {
+  key: ChartType;
+  label: string;
+  icon: string;
+}
 
-  const chartData = {
-    '7days': [
-      { date: 'Oct 28', sales: 1200, expenses: 800, profit: 400 },
-      { date: 'Oct 29', sales: 1500, expenses: 900, profit: 600 },
-      { date: 'Oct 30', sales: 1100, expenses: 700, profit: 400 },
-      { date: 'Oct 31', sales: 1800, expenses: 1000, profit: 800 },
-      { date: 'Nov 1', sales: 1600, expenses: 950, profit: 650 },
-      { date: 'Nov 2', sales: 2000, expenses: 1200, profit: 800 },
-      { date: 'Nov 3', sales: 1750, expenses: 1100, profit: 650 }
-    ],
-    '30days': [
-      { date: 'Week 1', sales: 8500, expenses: 5200, profit: 3300 },
-      { date: 'Week 2', sales: 9200, expenses: 5800, profit: 3400 },
-      { date: 'Week 3', sales: 7800, expenses: 4900, profit: 2900 },
-      { date: 'Week 4', sales: 10500, expenses: 6500, profit: 4000 }
-    ],
-    '90days': [
-      { date: 'Aug', sales: 32000, expenses: 20000, profit: 12000 },
-      { date: 'Sep', sales: 35500, expenses: 22000, profit: 13500 },
-      { date: 'Oct', sales: 38200, expenses: 24000, profit: 14200 }
-    ]
-  };
+interface TimeRangeOption {
+  key: TimeRange;
+  label: string;
+}
 
-  const currentData = chartData?.[timeRange];
+const BusinessChart: React.FC = () => {
+  const [chartType, setChartType] = useState<ChartType>('line');
+  const [timeRange, setTimeRange] = useState<TimeRange>('7days');
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [totals, setTotals] = useState({ sales: 0, expenses: 0, profit: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const chartTypes = [
+  useEffect(() => {
+    const fetchChartData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await getChartData(timeRange);
+        setChartData(response.data.chartData);
+        setTotals(response.data.totals);
+      } catch (err) {
+        setError('Failed to load chart data');
+        console.error('Chart data fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChartData();
+  }, [timeRange]);
+
+  const chartTypes: ChartTypeOption[] = [
     { key: 'line', label: 'Line', icon: 'TrendingUp' },
     { key: 'area', label: 'Area', icon: 'BarChart3' },
     { key: 'bar', label: 'Bar', icon: 'BarChart' }
   ];
 
-  const timeRanges = [
+  const timeRanges: TimeRangeOption[] = [
     { key: '7days', label: '7 Days' },
     { key: '30days', label: '30 Days' },
     { key: '90days', label: '90 Days' }
   ];
 
-  const renderChart = () => {
+  const renderChart = (): JSX.Element => {
     const commonProps = {
-      data: currentData,
+      data: chartData,
       margin: { top: 5, right: 30, left: 20, bottom: 5 }
     };
 
@@ -204,28 +216,42 @@ const BusinessChart = () => {
       </div>
       {/* Chart Container */}
       <div className="w-full h-80" aria-label="Business Performance Chart">
-        <ResponsiveContainer width="100%" height="100%">
-          {renderChart()}
-        </ResponsiveContainer>
+        {loading ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : error ? (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            {error}
+          </div>
+        ) : chartData.length === 0 ? (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            No data available for this period
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            {renderChart()}
+          </ResponsiveContainer>
+        )}
       </div>
       {/* Chart Summary */}
       <div className="mt-6 pt-4 border-t border-border">
         <div className="grid grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
           <div className="text-center">
             <div className="lg:text-2xl text-lg font-bold text-success">
-              ${currentData?.reduce((sum, item) => sum + item?.sales, 0)?.toLocaleString('en-US')}
+              Rs. {Math.round(totals.sales).toLocaleString()}
             </div>
             <div className="text-sm text-muted-foreground">Total Sales</div>
           </div>
           <div className="text-center">
             <div className="lg:text-2xl text-lg font-bold text-error">
-              ${currentData?.reduce((sum, item) => sum + item?.expenses, 0)?.toLocaleString('en-US')}
+              Rs. {Math.round(totals.expenses).toLocaleString()}
             </div>
             <div className="text-sm text-muted-foreground">Total Expenses</div>
           </div>
           <div className="text-center">
-            <div className="lg:text-2xl text-lg font-bold text-primary">
-              ${currentData?.reduce((sum, item) => sum + item?.profit, 0)?.toLocaleString('en-US')}
+            <div className={`lg:text-2xl text-lg font-bold ${totals.profit >= 0 ? 'text-primary' : 'text-error'}`}>
+              Rs. {Math.round(totals.profit).toLocaleString()}
             </div>
             <div className="text-sm text-muted-foreground">Net Profit</div>
           </div>

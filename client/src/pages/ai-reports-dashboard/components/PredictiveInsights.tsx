@@ -2,10 +2,35 @@ import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
-const PredictiveInsights = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState('next3months');
+type PeriodKey = 'next3months' | 'next6months';
 
-  const predictions = {
+interface PredictionMetric {
+  value: number;
+  growth: number;
+  confidence: number;
+}
+
+interface PredictionPeriod {
+  revenue: PredictionMetric;
+  expenses: PredictionMetric;
+  profit: PredictionMetric;
+}
+
+interface Recommendation {
+  id: number;
+  type: string;
+  priority: 'high' | 'medium' | 'low';
+  title: string;
+  description: string;
+  impact: string;
+  icon: string;
+  color: string;
+}
+
+const PredictiveInsights: React.FC = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodKey>('next3months');
+
+  const predictions: Record<PeriodKey, PredictionPeriod> = {
     next3months: {
       revenue: { value: 195000, growth: 12.5, confidence: 87 },
       expenses: { value: 142000, growth: 8.3, confidence: 92 },
@@ -18,7 +43,7 @@ const PredictiveInsights = () => {
     }
   };
 
-  const recommendations = [
+  const recommendations: Recommendation[] = [
     {
       id: 1,
       type: 'revenue',
@@ -63,7 +88,7 @@ const PredictiveInsights = () => {
 
   const currentPrediction = predictions?.[selectedPeriod];
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: 'high' | 'medium' | 'low'): string => {
     switch (priority) {
       case 'high': return 'bg-error/10 text-error border-error/20';
       case 'medium': return 'bg-warning/10 text-warning border-warning/20';

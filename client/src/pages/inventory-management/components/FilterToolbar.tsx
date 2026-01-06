@@ -3,7 +3,23 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
 
-const FilterToolbar = ({ 
+interface Filters {
+  category: string;
+  stockStatus: string;
+  priceRange: string;
+}
+
+interface FilterToolbarProps {
+  filters: Filters;
+  onFilterChange: (filterKey: string, value: string) => void;
+  onClearFilters: () => void;
+  onBulkImport: () => void;
+  onBulkExport: () => void;
+  totalProducts: number;
+  filteredCount: number;
+}
+
+const FilterToolbar: React.FC<FilterToolbarProps> = ({ 
   filters, 
   onFilterChange, 
   onClearFilters, 

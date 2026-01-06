@@ -3,12 +3,38 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import SyncStatusIndicator from '../../../components/ui/SyncStatusIndicator';
 
-const SyncStatusSection = ({ syncStatus, onForceSync, onResolveConflicts }) => {
-  const [currentStatus, setCurrentStatus] = useState(syncStatus);
-  const [lastSyncTime, setLastSyncTime] = useState(new Date());
-  const [isSyncing, setIsSyncing] = useState(false);
+type SyncStatusType = 'online' | 'syncing' | 'offline';
 
-  const syncHistory = [
+interface SyncStatusSectionProps {
+  syncStatus: SyncStatusType;
+  onForceSync: () => void;
+  onResolveConflicts: () => void;
+}
+
+interface SyncHistoryItem {
+  id: number;
+  timestamp: Date;
+  status: 'success' | 'conflict' | 'error';
+  type: 'auto' | 'manual';
+  recordsSync: number;
+  message: string;
+}
+
+interface PendingConflict {
+  id: number;
+  type: string;
+  item: string;
+  localValue: string;
+  cloudValue: string;
+  timestamp: Date;
+}
+
+const SyncStatusSection: React.FC<SyncStatusSectionProps> = ({ syncStatus, onForceSync, onResolveConflicts }) => {
+  const [currentStatus, setCurrentStatus] = useState<SyncStatusType>(syncStatus);
+  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
+  const syncHistory: SyncHistoryItem[] = [
     {
       id: 1,
       timestamp: new Date(Date.now() - 300000), // 5 minutes ago
@@ -43,7 +69,7 @@ const SyncStatusSection = ({ syncStatus, onForceSync, onResolveConflicts }) => {
     }
   ];
 
-  const pendingConflicts = [
+  const pendingConflicts: PendingConflict[] = [
     {
       id: 1,
       type: 'inventory',
@@ -62,7 +88,7 @@ const SyncStatusSection = ({ syncStatus, onForceSync, onResolveConflicts }) => {
     }
   ];
 
-  const handleForceSync = async () => {
+  const handleForceSync = async (): Promise<void> => {
     setIsSyncing(true);
     setCurrentStatus('syncing');
     
@@ -75,7 +101,7 @@ const SyncStatusSection = ({ syncStatus, onForceSync, onResolveConflicts }) => {
     }, 3000);
   };
 
-  const handleResolveConflict = (conflictId, resolution) => {
+  const handleResolveConflict = (conflictId: number, resolution: 'local' | 'cloud'): void => {
     // Mock conflict resolution
     alert(`Conflict ${conflictId} resolved using ${resolution} version`);
     onResolveConflicts();

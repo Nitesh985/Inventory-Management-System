@@ -2,8 +2,12 @@ import React, { useState } from "react";
 import Icon from "../AppIcon";
 import Button from "./Button";
 
-const QuickActionMenu = ({ className = "" }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+interface QuickActionMenuProps {
+  className?: string;
+}
+
+const QuickActionMenu: React.FC<QuickActionMenuProps> = ({ className = "" }) => {
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const quickActions = [
     {
@@ -36,7 +40,7 @@ const QuickActionMenu = ({ className = "" }) => {
     },
   ];
 
-  const handleActionClick = (path) => {
+  const handleActionClick = (path: string): void => {
     window.location.href = path;
     setIsExpanded(false);
   };

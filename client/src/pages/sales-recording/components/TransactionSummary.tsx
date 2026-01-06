@@ -1,7 +1,19 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
 
-const TransactionSummary = ({ lineItems, taxRate = 8.25, discountAmount = 0 }) => {
+interface LineItem {
+  id: number | string;
+  total: number;
+  quantity: number;
+}
+
+interface TransactionSummaryProps {
+  lineItems: LineItem[];
+  taxRate?: number;
+  discountAmount?: number;
+}
+
+const TransactionSummary: React.FC<TransactionSummaryProps> = ({ lineItems, taxRate = 8.25, discountAmount = 0 }) => {
   const subtotal = lineItems?.reduce((sum, item) => sum + item?.total, 0);
   const discountTotal = discountAmount;
   const taxableAmount = subtotal - discountTotal;
@@ -12,7 +24,7 @@ const TransactionSummary = ({ lineItems, taxRate = 8.25, discountAmount = 0 }) =
     { label: 'Subtotal', value: subtotal, icon: 'Calculator' },
     { label: 'Discount', value: -discountTotal, icon: 'Percent', isDiscount: true },
     { label: `Tax (${taxRate}%)`, value: taxAmount, icon: 'Receipt' },
-    { label: 'Total', value: grandTotal, icon: 'DollarSign', isTotal: true }
+    { label: 'Total', value: grandTotal, icon: 'Wallet', isTotal: true }
   ];
 
   return (
@@ -56,7 +68,7 @@ const TransactionSummary = ({ lineItems, taxRate = 8.25, discountAmount = 0 }) =
                 : item?.isDiscount 
                 ? 'text-success' :'text-foreground'
             }`}>
-              {item?.isDiscount && item?.value !== 0 ? '-' : ''}${Math.abs(item?.value)?.toFixed(2)}
+              {item?.isDiscount && item?.value !== 0 ? '-' : ''}<span className="text-xs">Rs.</span> {Math.round(Math.abs(item?.value)).toLocaleString()}
             </span>
           </div>
         ))}

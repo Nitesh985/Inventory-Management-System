@@ -10,23 +10,110 @@ import LowStockAlert from './components/LowStockAlert';
 import BulkImportModal from './components/BulkImportModal';
 import InventoryStats from './components/InventoryStats';
 import { useFetch } from '@/hooks/useFetch';
-import { getAllProducts } from '@/api/products';
+import { useMutation } from '@/hooks/useMutation';
+import { getAllProducts, createProduct, updateProduct, deleteProduct } from '@/api/products';
+import { updateInventory, createOrUpdateInventory } from '@/api/inventory';
 
-const InventoryManagement = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [showProductModal, setShowProductModal] = useState(false);
-  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
+// Backend product structure (from API)
+interface BackendProduct {
+  _id: string;
+  shopId: string;
+  sku: string;
+  name: string;
+  category?: string;
+  description?: string;
+  unit: number;
+  price: number;
+  cost: number;
+  reorderLevel: number;
+  stock: number;
+  reserved: number;
+  availableStock: number;
+  isLowStock: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Frontend product structure (for UI components)
+interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+  currentStock: number;
+  minStock: number;
+  maxStock: number;
+  unitPrice: number;
+  costPrice: number;
+  description: string;
+  lastUpdated: string;
+  reserved: number;
+  availableStock: number;
+  isLowStock: boolean;
+}
+
+interface Filters {
+  category: string;
+  stockStatus: string;
+  priceRange: string;
+}
+
+const InventoryManagement: React.FC = () => {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [showProductModal, setShowProductModal] = useState<boolean>(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState<boolean>(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
   
-  const { data: products = [], loading, error } = useFetch(getAllProducts); 
+  const { data: productsData, loading, error } = useFetch(getAllProducts, [refreshKey]);
   
-  const [filters, setFilters] = useState({
+  // Transform backend data to frontend format
+  const products: Product[] = useMemo(() => {
+    const rawProducts = productsData?.data || productsData || [];
+    if (!Array.isArray(rawProducts)) return [];
+    
+    return rawProducts.map((p: BackendProduct) => ({
+      id: p._id,
+      name: p.name || '',
+      sku: p.sku || '',
+      category: p.category || '',
+      currentStock: p.stock ?? 0,
+      minStock: p.reorderLevel ?? 0,
+      maxStock: 0, // Not tracked in backend
+      unitPrice: p.price ?? 0,
+      costPrice: p.cost ?? 0,
+      description: p.description || '',
+      lastUpdated: p.updatedAt || p.createdAt || new Date().toISOString(),
+      reserved: p.reserved ?? 0,
+      availableStock: p.availableStock ?? p.stock ?? 0,
+      isLowStock: p.isLowStock ?? false,
+    }));
+  }, [productsData]);
+  
+  const { mutate: createProductMutation, loading: creating } = useMutation(createProduct);
+  const { mutate: updateProductMutation, loading: updating } = useMutation(
+    (data: { id: string; payload: Partial<Product> }) => updateProduct(data.id, data.payload)
+  );
+  const { mutate: deleteProductMutation, loading: deleting } = useMutation(deleteProduct);
+  const { mutate: updateInventoryMutation } = useMutation(createOrUpdateInventory);
+  
+  const triggerRefresh = () => setRefreshKey(prev => prev + 1); 
+  
+  const [filters, setFilters] = useState<Filters>({
     category: '',
     stockStatus: '',
     priceRange: ''
   });
   
-  const [syncStatus, setSyncStatus] = useState('online');
+  const [syncStatus, setSyncStatus] = useState<'online' | 'syncing' | 'offline'>('online');
+  
+  
+  const getProductStockStatus = (product: Product): string => {
+    if (!product) return 'unknown';
+    if (product.currentStock === 0) return 'out-of-stock';
+    if (product.isLowStock || (product.minStock != null && product.currentStock <= product.minStock)) return 'low-stock';
+    return 'in-stock';
+  };
   
   
   const filteredProducts = useMemo(() => {
@@ -74,85 +161,100 @@ const InventoryManagement = () => {
   
     return products.filter(product => {
       if (!product) return false;
-      return (
-        product.currentStock === 0 ||
-        (product.minStock != null && product.currentStock <= product.minStock)
-      );
+      // Use backend's isLowStock flag or calculate manually
+      return product.isLowStock || product.currentStock === 0 ||
+        (product.minStock != null && product.currentStock <= product.minStock);
     });
   }, [products]);
   
   
-  const getProductStockStatus = (product) => {
-    if (!product) return 'unknown';
-    if (product.currentStock === 0) return 'out-of-stock';
-    if (product.minStock != null && product.currentStock <= product.minStock) return 'low-stock';
-    return 'in-stock';
-  };
-  
-  
 
-  const handleAddProduct = () => {
+  const handleAddProduct = (): void => {
     setEditingProduct(null);
     setShowProductModal(true);
   };
   
-  const handleEditProduct = (product) => {
+  const handleEditProduct = (product: Product): void => {
     if (!product) return;
     setEditingProduct(product);
     setShowProductModal(true);
   };
   
-  const handleDeleteProduct = (productId) => {
+  const handleDeleteProduct = async (productId: string | number): Promise<void> => {
     if (!productId) return;
   
     if (window.confirm('Are you sure you want to delete this product?')) {
-      if (Array.isArray(products)) {
-        setProducts(prev => (Array.isArray(prev) ? prev.filter(p => p?.id !== productId) : []));
+      try {
+        await deleteProductMutation(String(productId));
+        triggerRefresh();
+      } catch (err) {
+        console.error('Failed to delete product:', err);
+        alert('Failed to delete product. Please try again.');
       }
     }
   };
   
   
-  const handleSaveProduct = (productData) => {
+  const handleSaveProduct = async (productData: Partial<Product>): Promise<void> => {
     if (!productData) return;
   
-    if (editingProduct) {
-      setProducts(prev =>
-        Array.isArray(prev)
-          ? prev.map(p => (p?.id === editingProduct.id ? { ...productData, id: editingProduct.id } : p))
-          : []
-      );
-    } else {
-      const newProduct = {
-        ...productData,
-        id: Date.now(),
-        lastUpdated: new Date().toISOString()
-      };
+    try {
+      if (editingProduct) {
+        // Update existing product - map frontend fields to backend fields
+        await updateProductMutation({ 
+          id: String(editingProduct.id), 
+          payload: {
+            name: productData.name,
+            sku: productData.sku,
+            category: productData.category,
+            description: productData.description,
+            price: productData.unitPrice,
+            cost: productData.costPrice,
+            reorderLevel: productData.minStock,
+          } as any
+        });
+      } else {
+        // Create new product - map frontend fields to backend fields
+        await createProductMutation({
+          name: productData.name || '',
+          sku: productData.sku || `SKU-${Date.now()}`,
+          unit: 1,
+          price: productData.unitPrice || 0,
+          cost: productData.costPrice || 0,
+          category: productData.category,
+          description: productData.description,
+          reorderLevel: productData.minStock || 0
+        });
+      }
   
-      setProducts(prev => (Array.isArray(prev) ? [...prev, newProduct] : [newProduct]));
+      triggerRefresh();
+      setShowProductModal(false);
+      setEditingProduct(null);
+    } catch (err) {
+      console.error('Failed to save product:', err);
+      alert('Failed to save product. Please try again.');
     }
-  
-    setShowProductModal(false);
-    setEditingProduct(null);
   };
   
   
-  const handleQuickStockUpdate = (productId, newStock) => {
+  const handleQuickStockUpdate = async (productId: string | number, newStock: number): Promise<void> => {
     if (!productId) return;
   
-    setProducts(prev =>
-      Array.isArray(prev)
-        ? prev.map(p =>
-            p?.id === productId
-              ? { ...p, currentStock: newStock, lastUpdated: new Date().toISOString() }
-              : p
-          )
-        : []
-    );
+    try {
+      // Update inventory stock via inventory API
+      await updateInventoryMutation({
+        productId: String(productId),
+        stock: newStock
+      });
+      triggerRefresh();
+    } catch (err) {
+      console.error('Failed to update stock:', err);
+      alert('Failed to update stock. Please try again.');
+    }
   };
   
   
-  const handleFilterChange = (filterKey, value) => {
+  const handleFilterChange = (filterKey: string, value: string): void => {
     setFilters(prev => ({
       ...prev,
       [filterKey]: value
@@ -181,8 +283,9 @@ const InventoryManagement = () => {
       'SKU',
       'Category',
       'Current Stock',
-      'Min Stock',
-      'Max Stock',
+      'Reserved',
+      'Available Stock',
+      'Reorder Level',
       'Unit Price',
       'Cost Price',
       'Description'
@@ -194,11 +297,12 @@ const InventoryManagement = () => {
         `"${product?.name ?? ''}"`,
         product?.sku ?? '',
         product?.category ?? '',
-        product?.currentStock ?? '',
-        product?.minStock ?? '',
-        product?.maxStock ?? '',
-        product?.unitPrice ?? '',
-        product?.costPrice ?? '',
+        product?.currentStock ?? 0,
+        product?.reserved ?? 0,
+        product?.availableStock ?? 0,
+        product?.minStock ?? 0,
+        product?.unitPrice ?? 0,
+        product?.costPrice ?? 0,
         `"${product?.description ?? ''}"`
       ].join(','))
     ].join('\n');
@@ -215,7 +319,7 @@ const InventoryManagement = () => {
   };
   
   
-  const handleImportComplete = (results) => {
+  const handleImportComplete = (results: unknown[]): void => {
     console.log('Import completed:', results || []);
   };
 

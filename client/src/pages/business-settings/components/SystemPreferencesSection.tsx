@@ -2,11 +2,30 @@ import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
-import { Checkbox } from '../../../components/ui/Checkbox';
+import Checkbox from '../../../components/ui/Checkbox';
 
-const SystemPreferencesSection = ({ preferences, onUpdate }) => {
-  const [formData, setFormData] = useState(preferences);
-  const [hasChanges, setHasChanges] = useState(false);
+interface Preferences {
+  syncFrequency: string;
+  backupFrequency: string;
+  dataRetention: string;
+  autoSync: boolean;
+  compressBackups: boolean;
+  lowStockAlerts: boolean;
+  dailySummary: boolean;
+  syncNotifications: boolean;
+  backupReminders: boolean;
+  browserNotifications: boolean;
+  [key: string]: string | boolean;
+}
+
+interface SystemPreferencesSectionProps {
+  preferences: Preferences;
+  onUpdate: (data: Preferences) => void;
+}
+
+const SystemPreferencesSection: React.FC<SystemPreferencesSectionProps> = ({ preferences, onUpdate }) => {
+  const [formData, setFormData] = useState<Preferences>(preferences);
+  const [hasChanges, setHasChanges] = useState<boolean>(false);
 
   const syncFrequencyOptions = [
     { value: 'realtime', label: 'Real-time (when online)' },
@@ -32,22 +51,22 @@ const SystemPreferencesSection = ({ preferences, onUpdate }) => {
     { value: 'forever', label: 'Keep forever' }
   ];
 
-  const handleSelectChange = (field, value) => {
+  const handleSelectChange = (field: string, value: string): void => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
 
-  const handleCheckboxChange = (field, checked) => {
+  const handleCheckboxChange = (field: string, checked: boolean): void => {
     setFormData(prev => ({ ...prev, [field]: checked }));
     setHasChanges(true);
   };
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     onUpdate(formData);
     setHasChanges(false);
   };
 
-  const handleReset = () => {
+  const handleReset = (): void => {
     setFormData(preferences);
     setHasChanges(false);
   };

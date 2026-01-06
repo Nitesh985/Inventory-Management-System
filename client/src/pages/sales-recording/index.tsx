@@ -10,6 +10,8 @@ import ProductSelector from './components/ProductSelector';
 import TransactionSummary from './components/TransactionSummary';
 import PaymentMethodSelector from './components/PaymentMethodSelector';
 import TransactionActions from './components/TransactionActions';
+import { useMutation } from '@/hooks/useMutation';
+import { createSale } from '@/api/sales';
 
 /* ----------------------------------
  * Local Types (minimal & safe)
@@ -40,6 +42,8 @@ const SalesRecording: React.FC = () => {
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
+
+  const { mutate: createSaleMutation, loading: creatingSale } = useMutation(createSale);
 
   const taxRate = 8.25;
   const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
@@ -77,31 +81,31 @@ const SalesRecording: React.FC = () => {
 
     setIsProcessing(true);
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      const saleData = {
+        customerId: selectedCustomer,
+        items: lineItems.map(item => ({
+          productId: item.productId || item.id,
+          productName: item.name || 'Unknown Product',
+          quantity: item.quantity,
+          unitPrice: item.price,
+          totalPrice: item.total
+        })),
+        totalAmount: totalAmount,
+        paidAmount: paymentMethod === 'cash' ? amountReceived : totalAmount
+      };
 
-    const saleData = {
-      id: `SALE-${Date.now()}`,
-      customer: selectedCustomer,
-      date: transactionDate,
-      items: lineItems,
-      subtotal,
-      tax: taxAmount,
-      total: totalAmount,
-      paymentMethod,
-      amountReceived: paymentMethod === 'cash' ? amountReceived : totalAmount,
-      change:
-        paymentMethod === 'cash'
-          ? Math.max(0, amountReceived - totalAmount)
-          : 0,
-      timestamp: new Date().toISOString(),
-    };
+      await createSaleMutation(saleData);
 
-    console.log('Sale recorded:', saleData);
-
-    handleClearTransaction();
-    setIsProcessing(false);
-
-    alert('Sale recorded successfully!');
+      console.log('Sale recorded:', saleData);
+      handleClearTransaction();
+      alert('Sale recorded successfully!');
+    } catch (error) {
+      console.error('Error recording sale:', error);
+      alert('Error recording sale. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSaveAsDraft = (): void => {

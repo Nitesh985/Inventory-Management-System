@@ -1,8 +1,28 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
 
-const InventoryStats = ({ products }) => {  
-    const calculateStats = () => {
+interface Product {
+  id?: string | number;
+  currentStock?: number;
+  minStock?: number;
+  unitPrice?: number;
+  category?: string;
+}
+
+interface InventoryStatsProps {
+  products: Product[];
+}
+
+interface Stats {
+  totalProducts: number;
+  totalValue: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  categoriesCount: number;
+}
+
+const InventoryStats: React.FC<InventoryStatsProps> = ({ products }) => {  
+    const calculateStats = (): Stats => {
       // SAFETY: if products is not a valid array, return zeros
       if (!Array.isArray(products) || products.length === 0) {
         return {
@@ -49,12 +69,9 @@ const InventoryStats = ({ products }) => {
   
     const stats = calculateStats();
   
-    const formatCurrency = (amount) => {
+    const formatCurrency = (amount: number): string => {
       const safeAmount = Number(amount) || 0;
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-      }).format(safeAmount);
+      return `Rs. ${safeAmount.toLocaleString('ne-NP', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
     };
   
   //   const statCards = [

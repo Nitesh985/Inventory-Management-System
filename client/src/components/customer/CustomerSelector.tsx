@@ -4,8 +4,8 @@ import Button from '../ui/Button';
 import Select from '../ui/Select';
 import Input from '../ui/Input';
 import { useFetch } from '@/hooks/useFetch';
+import { useMutation } from '@/hooks/useMutation';
 import { createCustomer, getCustomers } from '@/api/customers';
-// import { useMutation } from '@/hooks/useMutation';
 import Loader from '@/components/Loader';
 import AddCustomer from './AddCustomer';
 
@@ -31,7 +31,9 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
     email: '',
     address: ''
   });
-  const {data, loading, error} = useFetch(getCustomers);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const {data, loading, error} = useFetch(getCustomers, [refreshKey]);
+  const { mutate: createCustomerMutation, loading: creating } = useMutation(createCustomer);
   const [customers, setCustomers] = useState([ {value: 'walk-in', label: 'Walk-in Customer', phone: '', email: '', address: ''}])
   
   
@@ -58,19 +60,32 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
   
   const handleAddCustomer = async () => {
     if (newCustomer?.name?.trim()) {
-      const customer = {
-        value: `cust-${Date.now()}`,
-        label: newCustomer?.name,
-        phone: newCustomer?.phone,
-        email: newCustomer?.email,
-        address: newCustomer?.address
-      };
-      
-      
-      onAddCustomer(customer);
-      onCustomerSelect(customer?.value);
-      setNewCustomer({ name: '', phone: '', email: '', address: '' });
-      setShowAddForm(false);
+      try {
+        const result = await createCustomerMutation({
+          name: newCustomer.name,
+          phone: newCustomer.phone,
+          address: newCustomer.address,
+          shopId: 'default-shop-id', // TODO: Get from context
+          clientId: 'default-client-id' // TODO: Get from context
+        });
+        
+        const customer = {
+          value: result?._id || `cust-${Date.now()}`,
+          label: newCustomer?.name,
+          phone: newCustomer?.phone,
+          email: newCustomer?.email,
+          address: newCustomer?.address
+        };
+        
+        onAddCustomer(customer);
+        onCustomerSelect(customer?.value);
+        setNewCustomer({ name: '', phone: '', email: '', address: '' });
+        setShowAddForm(false);
+        setRefreshKey(prev => prev + 1); // Refresh customer list
+      } catch (err) {
+        console.error('Error creating customer:', err);
+        alert('Failed to create customer. Please try again.');
+      }
     }
   };
 

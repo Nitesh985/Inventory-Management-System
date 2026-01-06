@@ -3,10 +3,11 @@ import { useForm, type SubmitHandler, Controller } from 'react-hook-form'
 import { Link } from 'react-router-dom';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import { Checkbox } from '@/components/ui/Checkbox';
+import Checkbox from '@/components/ui/Checkbox';
 import FormValidationFeedback from '@/components/ui/FormValidationFeedback';
 import Icon from '@/components/AppIcon';
 import type { RegisterFormData, RegisterFormProps } from '../types';
+import { signIn } from '@/lib/auth-client';
 
 
 
@@ -17,7 +18,7 @@ const RegisterForm = ({
   isOnline,
   successMessage
 }: RegisterFormProps) => {
-  const {register, handleSubmit, watch, setValue, getValues, control } = useForm<RegisterFormData>({
+  const {register, handleSubmit, watch, control } = useForm<RegisterFormData>({
     defaultValues:{
       fullName: '',
       email: '',
@@ -26,6 +27,13 @@ const RegisterForm = ({
       acceptTerms: false
     }
   });
+
+  const providerSignUp = async () => {
+    await signIn.social({
+      provider: "google"
+    }, {
+    })
+  }
 
   const password = watch("password");
 
@@ -136,9 +144,7 @@ const RegisterForm = ({
           variant="outline"
           fullWidth
           disabled={!isOnline || isLoading}
-          onClick={() => {
-            // Placeholder for Google Sign-Up logic
-          }}
+          onClick={providerSignUp}
         >
           <div className="flex items-center justify-center space-x-2">
             <Icon name="Shield" size={18} />

@@ -13,6 +13,7 @@ const CustomerCredit = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isCustomerListExpanded, setIsCustomerListExpanded] = useState(false);
 
   // Function to trigger a re-fetch across all components
   const handleRefresh = () => setRefreshKey(prev => prev + 1);
@@ -45,19 +46,23 @@ const CustomerCredit = () => {
       {/* 2. Top Metric Cards */}
       <CreditStats key={`stats-${refreshKey}`} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* 3. Section 1: Customer Directory (Left Sidebar within page) */}
-        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className={`bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-300 w-full ${
+          isCustomerListExpanded ? 'lg:w-[58%] lg:min-w-[500px]' : 'lg:w-[33%] lg:min-w-[320px]'
+        }`}>
           <CustomerList 
             selectedCustomerId={selectedCustomerId} 
             onCustomerSelect={setSelectedCustomerId}
             onAddClick={() => setIsAddModalOpen(true)}
             refreshKey={refreshKey}
+            isExpanded={isCustomerListExpanded}
+            onToggleExpand={() => setIsCustomerListExpanded(!isCustomerListExpanded)}
           />
         </div>
 
         {/* 4. Section 3: Transaction & History (Main Content Area) */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="flex-1 space-y-6 min-w-0">
           {selectedCustomerId ? (
             <>
               {/* Record Entry Form (Functional Section) */}

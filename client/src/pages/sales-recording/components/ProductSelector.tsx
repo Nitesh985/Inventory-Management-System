@@ -91,7 +91,7 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
               placeholder="Search and select product"
               options={products?.map(product => ({
                 value: product?.value,
-                label: `${product?.label} - $${product?.price?.toFixed(2)}`,
+                label: `${product?.label} - Rs. ${Math.round(product?.price).toLocaleString()}`,
                 description: `Stock: ${product?.stock} | Category: ${product?.category}`
               }))}
               value={selectedProduct}
@@ -114,7 +114,7 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-foreground">{selectedProductData?.label}</p>
-                <p className="text-sm text-muted-foreground">Price: ${selectedProductData?.price?.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Price: <span className="text-xs">Rs.</span> {Math.round(selectedProductData?.price).toLocaleString()}</p>
               </div>
               <div className="text-right">
                 <div className={`text-sm font-medium ${getStockStatus(selectedProductData?.stock)?.color}`}>
@@ -126,7 +126,7 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
             {quantity > 0 && (
               <div className="mt-2 pt-2 border-t border-border">
                 <p className="text-sm font-medium text-foreground">
-                  Subtotal: ${(selectedProductData?.price * quantity)?.toFixed(2)}
+                  Subtotal: <span className="text-xs">Rs.</span> {Math.round(selectedProductData?.price * quantity).toLocaleString()}
                 </p>
               </div>
             )}
@@ -155,7 +155,7 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
                 <div className="flex-1">
                   <p className="font-medium text-foreground">{item?.productName}</p>
                   <p className="text-sm text-muted-foreground">
-                    ${item?.price?.toFixed(2)} × {item?.quantity}
+                    <span className="text-xs">Rs.</span> {Math.round(item?.price).toLocaleString()} × {item?.quantity}
                   </p>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -179,7 +179,7 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
                     </Button>
                   </div>
                   <div className="text-right min-w-0">
-                    <p className="font-medium text-foreground">${item?.total?.toFixed(2)}</p>
+                    <p className="font-medium text-foreground"><span className="text-xs">Rs.</span> {Math.round(item?.total).toLocaleString()}</p>
                   </div>
                   <Button
                     variant="ghost"

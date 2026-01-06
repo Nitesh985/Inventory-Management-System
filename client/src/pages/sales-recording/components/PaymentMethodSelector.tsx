@@ -3,7 +3,15 @@ import Icon from '../../../components/AppIcon';
 import Select from '../../../components/ui/Select';
 import Input from '../../../components/ui/Input';
 
-const PaymentMethodSelector = ({ 
+interface PaymentMethodSelectorProps {
+  paymentMethod: string;
+  onPaymentMethodChange: (value: string) => void;
+  amountReceived: number;
+  onAmountReceivedChange: (value: number) => void;
+  totalAmount: number;
+}
+
+const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({ 
   paymentMethod, 
   onPaymentMethodChange, 
   amountReceived, 
@@ -60,16 +68,16 @@ const PaymentMethodSelector = ({
                 <div className="bg-muted p-3 rounded-lg space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Total Amount:</span>
-                    <span className="font-medium text-foreground">${totalAmount?.toFixed(2)}</span>
+                    <span className="font-medium text-foreground"><span className="text-xs">Rs.</span> {Math.round(totalAmount).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Amount Received:</span>
-                    <span className="font-medium text-foreground">${amountReceived?.toFixed(2)}</span>
+                    <span className="font-medium text-foreground"><span className="text-xs">Rs.</span> {Math.round(amountReceived).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm pt-2 border-t border-border">
                     <span className="text-muted-foreground">Change:</span>
                     <span className={`font-medium ${changeAmount >= 0 ? 'text-success' : 'text-error'}`}>
-                      ${Math.abs(changeAmount)?.toFixed(2)}
+                      <span className="text-xs">Rs.</span> {Math.round(Math.abs(changeAmount)).toLocaleString()}
                       {changeAmount < 0 && ' (Insufficient)'}
                     </span>
                   </div>

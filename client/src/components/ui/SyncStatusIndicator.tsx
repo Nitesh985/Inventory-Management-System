@@ -1,7 +1,14 @@
 import React from "react";
 import Icon from "../AppIcon";
 
-const SyncStatusIndicator = ({
+interface SyncStatusIndicatorProps {
+  status?: "online" | "syncing" | "offline";
+  showLabel?: boolean;
+  size?: "sm" | "default" | "lg";
+  className?: string;
+}
+
+const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
   status = "online",
   showLabel = true,
   size = "default",

@@ -33,7 +33,11 @@
     "tailwindcss-animate": "^1.0.7",
     "tailwindcss-elevation": "^2.0.0",
     "tailwindcss-fluid-type": "^2.0.7",
-    "zod": "^4.2.1"
+    "zod": "^4.2.1",
+    "@geoapify/geocoder-autocomplete": "^3.0.1",
+    "@geoapify/react-geocoder-autocomplete": "^3.0.0",
+    "react-google-places-autocomplete": "^4.1.0",
+    "react-phone-input-2": "^2.15.1"
   },
   "scripts": {
     "dev": "bun --bun vite",

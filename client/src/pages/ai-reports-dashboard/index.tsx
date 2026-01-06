@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
 import Icon from '../../components/AppIcon';
@@ -9,66 +9,90 @@ import RevenueChart from './components/RevenueChart';
 import PredictiveInsights from './components/PredictiveInsights';
 import ReportGenerator from './components/ReportGenerator';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
+import { useFetch } from '@/hooks/useFetch';
+import { getSales } from '@/api/sales';
+import { getExpenses } from '@/api/expenses';
 
-const AIReportsDashboard = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [syncStatus, setSyncStatus] = useState('online');
-  const [activeView, setActiveView] = useState('overview');
+type SyncStatus = 'online' | 'syncing' | 'offline';
+type ViewId = 'overview' | 'analytics' | 'predictions' | 'reports';
 
-  useEffect(() => {
-    // Simulate sync status changes
-    const interval = setInterval(() => {
-      const statuses = ['online', 'syncing', 'offline'];
-      const randomStatus = statuses?.[Math.floor(Math.random() * statuses?.length)];
-      setSyncStatus(randomStatus);
-    }, 10000);
+interface ViewOption {
+  id: ViewId;
+  label: string;
+  icon: string;
+}
 
-    return () => clearInterval(interval);
-  }, []);
+interface QuickStat {
+  title: string;
+  value: string;
+  change: string;
+  trend: 'up' | 'down';
+  icon: string;
+  color: string;
+}
 
-  const viewOptions = [
+const AIReportsDashboard: React.FC = () => {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('online');
+  const [activeView, setActiveView] = useState<ViewId>('overview');
+
+  const { data: salesData } = useFetch(getSales, []);
+  const { data: expensesData } = useFetch(getExpenses, []);
+
+  // Calculate real stats from API data
+  const quickStats: QuickStat[] = useMemo(() => {
+    const sales = salesData || [];
+    const expenses = expensesData || [];
+    
+    const totalRevenue = sales.reduce((sum: number, sale: any) => sum + (sale?.totalAmount || 0), 0);
+    const totalExpenses = expenses.reduce((sum: number, exp: any) => sum + (exp?.amount || 0), 0);
+    const netProfit = totalRevenue - totalExpenses;
+    const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
+    return [
+      {
+        title: 'Total Revenue',
+        value: `Rs. ${totalRevenue.toLocaleString()}`,
+        change: '+12.5%',
+        trend: 'up' as const,
+        icon: 'DollarSign',
+        color: 'text-success'
+      },
+      {
+        title: 'Total Expenses',
+        value: `Rs. ${totalExpenses.toLocaleString()}`,
+        change: '+8.3%',
+        trend: 'up' as const,
+        icon: 'Receipt',
+        color: 'text-error'
+      },
+      {
+        title: 'Net Profit',
+        value: `Rs. ${netProfit.toLocaleString()}`,
+        change: netProfit >= 0 ? '+18.2%' : '-5.0%',
+        trend: netProfit >= 0 ? 'up' as const : 'down' as const,
+        icon: 'TrendingUp',
+        color: netProfit >= 0 ? 'text-success' : 'text-error'
+      },
+      {
+        title: 'Profit Margin',
+        value: `${profitMargin.toFixed(1)}%`,
+        change: profitMargin >= 0 ? '+2.1%' : '-1.5%',
+        trend: profitMargin >= 0 ? 'up' as const : 'down' as const,
+        icon: 'Percent',
+        color: 'text-primary'
+      }
+    ];
+  }, [salesData, expensesData]);
+
+  const viewOptions: ViewOption[] = [
     { id: 'overview', label: 'Overview', icon: 'LayoutDashboard' },
     { id: 'analytics', label: 'Advanced Analytics', icon: 'BarChart3' },
     { id: 'predictions', label: 'AI Predictions', icon: 'Brain' },
     { id: 'reports', label: 'Report Generator', icon: 'FileText' }
   ];
 
-  const quickStats = [
-    {
-      title: 'Total Revenue',
-      value: '$324,580',
-      change: '+12.5%',
-      trend: 'up',
-      icon: 'DollarSign',
-      color: 'text-success'
-    },
-    {
-      title: 'Total Expenses',
-      value: '$198,240',
-      change: '+8.3%',
-      trend: 'up',
-      icon: 'Receipt',
-      color: 'text-error'
-    },
-    {
-      title: 'Net Profit',
-      value: '$126,340',
-      change: '+18.2%',
-      trend: 'up',
-      icon: 'TrendingUp',
-      color: 'text-success'
-    },
-    {
-      title: 'Profit Margin',
-      value: '38.9%',
-      change: '+2.1%',
-      trend: 'up',
-      icon: 'Percent',
-      color: 'text-primary'
-    }
-  ];
-
-  const renderActiveView = () => {
+  const renderActiveView = (): JSX.Element => {
     switch (activeView) {
       case 'analytics':
         return <AdvancedAnalytics />;

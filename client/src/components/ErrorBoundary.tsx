@@ -1,17 +1,32 @@
 import React from "react";
 import Icon from "./AppIcon";
 
-class ErrorBoundary extends React.Component {
-  constructor(props) {
+interface ErrorBoundaryProps {
+  children?: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+// Extend Window interface for error handling
+interface WindowWithErrorHandler extends Window {
+  __COMPONENT_ERROR__?: (error: Error, errorInfo: React.ErrorInfo) => void;
+}
+
+declare const window: WindowWithErrorHandler;
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(_error: Error): ErrorBoundaryState {
     return { hasError: true };
   }
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error & { __ErrorBoundary?: boolean }, errorInfo: React.ErrorInfo) {
     error.__ErrorBoundary = true;
     window.__COMPONENT_ERROR__?.(error, errorInfo);
     // console.log("Error caught by ErrorBoundary:", error, errorInfo);

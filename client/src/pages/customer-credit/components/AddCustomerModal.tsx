@@ -2,16 +2,32 @@ import React, { useState } from 'react';
 import Icon from '@/components/AppIcon';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { useMutation } from '@/hooks/useMutation';
 import { createCustomer } from '@/api/customers';
 
-const AddCustomerModal = ({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) => {
+interface AddCustomerModalProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const AddCustomerModal = ({ onClose, onSuccess }: AddCustomerModalProps) => {
   const [data, setData] = useState({ name: '', phone: '', address: '' });
+  const { mutate: createCustomerMutation, loading, error } = useMutation(createCustomer);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createCustomer({ ...data, shopId: '69243c8f00b1f56bd2724e3a', clientId: 'client123' });
-    onSuccess();
-    onClose();
+    try {
+      await createCustomerMutation({ 
+        ...data, 
+        shopId: '69243c8f00b1f56bd2724e3a', // TODO: Get from context
+        clientId: 'client123' // TODO: Get from context
+      });
+      onSuccess();
+      onClose();
+    } catch (err) {
+      console.error('Error creating customer:', err);
+      alert('Failed to create customer. Please try again.');
+    }
   };
 
   return (

@@ -24,6 +24,6 @@
       "module": "ES2020"
     }
   },
-  "include": ["src"],
+  "include": ["src", "express.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

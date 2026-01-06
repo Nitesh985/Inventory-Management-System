@@ -3,11 +3,31 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
-const RevenueChart = () => {
-  const [chartType, setChartType] = useState('line');
-  const [timeRange, setTimeRange] = useState('6months');
+interface RevenueData {
+  month: string;
+  revenue: number;
+  expenses: number;
+  profit: number;
+}
 
-  const revenueData = [
+interface TooltipPayload {
+  dataKey: string;
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string;
+}
+
+const RevenueChart: React.FC = () => {
+  const [chartType, setChartType] = useState<'line' | 'bar'>('line');
+  const [timeRange, setTimeRange] = useState<'6months' | 'year'>('6months');
+
+  const revenueData: RevenueData[] = [
     { month: 'Jun 2024', revenue: 45000, expenses: 32000, profit: 13000 },
     { month: 'Jul 2024', revenue: 52000, expenses: 35000, profit: 17000 },
     { month: 'Aug 2024', revenue: 48000, expenses: 33000, profit: 15000 },
@@ -16,7 +36,7 @@ const RevenueChart = () => {
     { month: 'Nov 2024', revenue: 67000, expenses: 43000, profit: 24000 }
   ];
 
-  const yearlyData = [
+  const yearlyData: RevenueData[] = [
     { month: 'Jan 2024', revenue: 38000, expenses: 28000, profit: 10000 },
     { month: 'Feb 2024', revenue: 42000, expenses: 30000, profit: 12000 },
     { month: 'Mar 2024', revenue: 39000, expenses: 29000, profit: 10000 },
@@ -30,11 +50,11 @@ const RevenueChart = () => {
     { month: 'Nov 2024', revenue: 67000, expenses: 43000, profit: 24000 }
   ];
 
-  const getCurrentData = () => {
+  const getCurrentData = (): RevenueData[] => {
     return timeRange === 'year' ? yearlyData : revenueData;
   };
 
-  const formatCurrency = (value) => {
+  const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -42,7 +62,7 @@ const RevenueChart = () => {
     })?.format(value);
   };
 
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
     if (active && payload && payload?.length) {
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-modal">

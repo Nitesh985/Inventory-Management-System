@@ -81,7 +81,13 @@ export function CoolInventoryLoader({
   accent = "#06b6d4",
   speed = 2,
   ariaLabel = "Processing inventory",
-}) {
+}: {
+  size?: number;
+  primary?: string;
+  accent?: string;
+  speed?: number;
+  ariaLabel?: string;
+}): JSX.Element {
   // A cooler loader — conveyor with moving boxes and rotating cog
   return (
     <svg
@@ -192,10 +198,13 @@ export function CoolInventoryLoader({
   );
 }
 
-
+interface LoaderProps {
+  loading: boolean;
+  children: React.ReactNode;
+}
 
 // Demo component that renders both loaders for quick preview
-export default function Loader({loading, children}:{loading:boolean, children: React.ReactNode}) {
+export default function Loader({ loading, children }: LoaderProps): React.ReactNode {
   if (!loading) return children
   
   return (

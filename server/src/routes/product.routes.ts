@@ -6,11 +6,11 @@ import {
   updateProduct,
   softDeleteProduct
 } from '../controllers/product.controllers.ts'
-import { mockupData } from '../middlewares/mockup.middlewares.ts'
+import { verifyBusinessAuth } from '../middlewares/auth.middlewares.ts'
 
 
 const router = Router()
-router.use(mockupData)
+router.use(verifyBusinessAuth)
 
 // CREATE PRODUCT
 router.post('/', createProduct)

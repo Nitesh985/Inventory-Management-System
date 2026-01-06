@@ -3,11 +3,38 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 
-const ProductTable = ({ products, onEdit, onDelete, onQuickStockUpdate }) => {
-  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [editingStock, setEditingStock] = useState(null);
-  const [stockValue, setStockValue] = useState('');
+interface Product {
+  id: string | number;
+  name?: string;
+  sku?: string;
+  category?: string;
+  currentStock?: number;
+  minStock?: number;
+  maxStock?: number;
+  unitPrice?: number;
+  costPrice?: number;
+  description?: string;
+  lastUpdated?: string;
+  [key: string]: unknown;
+}
+
+interface ProductTableProps {
+  products: Product[];
+  onEdit: (product: Product) => void;
+  onDelete: (productId: string | number) => void;
+  onQuickStockUpdate: (productId: string | number, newStock: number) => void;
+}
+
+interface SortConfig {
+  key: string;
+  direction: 'asc' | 'desc';
+}
+
+const ProductTable: React.FC<ProductTableProps> = ({ products, onEdit, onDelete, onQuickStockUpdate }) => {
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [editingStock, setEditingStock] = useState<string | number | null>(null);
+  const [stockValue, setStockValue] = useState<string>('');
 
   const sortedAndFilteredProducts = useMemo(() => {
     let filtered = products?.filter(product =>
@@ -39,28 +66,28 @@ const ProductTable = ({ products, onEdit, onDelete, onQuickStockUpdate }) => {
     return filtered;
   }, [products, sortConfig, searchTerm]);
 
-  const handleSort = (key) => {
+  const handleSort = (key: string): void => {
     setSortConfig(prevConfig => ({
       key,
       direction: prevConfig?.key === key && prevConfig?.direction === 'asc' ? 'desc' : 'asc'
     }));
   };
 
-  const getSortIcon = (columnKey) => {
+  const getSortIcon = (columnKey: string): string => {
     if (sortConfig?.key !== columnKey) {
       return 'ArrowUpDown';
     }
     return sortConfig?.direction === 'asc' ? 'ArrowUp' : 'ArrowDown';
   };
 
-  const getStockStatus = (current, min) => {
+  const getStockStatus = (current: number, min?: number): string => {
     if (!min) return 'normal';
     if (current === 0) return 'out-of-stock';
     if (current <= min) return 'low-stock';
     return 'normal';
   };
 
-  const getStockStatusColor = (status) => {
+  const getStockStatusColor = (status: string): string => {
     switch (status) {
       case 'out-of-stock': return 'text-error bg-error/10';
       case 'low-stock': return 'text-warning bg-warning/10';
@@ -68,14 +95,11 @@ const ProductTable = ({ products, onEdit, onDelete, onQuickStockUpdate }) => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    })?.format(amount);
+  const formatCurrency = (amount: number): string => {
+    return `Rs. ${amount?.toLocaleString('ne-NP', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     return new Date(dateString)?.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -83,12 +107,12 @@ const ProductTable = ({ products, onEdit, onDelete, onQuickStockUpdate }) => {
     });
   };
 
-  const handleStockEdit = (productId, currentStock) => {
+  const handleStockEdit = (productId: string | number, currentStock: number): void => {
     setEditingStock(productId);
     setStockValue(currentStock?.toString());
   };
 
-  const handleStockSave = (productId) => {
+  const handleStockSave = (productId: string | number): void => {
     const newStock = parseInt(stockValue);
     if (!isNaN(newStock) && newStock >= 0) {
       onQuickStockUpdate(productId, newStock);

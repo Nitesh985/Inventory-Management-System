@@ -1,12 +1,19 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Icon from "../AppIcon";
 import Button from "./Button";
 import Logo from "../../assets/logo.png";
+import { signOut } from "@/lib/auth-client";
 
-const Header = ({ onMenuToggle, syncStatus = "online" }) => {
+interface HeaderProps {
+  onMenuToggle: () => void;
+  syncStatus?: "online" | "syncing" | "offline";
+}
+
+const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate()
 
   const primaryNavItems = [
     {
@@ -144,7 +151,11 @@ const Header = ({ onMenuToggle, syncStatus = "online" }) => {
                     <span>Help & Support</span>
                   </button>
 
-                  <button className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
+                  <button 
+                  className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
+                  onClick={()=>
+                    signOut().then(()=>navigate("/sign-in", {replace:true}))}
+                  >
                     <Icon name="LogOut" size={16} />
                     <span>Sign Out</span>
                   </button>

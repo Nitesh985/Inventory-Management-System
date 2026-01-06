@@ -7,14 +7,24 @@ import Product from '../models/product.models.ts'
 import mongoose from 'mongoose'
 
 const createInventory = asyncHandler(async (req: Request, res: Response) => {
-  const { shopId, productId, stock, reserved } = req.body
+  const shopId = req.user!.activeShopId!
+  const { productId, stock, reserved } = req.body
 
-  if (!shopId || !productId) throw new ApiError(400, 'shopId and productId required')
+  if (!productId) throw new ApiError(400, 'productId required')
 
-  const product = await Product.findById(productId)
-  if (!product) throw new ApiError(400, 'Product not found')
+  // Verify product exists and belongs to the same shop
+  const product = await Product.findOne({
+    _id: productId,
+    shopId: new mongoose.Types.ObjectId(shopId),
+    deleted: false
+  })
+  if (!product) throw new ApiError(400, 'Product not found or does not belong to this shop')
 
-  const existing = await Inventory.findOne({ shopId, productId })
+  const existing = await Inventory.findOne({ 
+    shopId: new mongoose.Types.ObjectId(shopId), 
+    productId: new mongoose.Types.ObjectId(productId) 
+  })
+  
   if (existing) {
     // update existing
     existing.stock = (stock ?? existing.stock)
@@ -24,8 +34,8 @@ const createInventory = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const inventory = await Inventory.create({
-    shopId,
-    productId,
+    shopId: new mongoose.Types.ObjectId(shopId),
+    productId: new mongoose.Types.ObjectId(productId),
     stock: stock ?? 0,
     reserved: reserved ?? 0
   })
@@ -34,30 +44,48 @@ const createInventory = asyncHandler(async (req: Request, res: Response) => {
 })
 
 const getInventory = asyncHandler(async (req: Request, res: Response) => {
-  const { shopId, productId } = req.query
-  const filter: any = {}
-  if (shopId) filter.shopId = shopId
-  if (productId) filter.productId = productId
+  const shopId = req.user!.activeShopId!
+  const { productId } = req.query
+  
+  const filter: any = { shopId: new mongoose.Types.ObjectId(shopId) }
+  if (productId) filter.productId = new mongoose.Types.ObjectId(productId as string)
+  
   const items = await Inventory.find(filter)
   return res.status(200).json(new ApiResponse(200, items, 'Inventory fetched'))
 })
 
 const getInventoryById = asyncHandler(async (req: Request, res: Response) => {
-  const item = await Inventory.findById(req.params.id)
+  const shopId = req.user!.activeShopId!
+  const item = await Inventory.findOne({
+    _id: req.params.id,
+    shopId: new mongoose.Types.ObjectId(shopId)
+  })
   if (!item) throw new ApiError(404, 'Inventory not found')
   return res.status(200).json(new ApiResponse(200, item, 'Inventory fetched'))
 })
 
 const updateInventory = asyncHandler(async (req: Request, res: Response) => {
+  const shopId = req.user!.activeShopId!
   const updates = { ...req.body }
   delete updates._id
-  const item = await Inventory.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true })
+  delete updates.shopId // Prevent changing shopId
+
+  const item = await Inventory.findOneAndUpdate(
+    { _id: req.params.id, shopId: new mongoose.Types.ObjectId(shopId) },
+    { $set: updates },
+    { new: true }
+  )
   if (!item) throw new ApiError(404, 'Inventory not found')
   return res.status(200).json(new ApiResponse(200, item, 'Inventory updated'))
 })
 
 const deleteInventory = asyncHandler(async (req: Request, res: Response) => {
-  await Inventory.findByIdAndDelete(req.params.id)
+  const shopId = req.user!.activeShopId!
+  const result = await Inventory.findOneAndDelete({
+    _id: req.params.id,
+    shopId: new mongoose.Types.ObjectId(shopId)
+  })
+  if (!result) throw new ApiError(404, 'Inventory not found')
   return res.status(200).json(new ApiResponse(200, {}, 'Inventory deleted'))
 })
 

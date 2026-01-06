@@ -17,10 +17,11 @@ type SaleItemInput = {
 }
 
 const createSale = asyncHandler(async (req: Request, res: Response) => {
-  const { customerId, shopId, items, totalAmount, paidAmount = 0, invoiceNo, clientId } = req.body;
+  const shopId = req.user!.activeShopId!
+  const { customerId, items, totalAmount, paidAmount = 0 } = req.body;
 
   // --- VALIDATIONS ---
-  const requiredFields = ["customerId", "shopId", "items", "totalAmount", "invoiceNo"] as const;
+  const requiredFields = ["customerId", "items", "totalAmount"] as const;
   for (const field of requiredFields) {
     if (!req.body[field]) throw new ApiError(400, `Missing required field: ${field}`);
   }
@@ -38,16 +39,33 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
   });
 
   // -------------------------------------------------------
-  // 1️⃣ CUSTOMER MUST EXIST
+  // 0️⃣ AUTO-GENERATE UNIQUE INVOICE NUMBER
   // -------------------------------------------------------
-  const customer = await Customer.findById(customerId);
+  // Format: INV-{YYYYMMDD}-{timestamp(last6)}-{random4}
+  const now = new Date();
+  const datePart = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+  const timestampPart = String(now.getTime()).slice(-6); // Last 6 digits of timestamp
+  const randomPart = String(Math.floor(1000 + Math.random() * 9000)); // 4-digit random
+  const invoiceNo = `INV-${datePart}-${timestampPart}-${randomPart}`;
+
+  // -------------------------------------------------------
+  // 1️⃣ CUSTOMER MUST EXIST AND BELONG TO SHOP
+  // -------------------------------------------------------
+  const customer = await Customer.findOne({
+    _id: customerId,
+    shopId: new mongoose.Types.ObjectId(shopId),
+    deleted: false
+  });
   if (!customer) throw new ApiError(404, "Customer not found");
 
   // -------------------------------------------------------
   // 2️⃣ UPDATE INVENTORY (DECREASE STOCK)
   // -------------------------------------------------------
   for (const item of items) {
-    const productInv = await Inventory.findOne({productId: item.productId, shopId});
+    const productInv = await Inventory.findOne({
+      productId: new mongoose.Types.ObjectId(item.productId), 
+      shopId: new mongoose.Types.ObjectId(shopId)
+    });
     if (!productInv) throw new ApiError(404, `Product not found: ${item.productName}`);
 
     if (productInv.stock < item.quantity)
@@ -61,12 +79,11 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
   // 3️⃣ CREATE SALE
   // -------------------------------------------------------
   const sale = await Sales.create({
-    customerId,
-    shopId,
+    customerId: new mongoose.Types.ObjectId(customerId),
+    shopId: new mongoose.Types.ObjectId(shopId),
     items,
     totalAmount,
     paidAmount,
-    clientId,
     invoiceNo,
   });
 
@@ -77,18 +94,21 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
 
 // GET ALL SALES
 const getSales = asyncHandler(async (req: Request, res: Response) => {
-  const { shopId } = req.query
-  const filter: any = {}
+  const shopId = req.user!.activeShopId!
 
-  if (shopId) filter.shopId = shopId
-
-  const sales = await Sales.find(filter)
+  const sales = await Sales.find({ shopId: new mongoose.Types.ObjectId(shopId) })
+    .populate('customerId', 'name phone email')
+    .sort({ createdAt: -1 })
   return res.status(200).json(new ApiResponse(200, sales, 'Sales fetched'))
 })
 
 // GET SINGLE SALE
 const getSale = asyncHandler(async (req: Request, res: Response) => {
-  const sale = await Sales.findById(req.params.id)
+  const shopId = req.user!.activeShopId!
+  const sale = await Sales.findOne({
+    _id: req.params.id,
+    shopId: new mongoose.Types.ObjectId(shopId)
+  })
   if (!sale) throw new ApiError(404, 'Sale not found')
 
   return res.status(200).json(new ApiResponse(200, sale, 'Sale fetched'))
@@ -96,6 +116,7 @@ const getSale = asyncHandler(async (req: Request, res: Response) => {
 
 // UPDATE SALE
 const updateSale = asyncHandler(async (req: Request, res: Response) => {
+  const shopId = req.user!.activeShopId!
   const saleId = req.params.id;
   const updates = req.body;
 
@@ -103,11 +124,12 @@ const updateSale = asyncHandler(async (req: Request, res: Response) => {
   session.startTransaction();
 
   try {
-    // 1. Fetch old sale
-    const oldSale = await Sales.findById(saleId).session(session);
+    // 1. Fetch old sale - verify it belongs to this shop
+    const oldSale = await Sales.findOne({
+      _id: saleId,
+      shopId: new mongoose.Types.ObjectId(shopId)
+    }).session(session);
     if (!oldSale) throw new ApiError(404, "Sale not found");
-
-    const shopId = oldSale.shopId;
 
     const oldItemsMap = new Map();
     oldSale.items.forEach((it: any) => {
@@ -132,8 +154,8 @@ const updateSale = asyncHandler(async (req: Request, res: Response) => {
       if (difference > 0) {
         const updatedInv = await Inventory.findOneAndUpdate(
           {
-            productId,
-            shopId,
+            productId: new mongoose.Types.ObjectId(productId),
+            shopId: new mongoose.Types.ObjectId(shopId),
             stock: { $gte: difference }
           },
           {
@@ -153,7 +175,7 @@ const updateSale = asyncHandler(async (req: Request, res: Response) => {
       // If new quantity is smaller → restore stock
       if (difference < 0) {
         await Inventory.findOneAndUpdate(
-          { productId, shopId },
+          { productId: new mongoose.Types.ObjectId(productId), shopId: new mongoose.Types.ObjectId(shopId) },
           { $inc: { stock: Math.abs(difference) } },
           { new: true, session }
         );
@@ -165,7 +187,7 @@ const updateSale = asyncHandler(async (req: Request, res: Response) => {
       if (!newItemsMap.has(productId)) {
 
         await Inventory.findOneAndUpdate(
-          { productId, shopId },
+          { productId: new mongoose.Types.ObjectId(productId), shopId: new mongoose.Types.ObjectId(shopId) },
           { $inc: { stock: oldQty } },
           { new: true, session }
         );
@@ -175,6 +197,7 @@ const updateSale = asyncHandler(async (req: Request, res: Response) => {
     
     // 4. Update sale document
     updates.totalAmount = updates.items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) ?? updates.totalAmount;
+    delete updates.shopId; // Prevent changing shopId
 
     const updatedSale = await Sales.findByIdAndUpdate(
       saleId,
@@ -198,17 +221,21 @@ const updateSale = asyncHandler(async (req: Request, res: Response) => {
 
 // DELETE SALE
 const deleteSale = asyncHandler(async (req: Request, res: Response) => {
+  const shopId = req.user!.activeShopId!
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const saleId = req.params.id;
 
-    // 1. Find the sale
-    const sale = await Sales.findById(saleId).session(session);
+    // 1. Find the sale - verify it belongs to this shop
+    const sale = await Sales.findOne({
+      _id: saleId,
+      shopId: new mongoose.Types.ObjectId(shopId)
+    }).session(session);
     if (!sale) throw new ApiError(404, "Sale not found");
 
-    const { items, shopId, customerId, totalAmount, paidAmount } = sale;
+    const { items, customerId, totalAmount, paidAmount } = sale;
     const unpaidAmount = totalAmount - paidAmount;
 
     // 2. Restore inventory for each item
@@ -216,7 +243,7 @@ const deleteSale = asyncHandler(async (req: Request, res: Response) => {
       const { productId, quantity } = item;
 
       await Inventory.findOneAndUpdate(
-        { shopId, productId },
+        { shopId: new mongoose.Types.ObjectId(shopId), productId: new mongoose.Types.ObjectId(productId) },
         { $inc: { stock: quantity } }, // restore
         { session }
       );

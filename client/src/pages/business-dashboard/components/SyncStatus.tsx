@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 
-const SyncStatus = () => {
-  const [syncStatus, setSyncStatus] = useState('online');
-  const [lastSync, setLastSync] = useState(new Date());
-  const [pendingChanges, setPendingChanges] = useState(0);
+type SyncStatusType = 'online' | 'syncing' | 'offline';
+
+interface StatusConfig {
+  icon: string;
+  color: string;
+  bgColor: string;
+  label: string;
+  description: string;
+}
+
+const SyncStatus: React.FC = () => {
+  const [syncStatus, setSyncStatus] = useState<SyncStatusType>('online');
+  const [lastSync, setLastSync] = useState<Date>(new Date());
+  const [pendingChanges, setPendingChanges] = useState<number>(0);
 
   useEffect(() => {
     // Simulate sync status changes
@@ -30,7 +40,7 @@ const SyncStatus = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const getStatusConfig = () => {
+  const getStatusConfig = (): StatusConfig => {
     switch (syncStatus) {
       case 'online':
         return {

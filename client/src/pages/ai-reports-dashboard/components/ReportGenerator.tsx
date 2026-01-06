@@ -1,12 +1,39 @@
 import React, { useState } from 'react';
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
-import Input from '../../../components/ui/Input';
-import Select from '../../../components/ui/Select';
-import { Checkbox } from '../../../components/ui/Checkbox';
+import Icon from '@/components/AppIcon';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Checkbox from '@/components/ui/Checkbox';
 
-const ReportGenerator = () => {
-  const [reportConfig, setReportConfig] = useState({
+interface ReportConfig {
+  reportType: string;
+  dateRange: string;
+  startDate: string;
+  endDate: string;
+  categories: string[];
+  format: string;
+  includeCharts: boolean;
+  includePredictions: boolean;
+  includeRecommendations: boolean;
+}
+
+interface ScheduledReport {
+  id: number;
+  name: string;
+  type: string;
+  frequency: string;
+  nextRun: string;
+  status: 'active' | 'paused';
+  recipients: string[];
+}
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+const ReportGenerator: React.FC = () => {
+  const [reportConfig, setReportConfig] = useState<ReportConfig>({
     reportType: 'comprehensive',
     dateRange: 'last30days',
     startDate: '',
@@ -18,8 +45,8 @@ const ReportGenerator = () => {
     includeRecommendations: true
   });
 
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [scheduledReports, setScheduledReports] = useState([
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([
     {
       id: 1,
       name: 'Monthly Business Summary',
@@ -40,7 +67,7 @@ const ReportGenerator = () => {
     }
   ]);
 
-  const reportTypes = [
+  const reportTypes: SelectOption[] = [
     { value: 'comprehensive', label: 'Comprehensive Business Report' },
     { value: 'sales', label: 'Sales Performance Report' },
     { value: 'expenses', label: 'Expense Analysis Report' },
@@ -48,7 +75,7 @@ const ReportGenerator = () => {
     { value: 'predictions', label: 'AI Predictions Report' }
   ];
 
-  const dateRangeOptions = [
+  const dateRangeOptions: SelectOption[] = [
     { value: 'last7days', label: 'Last 7 Days' },
     { value: 'last30days', label: 'Last 30 Days' },
     { value: 'last3months', label: 'Last 3 Months' },
@@ -57,14 +84,14 @@ const ReportGenerator = () => {
     { value: 'custom', label: 'Custom Date Range' }
   ];
 
-  const formatOptions = [
+  const formatOptions: SelectOption[] = [
     { value: 'pdf', label: 'PDF Document' },
     { value: 'excel', label: 'Excel Spreadsheet' },
     { value: 'csv', label: 'CSV Data' },
     { value: 'email', label: 'Email Summary' }
   ];
 
-  const categoryOptions = [
+  const categoryOptions: SelectOption[] = [
     { value: 'sales', label: 'Sales Data' },
     { value: 'expenses', label: 'Expense Data' },
     { value: 'inventory', label: 'Inventory Data' },
@@ -72,7 +99,7 @@ const ReportGenerator = () => {
     { value: 'suppliers', label: 'Supplier Data' }
   ];
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (): Promise<void> => {
     setIsGenerating(true);
     // Simulate report generation
     setTimeout(() => {
@@ -82,14 +109,14 @@ const ReportGenerator = () => {
     }, 3000);
   };
 
-  const handleConfigChange = (field, value) => {
+  const handleConfigChange = (field: keyof ReportConfig, value: string | boolean): void => {
     setReportConfig(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleCategoryChange = (category, checked) => {
+  const handleCategoryChange = (category: string, checked: boolean): void => {
     setReportConfig(prev => ({
       ...prev,
       categories: checked 

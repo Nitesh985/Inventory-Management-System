@@ -1,160 +1,236 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useFetch } from '@/hooks/useFetch';
 import Icon from '@/components/AppIcon';
 import Loader from '@/components/Loader';
+import { getCustomerCreditHistory } from '@/api/credits';
 
-// Assuming you add a 'getCredits' to your api/customers.ts or similar
-import { getCredits } from '@/api/credits'; 
-import axios from 'axios';
+interface HistoryItem {
+  _id: string;
+  type: 'CREDIT' | 'PAYMENT';
+  date: string;
+  amount: number;
+  description: string;
+  invoiceNo?: string;
+  items?: Array<{
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+  }>;
+  paymentMethod?: string;
+  note?: string;
+  runningBalance?: number;
+}
 
-const CreditHistory = () => {
-  const { data: credits, loading } = useFetch(getCredits);
-  // const [credits, setCredits] = useState([])
-  const [creditHistory, setCreditHistory] = useState<any>({});
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
-
-  const sortedCredits = useMemo(() => {
-    if (!credits) return [];
-    let sortableItems = [...credits];
-    if (sortConfig !== null) {
-      sortableItems.sort((a, b) => {
-        const aValue = sortConfig.key === 'name' ? a.customerId.name : a[sortConfig.key];
-        const bValue = sortConfig.key === 'name' ? b.customerId.name : b[sortConfig.key];
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [credits, sortConfig]);
-
-  useEffect(()=>{
-    axios.get("/api/customers/outstanding/6944d4a4b9dd57ae6c7855a3")
-      .then(res=>{
-        setCreditHistory(res.data.data);
-        console.log(res.data.data)
-      })
-  }, [])
-
-  
-  const requestSort = (key: string) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig?.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
+interface CreditHistoryData {
+  customer: {
+    _id: string;
+    name: string;
+    phone?: string;
   };
+  summary: {
+    totalCredit: number;
+    totalPaid: number;
+    currentBalance: number;
+  };
+  history: HistoryItem[];
+}
+
+interface CreditHistoryProps {
+  customerId?: string;
+  refreshKey?: number;
+}
+
+const CreditHistory: React.FC<CreditHistoryProps> = ({ customerId, refreshKey }) => {
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  const fetchHistory = useCallback(() => {
+    if (!customerId) return Promise.resolve(null);
+    return getCustomerCreditHistory(customerId);
+  }, [customerId]);
+
+  const { data, loading } = useFetch<CreditHistoryData>(fetchHistory, [customerId, refreshKey]);
+
+  const formatCurrency = (amount: number) => `Rs. ${Math.round(amount || 0).toLocaleString('en-NP')}`;
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-NP', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('en-NP', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  if (!customerId) {
+    return (
+      <div className="bg-card border border-border rounded-xl shadow-sm p-8 text-center">
+        <Icon name="History" size={48} className="mx-auto text-muted-foreground/30 mb-4" />
+        <p className="text-muted-foreground">Select a customer to view credit history</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-      <div className="p-4 border-b border-border flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-foreground">Credit History</h2>
-      </div>
-      <Loader loading={loading}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-muted/50 text-muted-foreground uppercase text-xs">
-              <tr >
-                <th className="p-4 px-10 cursor-pointer hover:text-primary" onClick={() => requestSort('name')}>
-                  Date {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="p-4 cursor-pointer hover:text-primary" onClick={() => requestSort('amount')}>
-                 Product
-                 </th>
-                <th className="p-4">Amount</th>
-                </tr>
-            </thead>
+      {/* Header */}
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Icon name="History" size={20} className="text-primary" />
+            Credit History
+          </h2>
+          {data?.history && (
+            <span className="text-xs text-muted-foreground">
+              {data.history.length} transactions
+            </span>
+          )}
+        </div>
 
-            
-            
-            <tbody className="divide-y divide-border">
-                {Object.entries(
-                  creditHistory?.itemsTaken?.reduce((acc: any, item: any) => {
-                    const date = new Date(item.createdAt).toLocaleDateString();
-                    if (!acc[date]) acc[date] = [];
-                    acc[date].push(item);
-                    return acc;
-                  }, {}) || {}
-                ).map(([date, items]: any) => {
-                  const dayTotal = items.reduce(
-                    (sum: number, i: any) => sum + i.unpaidAmount,
-                    0
-                  );
-              
-                  return (
-                    <tr key={date} className="hover:bg-muted/30 transition-colors align-top">
-                      {/* Date */}
-                      <td className="p-4 px-10 text-muted-foreground text-xs font-medium">
-                        {date}
-                      </td>
-              
-                      {/* Products */}
-                      <td className="p-4 space-y-1">
-                        {items.map((item: any) => (
-                          <div key={item._id} className="text-sm text-foreground">
-                            <span className="font-medium">
-                              {item.productName}
+        {/* Summary Cards */}
+        {data?.summary && (
+          <div className="grid grid-cols-3 gap-3 mt-4">
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Total Credit</p>
+              <p className="text-sm font-bold text-red-600">{formatCurrency(data.summary.totalCredit)}</p>
+            </div>
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Total Paid</p>
+              <p className="text-sm font-bold text-green-600">{formatCurrency(data.summary.totalPaid)}</p>
+            </div>
+            <div className={`rounded-lg p-3 text-center ${
+              data.summary.currentBalance > 0 
+                ? 'bg-orange-50 dark:bg-orange-900/20' 
+                : 'bg-blue-50 dark:bg-blue-900/20'
+            }`}>
+              <p className="text-xs text-muted-foreground mb-1">Balance Due</p>
+              <p className={`text-sm font-bold ${
+                data.summary.currentBalance > 0 ? 'text-orange-600' : 'text-blue-600'
+              }`}>
+                {formatCurrency(Math.abs(data.summary.currentBalance))}
+                {data.summary.currentBalance < 0 && <span className="text-xs ml-1">(Advance)</span>}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* History List */}
+      <Loader loading={loading}>
+        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+          {data?.history && data.history.length > 0 ? (
+            <div className="divide-y divide-border">
+              {data.history.map((item) => (
+                <div key={item._id} className="hover:bg-muted/30 transition-colors">
+                  {/* Main Row */}
+                  <div 
+                    className={`p-4 flex items-center gap-3 ${item.items && item.items.length > 0 ? 'cursor-pointer' : ''}`}
+                    onClick={() => item.items && item.items.length > 0 && toggleExpand(item._id)}
+                  >
+                    {/* Icon */}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      item.type === 'CREDIT' 
+                        ? 'bg-red-100 dark:bg-red-900/30' 
+                        : 'bg-green-100 dark:bg-green-900/30'
+                    }`}>
+                      <Icon 
+                        name={item.type === 'CREDIT' ? 'ShoppingCart' : 'Banknote'} 
+                        size={18} 
+                        className={item.type === 'CREDIT' ? 'text-red-600' : 'text-green-600'} 
+                      />
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {item.description}
+                        </p>
+                        {item.items && item.items.length > 0 && (
+                          <Icon 
+                            name={expandedItems.has(item._id) ? 'ChevronUp' : 'ChevronDown'} 
+                            size={14} 
+                            className="text-muted-foreground flex-shrink-0" 
+                          />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(item.date)} • {formatTime(item.date)}
+                        {item.paymentMethod && ` • ${item.paymentMethod}`}
+                      </p>
+                      {item.note && (
+                        <p className="text-xs text-muted-foreground italic mt-1">"{item.note}"</p>
+                      )}
+                    </div>
+
+                    {/* Amount & Balance */}
+                    <div className="text-right flex-shrink-0">
+                      <p className={`text-sm font-bold ${
+                        item.type === 'CREDIT' ? 'text-red-600' : 'text-green-600'
+                      }`}>
+                        {item.type === 'CREDIT' ? '+' : '-'}{formatCurrency(item.amount)}
+                      </p>
+                      {item.runningBalance !== undefined && (
+                        <p className="text-xs text-muted-foreground">
+                          Bal: {formatCurrency(item.runningBalance)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expanded Items (for Credit Sales) */}
+                  {expandedItems.has(item._id) && item.items && item.items.length > 0 && (
+                    <div className="px-4 pb-4 ml-14">
+                      <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">Items</p>
+                        {item.items.map((product, idx) => (
+                          <div key={idx} className="flex justify-between text-sm">
+                            <span className="text-foreground">
+                              {product.productName} 
+                              <span className="text-muted-foreground ml-1">
+                                × {product.quantity}
+                              </span>
                             </span>
                             <span className="text-muted-foreground">
-                              {" "}
-                              (Rs. {item.price}) × {item.quantity}
+                              {formatCurrency(product.totalPrice)}
                             </span>
                           </div>
                         ))}
-                      </td>
-              
-                      {/* Amount (bottom aligned) */}
-                      <td className="p-4">
-                        <div className="flex flex-col h-full justify-end items-end">
-                          <span className="text-xs text-muted-foreground mb-1">
-                            Day Total
-                          </span>
-                          <span className="font-semibold text-sm text-red-600">
-                            Rs. {dayTotal}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-
-              {/*{sortedCredits.map((credit: any) => (
-                <tr key={credit._id} className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 font-medium">{credit.customerId.name}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded text-xs font-bold ${
-                      credit.amount > 0 
-                        ? 'bg-red-100 text-red-700'  // Business gave goods (Customer owes)
-                        : 'bg-green-100 text-green-700' // Business got cash (Customer paid)
-                    }`}>
-                      {credit.amount > 0 ? 'GAVE' : 'GOT'}
-                    </span>
-                  </td>
-                  <td className={`p-4 font-bold ${credit.amount > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                    {Math.abs(credit.amount).toLocaleString()}
-                  </td>
-                  <td className="p-4 text-muted-foreground text-xs">
-                    {new Date(credit.date).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}*/}
-
-               {/*{creditHistory?.itemsTaken?.length > 0 && creditHistory?.itemsTaken?.map((item: any) => (
-                <tr key={item._id} className="hover:bg-muted/30 transition-colors">
-                    <td className="p-4 px-10 text-muted-foreground text-xs">
-                      {new Date(item?.createdAt).toLocaleDateString()}
-                    </td>
-                  <td className="p-4 font-medium">{item.productName}</td>
-                  <td className="p-4">
-                    
-                    <span className={`px-2 py-1 text-xs font-bold text-slate-600`}>
-                      Rs. {item.unpaidAmount}
-                    </span>
-                  </td>
-                </tr>
-              ))} */}
-            </tbody>
-          </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center">
+              <Icon name="FileText" size={32} className="mx-auto text-muted-foreground/30 mb-2" />
+              <p className="text-muted-foreground text-sm">No credit history found</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Credit sales and payments will appear here
+              </p>
+            </div>
+          )}
         </div>
       </Loader>
     </div>

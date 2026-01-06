@@ -3,15 +3,52 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
-import { useMutation } from '@/hooks/useMutation';
-import { createProduct, type CreateProductDTO } from '@/api/products';
-import { createOrUpdateInventory } from '@/api/inventory';
+
+interface Product {
+  id?: string | number;
+  name?: string;
+  sku?: string;
+  category?: string;
+  description?: string;
+  currentStock?: number;
+  minStock?: number;
+  maxStock?: number;
+  unitPrice?: number;
+  costPrice?: number;
+  supplier?: string;
+  location?: string;
+}
+
+interface ProductFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  product?: Product | null;
+  onSave: (productData: FormData) => void;
+}
+
+interface FormData {
+  name: string;
+  sku: string;
+  category: string;
+  description: string;
+  unit: string;
+  minStock: string;
+  maxStock: string;
+  price: string;
+  cost: string;
+  supplier: string;
+  location: string;
+}
+
+interface FormErrors {
+  [key: string]: string;
+}
 
 // TODO: Add reorderLevel
 // TODO: Add reserve section
 
-const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
-  const [formData, setFormData] = useState({
+const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, product = null, onSave }) => {
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     sku: '',
     category: '',
@@ -25,10 +62,8 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
     location: ''
   });
 
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const {mutate, loading, error} = useMutation(createProduct)
-  const {mutate:mutateInv, loading:loadingInv, error:errorInv} = useMutation(createOrUpdateInventory)
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const categories = [
     { value: 'electronics', label: 'Electronics' },
@@ -66,11 +101,11 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
         sku: product?.sku || '',
         category: product?.category || '',
         description: product?.description || '',
-        unit: product?.unit?.toString() || '',
+        unit: product?.currentStock?.toString() || '0',
         minStock: product?.minStock?.toString() || '',
         maxStock: product?.maxStock?.toString() || '',
-        price: product?.price?.toString() || '',
-        cost: product?.cost?.toString() || '',
+        price: product?.unitPrice?.toString() || '',
+        cost: product?.costPrice?.toString() || '',
         supplier: product?.supplier || '',
         location: product?.location || ''
       });
@@ -92,7 +127,7 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
     setErrors({});
   }, [product, isOpen]);
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: keyof FormData, value: string): void => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -157,59 +192,28 @@ const ProductFormModal = ({ isOpen, onClose, product = null, onSave }) => {
     }
 
     setIsSubmitting(true);
-
-    // name: '',
-    // sku: '',
-    // category: '',
-    // description: '',
-    // unit: '',
-    // minStock: '',
-    // maxStock: '',
-    // price: '',
-    // cost: '',
-    // supplier: '',
-    // location: ''
     
     try {
-      const productSubmitData:CreateProductDTO = {
+      // Map form data to frontend Product format (parent will handle API mapping)
+      const productData = {
         name: formData.name,
         sku: formData.sku,
         category: formData.category,
-        description: formData?.description,
-        unit: parseInt(formData?.unit),
-        price: parseInt(formData?.price),
-        cost: parseInt(formData?.cost),
-        reorderLevel: 10
+        description: formData?.description || '',
+        currentStock: parseInt(formData?.unit) || 0,
+        minStock: formData?.minStock ? parseInt(formData?.minStock) : 0,
+        maxStock: formData?.maxStock ? parseInt(formData?.maxStock) : 0,
+        unitPrice: parseFloat(formData?.price) || 0,
+        costPrice: formData?.cost ? parseFloat(formData?.cost) : 0,
+        lastUpdated: new Date()?.toISOString()
+      };
+
+      if (product) {
+        productData.id = product?.id;
       }
-      mutate({...productSubmitData})
-        .then(()=>{
-          const inventorySubmitData = {
-            stock: parseInt(formData.unit),
-            reserved: 5
-          }
-          mutateInv({...inventorySubmitData})
-            .then(()=>{
-              
-            })
-        })
-        .then(async ()=>{
-          const productData = {
-            ...formData,
-            unit: parseInt(formData?.unit),
-            minStock: formData?.minStock ? parseInt(formData?.minStock) : null,
-            maxStock: formData?.maxStock ? parseInt(formData?.maxStock) : null,
-            price: parseFloat(formData?.price),
-            cost: formData?.cost ? parseFloat(formData?.cost) : null,
-            lastUpdated: new Date()?.toISOString()
-          };
-    
-          if (product) {
-            productData.id = product?.id;
-          }
-    
-          await onSave(productData);
-          onClose();
-        })
+
+      await onSave(productData);
+      onClose();
 
     } catch (error) {
       console.error('Error saving product:', error);

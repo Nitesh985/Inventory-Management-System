@@ -1,83 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { useFetch } from '@/hooks/useFetch';
+import { getSales } from '@/api/sales';
+import { getExpenses } from '@/api/expenses';
+import Loader from '@/components/Loader';
+
+interface Transaction {
+  id: string;
+  type: 'sale' | 'expense';
+  description: string;
+  customer?: string;
+  vendor?: string;
+  amount: number;
+  date: string;
+  time: string;
+  status: string;
+  category: string;
+}
 
 const RecentTransactions = () => {
   const [activeTab, setActiveTab] = useState('all');
+  const { data: salesData, loading: salesLoading } = useFetch(getSales, []);
+  const { data: expensesData, loading: expensesLoading } = useFetch(getExpenses, []);
 
-  const transactions = [
-    {
-      id: "TXN001",
-      type: "sale",
-      description: "Product Sale - Electronics",
-      customer: "John Smith",
-      amount: 1250.00,
-      date: "2025-11-03",
-      time: "10:30 AM",
-      status: "completed",
-      category: "Electronics"
-    },
-    {
-      id: "TXN002",
-      type: "expense",
-      description: "Office Supplies Purchase",
-      vendor: "Office Depot",
-      amount: -85.50,
-      date: "2025-11-03",
-      time: "09:15 AM",
-      status: "completed",
-      category: "Office Supplies"
-    },
-    {
-      id: "TXN003",
-      type: "sale",
-      description: "Service - Consultation",
-      customer: "Sarah Johnson",
-      amount: 500.00,
-      date: "2025-11-02",
-      time: "02:45 PM",
-      status: "completed",
-      category: "Services"
-    },
-    {
-      id: "TXN004",
-      type: "expense",
-      description: "Utility Bill - Electricity",
-      vendor: "Power Company",
-      amount: -120.00,
-      date: "2025-11-02",
-      time: "11:20 AM",
-      status: "pending",
-      category: "Utilities"
-    },
-    {
-      id: "TXN005",
-      type: "sale",
-      description: "Product Sale - Clothing",
-      customer: "Mike Wilson",
-      amount: 75.00,
-      date: "2025-11-01",
-      time: "04:10 PM",
-      status: "completed",
-      category: "Clothing"
-    }
-  ];
+  const transactions: Transaction[] = useMemo(() => {
+    const salesTransactions: Transaction[] = (salesData || []).map((sale: any) => ({
+      id: sale._id || `sale-${Date.now()}`,
+      type: 'sale' as const,
+      description: sale.description || `Sale - ${sale.items?.length || 0} items`,
+      customer: sale.customerId?.name || sale.customerName || 'Walk-in Customer',
+      amount: sale.totalAmount || 0,
+      date: new Date(sale.createdAt || sale.date).toLocaleDateString(),
+      time: new Date(sale.createdAt || sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: sale.status || 'completed',
+      category: sale.category || 'Sales'
+    }));
+
+    const expenseTransactions: Transaction[] = (expensesData || []).map((expense: any) => ({
+      id: expense._id || `exp-${Date.now()}`,
+      type: 'expense' as const,
+      description: expense.description || expense.name || 'Expense',
+      vendor: expense.vendor || expense.category || 'Unknown',
+      amount: -(expense.amount || 0),
+      date: new Date(expense.createdAt || expense.date).toLocaleDateString(),
+      time: new Date(expense.createdAt || expense.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: expense.status || 'completed',
+      category: expense.category || 'Expense'
+    }));
+
+    return [...salesTransactions, ...expenseTransactions]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 10);
+  }, [salesData, expensesData]);
 
   const filteredTransactions = transactions?.filter(transaction => {
     if (activeTab === 'all') return true;
     return transaction?.type === activeTab;
   });
 
-  const getTransactionIcon = (type) => {
+  const getTransactionIcon = (type: string): string => {
     return type === 'sale' ? 'ArrowUpRight' : 'ArrowDownLeft';
   };
 
-  const getTransactionColor = (type) => {
+  const getTransactionColor = (type: string): string => {
     return type === 'sale' ? 'text-success' : 'text-error';
   };
 
-  const getStatusBadge = (status) => {
-    const colors = {
+  const getStatusBadge = (status: string): string => {
+    const colors: Record<string, string> = {
       completed: 'bg-success/10 text-success',
       pending: 'bg-warning/10 text-warning',
       failed: 'bg-error/10 text-error'
@@ -118,6 +109,7 @@ const RecentTransactions = () => {
         ))}
       </div>
       {/* Transactions List */}
+      <Loader loading={salesLoading || expensesLoading}>
       <div className="space-y-3">
         {filteredTransactions?.map((transaction) => (
           <div
@@ -150,7 +142,7 @@ const RecentTransactions = () => {
 
             <div className="text-right">
               <div className={`text-lg font-semibold ${getTransactionColor(transaction?.type)}`}>
-                ${Math.abs(transaction?.amount)?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                Rs. {Math.round(Math.abs(transaction?.amount)).toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground">
                 {transaction?.id}
@@ -159,7 +151,8 @@ const RecentTransactions = () => {
           </div>
         ))}
       </div>
-      {filteredTransactions?.length === 0 && (
+      </Loader>
+      {filteredTransactions?.length === 0 && !(salesLoading || expensesLoading) && (
         <div className="text-center py-8">
           <Icon name="Receipt" size={48} className="text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No transactions found</h3>

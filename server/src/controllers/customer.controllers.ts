@@ -7,37 +7,42 @@ import Customer from "../models/customer.models.ts";
 import Sales from "../models/sales.models.ts";
 
 const createCustomer = asyncHandler(async (req: Request, res: Response) => {
-  const { shopId, clientId, name, phone, address, email } = req.body;
+  const shopId = req.user!.activeShopId!
+  const { name, phone, address, email } = req.body;
 
-  if (!shopId || !clientId || !name) {
-    throw new ApiError(400, "shopId, clientId and name are required");
+  if (!name) {
+    throw new ApiError(400, "name is required");
   }
 
-  // prevent duplicates by phone within same shop+client
-  const duplicateQuery: any = { shopId, clientId };
-
-  if (phone) duplicateQuery.phone = phone;
-  if (email) duplicateQuery.email = email;
-
-  const existing = await Customer.findOne(duplicateQuery);
-
-  if (existing) {
-    if (existing.phone === phone) {
+  // prevent duplicates by phone or email within same shop
+  if (phone) {
+    const existingByPhone = await Customer.findOne({ 
+      shopId: new mongoose.Types.ObjectId(shopId), 
+      phone, 
+      deleted: false 
+    });
+    if (existingByPhone) {
       throw new ApiError(400, "Customer with this phone already exists");
     }
-    if (existing.email === email) {
+  }
+  
+  if (email) {
+    const existingByEmail = await Customer.findOne({ 
+      shopId: new mongoose.Types.ObjectId(shopId), 
+      email: email.toLowerCase(), 
+      deleted: false 
+    });
+    if (existingByEmail) {
       throw new ApiError(400, "Customer with this email already exists");
     }
   }
 
   const customer = await Customer.create({
-    shopId,
-    clientId,
+    shopId: new mongoose.Types.ObjectId(shopId),
     name,
     phone: phone || "",
     address: address || "",
-    email: email.toLowerCase() || "",
-    outstandingBalance: 0,
+    email: email ? email.toLowerCase() : "",
     notes: "",
     deleted: false,
   });
@@ -48,19 +53,26 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const getCustomers = asyncHandler(async (req: Request, res: Response) => {
-  const { shopId, clientId } = req.query;
-  const filter: any = { deleted: false };
-  if (shopId) filter.shopId = shopId;
-  if (clientId) filter.clientId = clientId;
-  const customers = await Customer.find(filter);
+  const shopId = req.user!.activeShopId!
+  
+  const customers = await Customer.find({ 
+    shopId: new mongoose.Types.ObjectId(shopId),
+    deleted: false 
+  });
+  
   return res
     .status(200)
     .json(new ApiResponse(200, customers, "Customers fetched"));
 });
 
 const getCustomer = asyncHandler(async (req: Request, res: Response) => {
-  const customer = await Customer.findById(req.params.id);
-  if (!customer || customer.deleted)
+  const shopId = req.user!.activeShopId!
+  const customer = await Customer.findOne({
+    _id: req.params.id,
+    shopId: new mongoose.Types.ObjectId(shopId),
+    deleted: false
+  });
+  if (!customer)
     throw new ApiError(404, "Customer not found");
   return res
     .status(200)
@@ -68,10 +80,13 @@ const getCustomer = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const updateCustomer = asyncHandler(async (req: Request, res: Response) => {
+  const shopId = req.user!.activeShopId!
   const updates = { ...req.body };
   delete updates._id;
-  const customer = await Customer.findByIdAndUpdate(
-    req.params.id,
+  delete updates.shopId; // Prevent changing shopId
+  
+  const customer = await Customer.findOneAndUpdate(
+    { _id: req.params.id, shopId: new mongoose.Types.ObjectId(shopId), deleted: false },
     { $set: updates },
     { new: true },
   );
@@ -82,9 +97,10 @@ const updateCustomer = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const deleteCustomer = asyncHandler(async (req: Request, res: Response) => {
+  const shopId = req.user!.activeShopId!
   // soft delete
-  const customer = await Customer.findByIdAndUpdate(
-    req.params.id,
+  const customer = await Customer.findOneAndUpdate(
+    { _id: req.params.id, shopId: new mongoose.Types.ObjectId(shopId), deleted: false },
     { $set: { deleted: true } },
     { new: true },
   );
@@ -96,11 +112,19 @@ const deleteCustomer = asyncHandler(async (req: Request, res: Response) => {
 
 const getCustomerOutstanding = asyncHandler(
   async (req: Request, res: Response) => {
+    const shopId = req.user!.activeShopId!
     const { customerId } = req.params;
-    const { shopId } = req.body;
 
     const customerObjectId = new mongoose.Types.ObjectId(customerId);
     const shopObjectId = new mongoose.Types.ObjectId(shopId);
+
+    // Verify customer belongs to this shop
+    const customer = await Customer.findOne({
+      _id: customerObjectId,
+      shopId: shopObjectId,
+      deleted: false
+    });
+    if (!customer) throw new ApiError(404, "Customer not found");
 
     const data = await Sales.aggregate([
       // 1️⃣ Match customer + shop

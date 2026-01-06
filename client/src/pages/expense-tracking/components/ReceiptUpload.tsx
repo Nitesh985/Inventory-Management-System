@@ -3,11 +3,26 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Image from '../../../components/AppImage';
 
-const ReceiptUpload = ({ receipts = [], onReceiptsChange }) => {
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
+interface Receipt {
+  id: number;
+  file: File;
+  name: string;
+  size: number;
+  type: string;
+  url: string | ArrayBuffer | null;
+  uploadedAt: string;
+}
 
-  const handleDrag = (e) => {
+interface ReceiptUploadProps {
+  receipts?: Receipt[];
+  onReceiptsChange: (receipts: Receipt[]) => void;
+}
+
+const ReceiptUpload: React.FC<ReceiptUploadProps> = ({ receipts = [], onReceiptsChange }) => {
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>): void => {
     e?.preventDefault();
     e?.stopPropagation();
     if (e?.type === "dragenter" || e?.type === "dragover") {
@@ -17,7 +32,7 @@ const ReceiptUpload = ({ receipts = [], onReceiptsChange }) => {
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>): void => {
     e?.preventDefault();
     e?.stopPropagation();
     setDragActive(false);
@@ -27,15 +42,15 @@ const ReceiptUpload = ({ receipts = [], onReceiptsChange }) => {
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     e?.preventDefault();
     if (e?.target?.files && e?.target?.files?.[0]) {
       handleFiles(e?.target?.files);
     }
   };
 
-  const handleFiles = (files) => {
-    const newReceipts = [];
+  const handleFiles = (files: FileList): void => {
+    const newReceipts: Receipt[] = [];
     
     Array.from(files)?.forEach((file) => {
       if (file?.type?.startsWith('image/') || file?.type === 'application/pdf') {
@@ -61,11 +76,11 @@ const ReceiptUpload = ({ receipts = [], onReceiptsChange }) => {
     });
   };
 
-  const removeReceipt = (receiptId) => {
+  const removeReceipt = (receiptId: number): void => {
     onReceiptsChange(receipts?.filter(receipt => receipt?.id !== receiptId));
   };
 
-  const formatFileSize = (bytes) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];

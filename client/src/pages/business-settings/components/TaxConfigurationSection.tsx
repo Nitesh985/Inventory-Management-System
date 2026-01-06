@@ -3,13 +3,43 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
-import { Checkbox } from '../../../components/ui/Checkbox';
+import Checkbox from '../../../components/ui/Checkbox';
 
-const TaxConfigurationSection = ({ taxConfig, onUpdate }) => {
-  const [formData, setFormData] = useState(taxConfig);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [showAddCategory, setShowAddCategory] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: '', rate: '', description: '' });
+interface TaxCategory {
+  id: string;
+  name: string;
+  rate: number;
+  description: string;
+}
+
+interface TaxConfig {
+  taxRegion: string;
+  defaultTaxRate: number;
+  reportingPeriod: string;
+  taxRegistrationNumber: string;
+  taxInclusive: boolean;
+  autoCalculateTax: boolean;
+  roundTaxAmounts: boolean;
+  taxCategories: TaxCategory[];
+  [key: string]: string | number | boolean | TaxCategory[];
+}
+
+interface TaxConfigurationSectionProps {
+  taxConfig: TaxConfig;
+  onUpdate: (data: TaxConfig) => void;
+}
+
+interface NewCategory {
+  name: string;
+  rate: string;
+  description: string;
+}
+
+const TaxConfigurationSection: React.FC<TaxConfigurationSectionProps> = ({ taxConfig, onUpdate }) => {
+  const [formData, setFormData] = useState<TaxConfig>(taxConfig);
+  const [hasChanges, setHasChanges] = useState<boolean>(false);
+  const [showAddCategory, setShowAddCategory] = useState<boolean>(false);
+  const [newCategory, setNewCategory] = useState<NewCategory>({ name: '', rate: '', description: '' });
 
   const taxRegionOptions = [
     { value: 'us', label: 'United States' },
@@ -27,19 +57,19 @@ const TaxConfigurationSection = ({ taxConfig, onUpdate }) => {
     { value: 'annually', label: 'Annually' }
   ];
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: string | number | boolean): void => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
 
-  const handleCategoryChange = (index, field, value) => {
+  const handleCategoryChange = (index: number, field: string, value: string | number): void => {
     const updatedCategories = [...formData?.taxCategories];
     updatedCategories[index] = { ...updatedCategories?.[index], [field]: value };
     setFormData(prev => ({ ...prev, taxCategories: updatedCategories }));
     setHasChanges(true);
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = (): void => {
     if (newCategory?.name && newCategory?.rate) {
       const updatedCategories = [...formData?.taxCategories, {
         id: Date.now()?.toString(),
@@ -53,7 +83,7 @@ const TaxConfigurationSection = ({ taxConfig, onUpdate }) => {
     }
   };
 
-  const handleRemoveCategory = (index) => {
+  const handleRemoveCategory = (index: number): void => {
     const updatedCategories = formData?.taxCategories?.filter((_, i) => i !== index);
     setFormData(prev => ({ ...prev, taxCategories: updatedCategories }));
     setHasChanges(true);

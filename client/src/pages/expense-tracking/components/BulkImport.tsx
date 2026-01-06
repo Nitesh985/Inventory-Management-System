@@ -2,13 +2,29 @@ import React, { useState, useRef } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
-const BulkImport = ({ onImport, isLoading = false }) => {
-  const [dragActive, setDragActive] = useState(false);
-  const [importData, setImportData] = useState(null);
-  const [errors, setErrors] = useState([]);
-  const fileInputRef = useRef(null);
+interface ImportData {
+  id?: number;
+  amount: number;
+  category: string;
+  vendor: string;
+  date: string;
+  description?: string;
+  isTaxRelated?: boolean;
+  receipts?: any[];
+}
 
-  const handleDrag = (e) => {
+interface BulkImportProps {
+  onImport: (data: ImportData[]) => void;
+  isLoading?: boolean;
+}
+
+const BulkImport: React.FC<BulkImportProps> = ({ onImport, isLoading = false }) => {
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const [importData, setImportData] = useState<ImportData[] | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>): void => {
     e?.preventDefault();
     e?.stopPropagation();
     if (e?.type === "dragenter" || e?.type === "dragover") {
@@ -18,7 +34,7 @@ const BulkImport = ({ onImport, isLoading = false }) => {
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>): void => {
     e?.preventDefault();
     e?.stopPropagation();
     setDragActive(false);
@@ -28,14 +44,14 @@ const BulkImport = ({ onImport, isLoading = false }) => {
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     e?.preventDefault();
     if (e?.target?.files && e?.target?.files?.[0]) {
       handleFile(e?.target?.files?.[0]);
     }
   };
 
-  const handleFile = (file) => {
+  const handleFile = (file: File): void => {
     if (file?.type !== 'text/csv' && !file?.name?.endsWith('.csv')) {
       setErrors(['Please upload a CSV file']);
       return;
@@ -44,8 +60,8 @@ const BulkImport = ({ onImport, isLoading = false }) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const csv = e?.target?.result;
-        const lines = csv?.split('\n');
+        const csv = e?.target?.result as string;
+        const lines = csv?.replace(/\r\n/g, '\n')?.replace(/\r/g, '\n')?.split('\n');
         const headers = lines?.[0]?.split(',')?.map(h => h?.trim()?.toLowerCase());
         
         const requiredHeaders = ['amount', 'category', 'vendor', 'date'];
@@ -56,14 +72,14 @@ const BulkImport = ({ onImport, isLoading = false }) => {
           return;
         }
 
-        const data = [];
-        const parseErrors = [];
+        const data: ImportData[] = [];
+        const parseErrors: string[] = [];
 
         for (let i = 1; i < lines?.length; i++) {
           if (lines?.[i]?.trim() === '') continue;
           
           const values = lines?.[i]?.split(',')?.map(v => v?.trim());
-          const row = {};
+          const row: Record<string, string> = {};
           
           headers?.forEach((header, index) => {
             row[header] = values?.[index] || '';
@@ -256,7 +272,7 @@ const BulkImport = ({ onImport, isLoading = false }) => {
                 {importData?.slice(0, 10)?.map((expense, index) => (
                   <tr key={index} className="hover:bg-muted/50">
                     <td className="p-3 text-foreground font-medium">
-                      ${expense?.amount?.toFixed(2)}
+                      Rs. {Math.round(expense?.amount || 0).toLocaleString('en-NP')}
                     </td>
                     <td className="p-3 text-muted-foreground">{expense?.category}</td>
                     <td className="p-3 text-muted-foreground">{expense?.vendor}</td>

@@ -41,7 +41,7 @@ const QuickActions = () => {
     }
   ];
 
-  const handleActionClick = (path) => {
+  const handleActionClick = (path: string): void => {
     window.location.href = path;
   };
 

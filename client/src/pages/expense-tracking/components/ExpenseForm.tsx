@@ -4,8 +4,28 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 
-const ExpenseForm = ({ onSubmit, onSaveDraft, isLoading = false }) => {
-  const [formData, setFormData] = useState({
+interface ExpenseData {
+  amount: string;
+  category: string;
+  vendor: string;
+  date: string;
+  description: string;
+  isTaxRelated: boolean;
+  customCategory: string;
+}
+
+interface ExpenseFormProps {
+  onSubmit: (data: ExpenseData) => void;
+  onSaveDraft: (data: ExpenseData) => void;
+  isLoading?: boolean;
+}
+
+interface FormErrors {
+  [key: string]: string;
+}
+
+const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onSaveDraft, isLoading = false }) => {
+  const [formData, setFormData] = useState<ExpenseData>({
     amount: '',
     category: '',
     vendor: '',
@@ -15,8 +35,8 @@ const ExpenseForm = ({ onSubmit, onSaveDraft, isLoading = false }) => {
     customCategory: ''
   });
 
-  const [showCustomCategory, setShowCustomCategory] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [showCustomCategory, setShowCustomCategory] = useState<boolean>(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const expenseCategories = [
     { value: 'office-supplies', label: 'Office Supplies' },
@@ -43,14 +63,14 @@ const ExpenseForm = ({ onSubmit, onSaveDraft, isLoading = false }) => {
     { value: 'other', label: 'Other' }
   ];
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: keyof ExpenseData, value: string | boolean): void => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors?.[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
-  const handleCategoryChange = (value) => {
+  const handleCategoryChange = (value: string): void => {
     if (value === 'custom') {
       setShowCustomCategory(true);
       setFormData(prev => ({ ...prev, category: '' }));
@@ -78,6 +98,10 @@ const ExpenseForm = ({ onSubmit, onSaveDraft, isLoading = false }) => {
     if (!formData?.date) {
       newErrors.date = 'Please select a date';
     }
+    
+    if (!formData?.description?.trim()) {
+      newErrors.description = 'Please enter a description';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors)?.length === 0;
@@ -88,6 +112,19 @@ const ExpenseForm = ({ onSubmit, onSaveDraft, isLoading = false }) => {
     if (validateForm()) {
       const finalCategory = formData?.customCategory || formData?.category;
       onSubmit({ ...formData, category: finalCategory });
+      
+      // Reset form after successful submission
+      setFormData({
+        amount: '',
+        category: '',
+        vendor: '',
+        date: new Date()?.toISOString()?.split('T')?.[0],
+        description: '',
+        isTaxRelated: false,
+        customCategory: ''
+      });
+      setShowCustomCategory(false);
+      setErrors({});
     }
   };
 
@@ -174,6 +211,8 @@ const ExpenseForm = ({ onSubmit, onSaveDraft, isLoading = false }) => {
           placeholder="Brief description of the expense"
           value={formData?.description}
           onChange={(e) => handleInputChange('description', e?.target?.value)}
+          error={errors?.description}
+          required
         />
 
         <div className="flex items-center space-x-3 p-4 bg-muted rounded-lg">

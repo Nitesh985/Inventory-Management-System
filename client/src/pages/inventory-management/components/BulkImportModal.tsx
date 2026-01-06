@@ -2,13 +2,33 @@ import React, { useState, useRef } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
-const BulkImportModal = ({ isOpen, onClose, onImport }) => {
-  const [dragActive, setDragActive] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [importResults, setImportResults] = useState(null);
-  const [step, setStep] = useState('upload'); // 'upload', 'processing', 'results'
-  const fileInputRef = useRef(null);
+interface ImportError {
+  row: number;
+  error: string;
+}
+
+interface ImportResults {
+  total: number;
+  successful: number;
+  failed: number;
+  errors: ImportError[];
+}
+
+interface BulkImportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onImport: (results: ImportResults) => void;
+}
+
+type Step = 'upload' | 'processing' | 'results';
+
+const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onClose, onImport }) => {
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [importResults, setImportResults] = useState<ImportResults | null>(null);
+  const [step, setStep] = useState<Step>('upload'); // 'upload', 'processing', 'results'
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sampleData = `Product Name,SKU,Category,Current Stock,Min Stock,Max Stock,Unit Price,Cost Price,Description
 iPhone 15 Pro,IPH15PRO001,electronics,25,5,100,999.00,750.00,Latest iPhone model with Pro features
@@ -16,7 +36,7 @@ Samsung Galaxy S24,SGS24001,electronics,15,3,50,899.00,650.00,Premium Android sm
 MacBook Air M3,MBA-M3-001,electronics,8,2,20,1299.00,950.00,Latest MacBook Air with M3 chip
 Wireless Earbuds,WEB001,electronics,50,10,200,79.99,45.00,Bluetooth wireless earbuds with noise cancellation`;
 
-  const handleDrag = (e) => {
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>): void => {
     e?.preventDefault();
     e?.stopPropagation();
     if (e?.type === "dragenter" || e?.type === "dragover") {
@@ -26,7 +46,7 @@ Wireless Earbuds,WEB001,electronics,50,10,200,79.99,45.00,Bluetooth wireless ear
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>): void => {
     e?.preventDefault();
     e?.stopPropagation();
     setDragActive(false);
@@ -36,7 +56,7 @@ Wireless Earbuds,WEB001,electronics,50,10,200,79.99,45.00,Bluetooth wireless ear
     }
   };
 
-  const handleFileSelect = (file) => {
+  const handleFileSelect = (file: File): void => {
     if (file && file?.type === 'text/csv') {
       setSelectedFile(file);
     } else {
@@ -44,13 +64,13 @@ Wireless Earbuds,WEB001,electronics,50,10,200,79.99,45.00,Bluetooth wireless ear
     }
   };
 
-  const handleFileInputChange = (e) => {
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     if (e?.target?.files && e?.target?.files?.[0]) {
       handleFileSelect(e?.target?.files?.[0]);
     }
   };
 
-  const processImport = async () => {
+  const processImport = async (): Promise<void> => {
     if (!selectedFile) return;
 
     setIsProcessing(true);

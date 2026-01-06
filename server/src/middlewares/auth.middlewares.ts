@@ -1,91 +1,57 @@
 import { ApiError } from "../utils/ApiError.ts"
-import { Table } from "../models/table.models.ts"
-import jwt from 'jsonwebtoken'
 import { asyncHandler } from "../utils/asyncHandler.ts"
-import  User  from "../models/user.models.ts"
+import type { NextFunction, Request, Response } from 'express'
 import {auth} from "../lib/auth.ts"
+import Shop from "../models/shop.models.ts"
 
 
-const verifyAuth = asyncHandler(async(req, res, next)=>{
-    const accessToken = req.cookies?.accessToken || req.header("authorization")?.split(" ")[1]
 
-    if (!accessToken){
-        throw new ApiError(403, "Not authenticated")
+const verifyUserAuth = asyncHandler(async(req:Request, res:Response, next:NextFunction)=>{
+  const session = await auth.api.getSession({
+    headers: req.headers
+  })
+
+  console.log(session)
+  
+  if (!session){
+    throw new ApiError(401, "Unauthorized access!")
+  }
+
+  req.user = session.user
+  
+  next()
+})
+
+const verifyBusinessAuth = asyncHandler(async(req:Request, res:Response, next:NextFunction)=>{
+  const session = await auth.api.getSession({
+    headers: req.headers
+  })
+  
+  if (!session){
+    throw new ApiError(401, "Unauthorized access!")
+  }
+
+  // TODO: Remove this temp injection once proper shop selection is implemented
+  // Temporarily inject first shop's id from database for testing
+  const shop = await Shop.findOne()
+  if (shop) {
+    // Update shop's ownerId to current user if not already set
+    if (!shop.ownerId || shop.ownerId.toString() !== session.user.id) {
+      shop.ownerId = session.user.id as any
+      await shop.save()
     }
+    session.user.activeShopId = shop._id.toString()
+  }
 
-    let userId
+  if (!session.user.activeShopId){
+    throw new ApiError(403, "Forbidden! No active shop selected. Please select a shop first.")
+  }
 
-    jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, (err, data)=>{
-        if (err){
-            throw new ApiError(err.status || 401, err?.message || "The token is invalid or has expired")
-        }
-        userId = data?._id
-    })
-    console.log(userId)
 
-    const user = await User.findById(userId)
-
-    if (!user){
-        throw new ApiError(404, "The user by that id is not found")
-    }
-
-    req.user = user
-    next()
-
+  req.user = session.user
+  console.log(req.user)
+  
+  next()
 })
 
-const verifyTable = asyncHandler(async (req, res, next) => {
-    next()
-    // const accessToken = req?.cookies?.accessToken || req?.header("authorization")?.split(" ")[1]
-
-    // if (!accessToken){
-    //     throw new ApiError(403, "Not authenticated")
-    // }
-
-    // let tableId
-
-    // jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, (err, data)=>{
-    //     if (err){
-    //         throw new ApiError(err.status || 401, err?.message || "The token is invalid or has expired")
-    //     }
-    //     tableId = data?._id
-    // })
-
-
-    // const table = await Table.findById(tableId)
-
-    // if (!table){
-    //     throw new ApiError(404, "The table by that id is not found")
-    // }
-
-    // req.table = table
-    // next()
-})
-
-const verifyAdmin = asyncHandler(async(req, res, next)=>{
-    next()
-    // const user = await userModel.findById(req.user._id);
-    // if (user.role !== 1) {
-    //   return res.status(401).send({
-    //     success: false,
-    //     message: "UnAuthorized Access",
-    //   });
-    // } else {
-    //   next();
-    // }
-})
-
-const verifyBetterAuth = asyncHandler(async(req, res, next)=>{
-    const {email, password} = req.body;
-
-const response = await auth.api.signInEmail({
-    body: {
-        email,
-        password
-    },
-    asResponse: true // returns a response object instead of data
-});
-
-})
-
-export { verifyTable, verifyAdmin, verifyAuth }
+export { verifyUserAuth, verifyBusinessAuth }

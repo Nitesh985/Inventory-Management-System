@@ -4,7 +4,14 @@ import Icon from "../AppIcon";
 import Button from "./Button";
 import Logo from "../../assets/logo.png";
 
-const Sidebar = ({ isCollapsed = false, onToggle, syncStatus = "online", onMobileOpenChange }) => {
+interface SidebarProps {
+  isCollapsed?: boolean;
+  onToggle: () => void;
+  syncStatus?: "online" | "syncing" | "offline";
+  onMobileOpenChange?: (isOpen: boolean) => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, syncStatus = "online", onMobileOpenChange }) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
 

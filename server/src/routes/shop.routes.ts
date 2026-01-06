@@ -2,29 +2,47 @@ import { Router } from 'express'
 import {
   createShop,
   getShops,
+  getMyShops,
+  setActiveShop,
   getShop,
+  getActiveShopProfile,
+  updateActiveShopProfile,
   updateShop,
   deleteShop
 } from '../controllers/shop.controllers.ts'
-import { mockupData } from '../middlewares/mockup.middlewares.ts'
+import { verifyUserAuth, verifyBusinessAuth } from '../middlewares/auth.middlewares.ts'
 
 
 const router = Router()
-router.use(mockupData)
+
+// All shop routes require authentication
+router.use(verifyUserAuth)
+
+// GET MY SHOPS (shops owned by current user)
+router.route("/my-shops").get(getMyShops)
+
+// SET ACTIVE SHOP
+router.route("/set-active").post(setActiveShop)
+
+// GET ACTIVE SHOP PROFILE (requires active shop)
+router.route("/profile").get(verifyBusinessAuth, getActiveShopProfile)
+
+// UPDATE ACTIVE SHOP PROFILE (requires active shop)
+router.route("/profile").put(verifyBusinessAuth, updateActiveShopProfile)
 
 // CREATE SHOP
-router.post('/', createShop)
+router.route("/").post(createShop)
 
 // GET ALL SHOPS
-router.get('/', getShops)
+router.route("/").get(getShops)
 
 // GET SINGLE SHOP
-router.get('/:id', getShop)
+router.route("/:id").get(getShop)
 
 // UPDATE SHOP
-router.put('/:id', updateShop)
+router.route("/:id").put(updateShop)
 
 // DELETE SHOP
-router.delete('/:id', deleteShop)
+router.route("/:id").delete(deleteShop)
 
 export default router

@@ -4,12 +4,34 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 
-const ExpenseHistory = ({ expenses = [], onEdit, onDelete }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [sortBy, setSortBy] = useState('date');
-  const [sortOrder, setSortOrder] = useState('desc');
+interface Expense {
+  id: string;
+  amount: number | string;
+  category: string;
+  vendor: string;
+  date: string;
+  description: string;
+  isTaxRelated?: boolean;
+  receipts?: unknown[];
+}
+
+interface ExpenseHistoryProps {
+  expenses?: Expense[];
+  onEdit: (expense: Expense) => void;
+  onDelete: (expenseId: string) => void;
+}
+
+interface DateRange {
+  start: string;
+  end: string;
+}
+
+const ExpenseHistory: React.FC<ExpenseHistoryProps> = ({ expenses = [], onEdit, onDelete }) => {
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [dateRange, setDateRange] = useState<DateRange>({ start: '', end: '' });
+  const [sortBy, setSortBy] = useState<string>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const categories = [
     { value: '', label: 'All Categories' },
@@ -17,7 +39,12 @@ const ExpenseHistory = ({ expenses = [], onEdit, onDelete }) => {
     { value: 'travel', label: 'Travel & Transportation' },
     { value: 'utilities', label: 'Utilities' },
     { value: 'marketing', label: 'Marketing & Advertising' },
-    { value: 'equipment', label: 'Equipment & Software' }
+    { value: 'equipment', label: 'Equipment & Software' },
+    { value: 'professional-services', label: 'Professional Services' },
+    { value: 'meals', label: 'Meals & Entertainment' },
+    { value: 'rent', label: 'Rent & Facilities' },
+    { value: 'insurance', label: 'Insurance' },
+    { value: 'maintenance', label: 'Maintenance & Repairs' }
   ];
 
   const sortOptions = [
@@ -54,14 +81,11 @@ const ExpenseHistory = ({ expenses = [], onEdit, onDelete }) => {
       return 0;
     });
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    })?.format(amount);
+  const formatCurrency = (amount: number | string): string => {
+    return `Rs. ${Math.round(Number(amount) || 0).toLocaleString('en-NP')}`;
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     return new Date(dateString)?.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -69,13 +93,18 @@ const ExpenseHistory = ({ expenses = [], onEdit, onDelete }) => {
     });
   };
 
-  const getCategoryColor = (category) => {
-    const colors = {
+  const getCategoryColor = (category: string): string => {
+    const colors: Record<string, string> = {
       'office-supplies': 'bg-blue-100 text-blue-800',
       'travel': 'bg-green-100 text-green-800',
       'utilities': 'bg-yellow-100 text-yellow-800',
       'marketing': 'bg-purple-100 text-purple-800',
       'equipment': 'bg-red-100 text-red-800',
+      'professional-services': 'bg-indigo-100 text-indigo-800',
+      'meals': 'bg-orange-100 text-orange-800',
+      'rent': 'bg-teal-100 text-teal-800',
+      'insurance': 'bg-cyan-100 text-cyan-800',
+      'maintenance': 'bg-pink-100 text-pink-800',
       'default': 'bg-gray-100 text-gray-800'
     };
     return colors?.[category] || colors?.default;

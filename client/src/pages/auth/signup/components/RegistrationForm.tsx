@@ -1,13 +1,14 @@
+//src/pages/auth/signup/components/RegistrationForm.tsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Input from '../../../../components/ui/Input';
 import Button from '../../../../components/ui/Button';
 import Select from '../../../../components/ui/Select';
-import { Checkbox } from '../../../../components/ui/Checkbox';
+import Checkbox from '../../../../components/ui/Checkbox';
 
 import Icon from '../../../../components/AppIcon';
 import PasswordStrengthIndicator from './PasswordStrengthIndicator';
-import { RegisterFormData, FormErrors, BusinessType } from '../types';
+import type { RegisterFormData, FormErrors, BusinessType } from '../types';
 
 interface RegistrationFormProps {
   onSubmit: (data: RegisterFormData) => void;
@@ -58,27 +59,7 @@ const RegistrationForm = ({ onSubmit, isLoading = false, className = '' }: Regis
       newErrors.ownerName = 'Owner name must be at least 2 characters';
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email address is required';
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-
-    // Confirm password validation
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
+    
 
     // Business type validation
     if (!formData.businessType) {
@@ -158,7 +139,7 @@ const RegistrationForm = ({ onSubmit, isLoading = false, className = '' }: Regis
         />
       </div>
 
-      {/* Account Credentials Section */}
+      {/* Account Credentials Section
       <div className="space-y-4">
         <div className="flex items-center space-x-2 mb-4">
           <Icon name="User" size={20} className="text-primary" />
@@ -221,7 +202,7 @@ const RegistrationForm = ({ onSubmit, isLoading = false, className = '' }: Regis
             <Icon name={showConfirmPassword ? 'EyeOff' : 'Eye'} size={16} />
           </button>
         </div>
-      </div>
+      </div> */}
 
       {/* Legal Agreements Section */}
       <div className="space-y-4 border-t border-border pt-6">

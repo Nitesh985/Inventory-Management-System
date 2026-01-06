@@ -9,25 +9,73 @@ import DataManagementSection from './components/DataManagementSection';
 import SyncStatusSection from './components/SyncStatusSection';
 import PWASettingsSection from './components/PWASettingsSection';
 
-const BusinessSettings = () => {
-  const [activeTab, setActiveTab] = useState('profile');
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+interface Preferences {
+  syncFrequency: string;
+  backupFrequency: string;
+  dataRetention: string;
+  autoSync: boolean;
+  compressBackups: boolean;
+  lowStockAlerts: boolean;
+  dailySummary: boolean;
+  syncNotifications: boolean;
+  backupReminders: boolean;
+  browserNotifications: boolean;
+}
 
-  // Mock data for business profile
-  const [businessData, setBusinessData] = useState({
-    businessName: "Digital Solutions Inc.",
-    businessType: "service",
-    taxId: "123-456-789",
-    currency: "USD",
-    address: "123 Business Street",
-    city: "New York",
-    postalCode: "10001",
-    phone: "+1 (555) 123-4567",
-    email: "contact@digitalsolutions.com"
-  });
+interface TaxCategory {
+  id: string;
+  name: string;
+  rate: number;
+  description: string;
+}
+
+interface TaxConfig {
+  taxRegion: string;
+  defaultTaxRate: number;
+  reportingPeriod: string;
+  taxRegistrationNumber: string;
+  taxInclusive: boolean;
+  autoCalculateTax: boolean;
+  roundTaxAmounts: boolean;
+  taxCategories: TaxCategory[];
+}
+
+interface DataSettings {
+  exportFormat: string;
+  exportDataType: string;
+  includeDeletedRecords: boolean;
+  includeMetadata: boolean;
+  autoBackupBeforeSync: boolean;
+  includeMediaInBackup: boolean;
+  encryptBackups: boolean;
+}
+
+interface PWASettings {
+  offlineMode: boolean;
+  cacheData: boolean;
+  backgroundSync: boolean;
+  pushNotifications: boolean;
+  salesAlerts: boolean;
+  lowStockWarnings: boolean;
+  syncNotifications: boolean;
+  autoLaunch: boolean;
+  keepScreenAwake: boolean;
+  fullscreenMode: boolean;
+}
+
+interface Tab {
+  id: string;
+  label: string;
+  icon: string;
+  description: string;
+}
+
+const BusinessSettings: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>('profile');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
 
   // Mock data for system preferences
-  const [preferences, setPreferences] = useState({
+  const [preferences, setPreferences] = useState<Preferences>({
     syncFrequency: "15min",
     backupFrequency: "daily",
     dataRetention: "1year",
@@ -40,18 +88,8 @@ const BusinessSettings = () => {
     browserNotifications: true
   });
 
-  // Mock data for user account
-  const [userAccount, setUserAccount] = useState({
-    fullName: "John Smith",
-    email: "john.smith@digitalsolutions.com",
-    phone: "+1 (555) 987-6543",
-    marketingEmails: true,
-    securityAlerts: true,
-    twoFactorEnabled: false
-  });
-
   // Mock data for tax configuration
-  const [taxConfig, setTaxConfig] = useState({
+  const [taxConfig, setTaxConfig] = useState<TaxConfig>({
     taxRegion: "us",
     defaultTaxRate: 8.25,
     reportingPeriod: "quarterly",
@@ -82,7 +120,7 @@ const BusinessSettings = () => {
   });
 
   // Mock data for data management
-  const [dataSettings, setDataSettings] = useState({
+  const [dataSettings, setDataSettings] = useState<DataSettings>({
     exportFormat: "csv",
     exportDataType: "all",
     includeDeletedRecords: false,
@@ -93,7 +131,7 @@ const BusinessSettings = () => {
   });
 
   // Mock data for PWA settings
-  const [pwaSettings, setPwaSettings] = useState({
+  const [pwaSettings, setPwaSettings] = useState<PWASettings>({
     offlineMode: true,
     cacheData: true,
     backgroundSync: true,
@@ -106,7 +144,7 @@ const BusinessSettings = () => {
     fullscreenMode: false
   });
 
-  const tabs = [
+  const tabs: Tab[] = [
     {
       id: 'profile',
       label: 'Business Profile',
@@ -151,7 +189,7 @@ const BusinessSettings = () => {
     }
   ];
 
-  const handleTabChange = (tabId) => {
+  const handleTabChange = (tabId: string): void => {
     if (hasUnsavedChanges) {
       if (confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
         setActiveTab(tabId);
@@ -162,52 +200,39 @@ const BusinessSettings = () => {
     }
   };
 
-  const handleBusinessUpdate = (data) => {
-    setBusinessData(data);
-    setHasUnsavedChanges(false);
-  };
-
-  const handlePreferencesUpdate = (data) => {
+  const handlePreferencesUpdate = (data: Preferences): void => {
     setPreferences(data);
     setHasUnsavedChanges(false);
   };
 
-  const handleAccountUpdate = (data) => {
-    setUserAccount(data);
-    setHasUnsavedChanges(false);
-  };
-
-  const handleTaxUpdate = (data) => {
+  const handleTaxUpdate = (data: TaxConfig): void => {
     setTaxConfig(data);
     setHasUnsavedChanges(false);
   };
 
-  const handleDataUpdate = (data) => {
+  const handleDataUpdate = (data: DataSettings): void => {
     setDataSettings(data);
     setHasUnsavedChanges(false);
   };
 
-  const handlePWAUpdate = (data) => {
+  const handlePWAUpdate = (data: PWASettings): void => {
     setPwaSettings(data);
     setHasUnsavedChanges(false);
   };
 
-  const handleForceSync = () => {
+  const handleForceSync = (): void => {
     alert('Force sync completed successfully!');
   };
 
-  const handleResolveConflicts = () => {
+  const handleResolveConflicts = (): void => {
     alert('All conflicts have been resolved.');
   };
 
-  const renderTabContent = () => {
+  const renderTabContent = (): JSX.Element | null => {
     switch (activeTab) {
       case 'profile':
         return (
-          <BusinessProfileSection
-            businessData={businessData}
-            onUpdate={handleBusinessUpdate}
-          />
+          <BusinessProfileSection />
         );
       case 'system':
         return (
@@ -219,8 +244,7 @@ const BusinessSettings = () => {
       case 'account':
         return (
           <UserAccountSection
-            userAccount={userAccount}
-            onUpdate={handleAccountUpdate}
+            onUpdate={() => setHasUnsavedChanges(false)}
           />
         );
       case 'tax':

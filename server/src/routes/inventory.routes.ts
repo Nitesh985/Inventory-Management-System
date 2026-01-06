@@ -6,10 +6,10 @@ import {
   updateInventory,
   deleteInventory
 } from '../controllers/inventory.controllers.ts'
-import { mockupData } from '../middlewares/mockup.middlewares.ts'
+import { verifyBusinessAuth } from '../middlewares/auth.middlewares.ts'
 
 const router = Router()
-router.use(mockupData)
+router.use(verifyBusinessAuth)
 
 // CREATE OR UPDATE INVENTORY
 router.post('/', createInventory)

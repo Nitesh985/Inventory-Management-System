@@ -6,19 +6,22 @@ import TrustSignals from '../shared/components/TrustSignals';
 import OfflineNotice from '../shared/components/OfflineNotice';
 import LoginFooter from '../shared/components/AuthFooter';
 import type { LoginFormData, LoginFormErrors } from './types';
+import { signIn } from '@/lib/auth-client';
+import { useSession } from '@/lib/auth-client';
+
+
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const {data: session} = useSession()
+
+
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<LoginFormErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
 
-  // Mock credentials for testing
-  const mockCredentials = {
-    email: 'admin@digitalkhata.com',
-    password: 'admin123'
-  };
+  
 
   // Monitor online/offline status
   useEffect(() => {
@@ -54,71 +57,24 @@ const LoginPage = () => {
     return newErrors;
   };
 
-  const handleLogin = async (formData: LoginFormData) => {
-    if (!isOnline) {
-      setErrors({ general: 'Internet connection required for authentication' });
-      return;
-    }
-
-    // Clear previous errors
-    setErrors({});
-
-    // Validate form
-    const validationErrors = validateForm(formData);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Check credentials
-      if (formData.email === mockCredentials.email && formData.password === mockCredentials.password) {
-        // Store authentication data
-        if (formData.rememberMe) {
-          localStorage.setItem('rememberMe', 'true');
-          localStorage.setItem('userEmail', formData.email);
-        }
-        
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('authToken', 'mock-jwt-token-' + Date.now());
-        localStorage.setItem('userRole', 'admin');
-        // Show success message then redirect to dashboard after a short delay
-        setErrors({});
-        setSuccessMessage('Login successful! Dashboard will be available soon.');
-        // wait briefly so user sees the success message
-        const id = window.setTimeout(() => {
-          setSuccessMessage(undefined);
-          navigate('/business-dashboard');
-        }, 1400);
-        // store timeout id so it can be cleared if component unmounts
-        redirectTimer.current = id;
-      } else {
-        setErrors({ 
-          general: `Invalid credentials. Use: ${mockCredentials.email} / ${mockCredentials.password}` 
-        });
+  const submitLoginForm = async (data: LoginFormData) => {
+    setIsLoading(true)
+    validateForm(data)
+    
+    await signIn.email({
+      email: data.email,
+      password: data.password,
+      rememberMe: data.rememberMe,
+    },{
+      onSuccess: () => {
+        setIsLoading(false)
+        navigate("/business-dashboard", {replace:true})
       }
-    } catch (error) {
-      setErrors({ general: 'Login failed. Please try again.' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    })   
+  }
 
-  // Keep a ref to any redirect timer so we can clear it if the component unmounts
-  const redirectTimer = useRef<number | null>(null);
+  
 
-  useEffect(() => {
-    return () => {
-      if (redirectTimer.current) {
-        clearTimeout(redirectTimer.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -135,7 +91,7 @@ const LoginPage = () => {
             {/* Left Column - Login Form */}
             <div className="order-2 lg:order-1">
               <LoginForm
-                onSubmit={handleLogin}
+                onSubmit={submitLoginForm}
                 errors={errors}
                 isLoading={isLoading}
                 isOnline={isOnline}

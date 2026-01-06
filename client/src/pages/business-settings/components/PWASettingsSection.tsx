@@ -1,14 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
-import { Checkbox } from '../../../components/ui/Checkbox';
+import Checkbox from '../../../components/ui/Checkbox';
 
-const PWASettingsSection = ({ pwaSettings, onUpdate }) => {
-  const [formData, setFormData] = useState(pwaSettings);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [notificationPermission, setNotificationPermission] = useState('default');
+interface PWASettings {
+  offlineMode: boolean;
+  pushNotifications: boolean;
+  autoSync: boolean;
+  cacheMedia: boolean;
+  [key: string]: boolean;
+}
+
+interface PWASettingsSectionProps {
+  pwaSettings: PWASettings;
+  onUpdate: (data: PWASettings) => void;
+}
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+const PWASettingsSection: React.FC<PWASettingsSectionProps> = ({ pwaSettings, onUpdate }) => {
+  const [formData, setFormData] = useState<PWASettings>(pwaSettings);
+  const [hasChanges, setHasChanges] = useState<boolean>(false);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState<boolean>(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'default'>('default');
 
   useEffect(() => {
     // Check if app is already installed
@@ -22,9 +39,9 @@ const PWASettingsSection = ({ pwaSettings, onUpdate }) => {
     }
 
     // Listen for beforeinstallprompt event
-    const handleBeforeInstallPrompt = (e) => {
+    const handleBeforeInstallPrompt = (e: Event): void => {
       e?.preventDefault();
-      setInstallPrompt(e);
+      setInstallPrompt(e as BeforeInstallPromptEvent);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -34,12 +51,12 @@ const PWASettingsSection = ({ pwaSettings, onUpdate }) => {
     };
   }, []);
 
-  const handleCheckboxChange = (field, checked) => {
+  const handleCheckboxChange = (field: string, checked: boolean): void => {
     setFormData(prev => ({ ...prev, [field]: checked }));
     setHasChanges(true);
   };
 
-  const handleInstallApp = async () => {
+  const handleInstallApp = async (): Promise<void> => {
     if (installPrompt) {
       const result = await installPrompt?.prompt();
       if (result?.outcome === 'accepted') {
@@ -49,7 +66,7 @@ const PWASettingsSection = ({ pwaSettings, onUpdate }) => {
     }
   };
 
-  const handleRequestNotifications = async () => {
+  const handleRequestNotifications = async (): Promise<void> => {
     if ('Notification' in window) {
       const permission = await Notification.requestPermission();
       setNotificationPermission(permission);
@@ -59,7 +76,7 @@ const PWASettingsSection = ({ pwaSettings, onUpdate }) => {
     }
   };
 
-  const handleTestNotification = () => {
+  const handleTestNotification = (): void => {
     if (notificationPermission === 'granted') {
       new Notification('Digital Khata', {
         body: 'Test notification from your business management app',
@@ -69,7 +86,7 @@ const PWASettingsSection = ({ pwaSettings, onUpdate }) => {
     }
   };
 
-  const handleClearCache = async () => {
+  const handleClearCache = async (): Promise<void> => {
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames?.map(name => caches.delete(name)));
@@ -77,7 +94,7 @@ const PWASettingsSection = ({ pwaSettings, onUpdate }) => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     onUpdate(formData);
     setHasChanges(false);
   };

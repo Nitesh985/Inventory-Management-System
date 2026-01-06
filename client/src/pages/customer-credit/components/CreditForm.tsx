@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import Icon from '@/components/AppIcon';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { useFetch } from '@/hooks/useFetch';
-import { getCustomerOutstanding } from '@/api/customers';
+import { useMutation } from '@/hooks/useMutation';
+import { createCredit } from '@/api/credits';
 
 interface CreditFormProps {
   selectedCustomerId: string;
@@ -13,32 +12,29 @@ interface CreditFormProps {
 
 const CreditForm = ({ selectedCustomerId, onSuccess }: CreditFormProps) => {
   const [type, setType] = useState<'gave' | 'got'>('gave');
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ amount: '', description: '', date: new Date().toISOString().split('T')[0] });
-  //const {data} = useFetch(getCustomerOutstanding(selectedCustomerId))
   
+  const { mutate: createCreditMutation, loading, error } = useMutation(createCredit);
   
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     try {
       // Logic: GAVE = Positive balance (debt), GOT = Negative balance (payment)
       const finalAmount = type === 'gave' ? Math.abs(Number(formData.amount)) : -Math.abs(Number(formData.amount));
       
-      await axios.post('/api/credits', {
+      await createCreditMutation({
         customerId: selectedCustomerId,
         amount: finalAmount,
         description: formData.description,
         date: formData.date,
-        shopId: '69243c8f00b1f56bd2724e3a' // Example ID
+        shopId: '69243c8f00b1f56bd2724e3a' // TODO: Get from context
       });
 
       setFormData({ ...formData, amount: '', description: '' });
       onSuccess(); // Refresh parents/siblings
     } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+      console.error('Error creating credit:', err);
+      alert('Failed to record transaction. Please try again.');
     }
   };
 

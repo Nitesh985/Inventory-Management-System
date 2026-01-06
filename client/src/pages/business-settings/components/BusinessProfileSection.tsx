@@ -1,49 +1,163 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
+import { getActiveShopProfile, updateActiveShopProfile, type ShopProfile, type UpdateShopProfileDTO } from '../../../api/shops';
 
-const BusinessProfileSection = ({ businessData, onUpdate }) => {
-  const [formData, setFormData] = useState(businessData);
-  const [isEditing, setIsEditing] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+interface BusinessProfileSectionProps {
+  onUpdate?: () => void;
+}
 
-  const currencyOptions = [
-    { value: 'USD', label: 'US Dollar ($)' },
-    { value: 'EUR', label: 'Euro (€)' },
-    { value: 'GBP', label: 'British Pound (£)' },
-    { value: 'INR', label: 'Indian Rupee (₹)' },
-    { value: 'CAD', label: 'Canadian Dollar (C$)' },
-    { value: 'AUD', label: 'Australian Dollar (A$)' }
-  ];
+// Nepal provinces
+const provinceOptions = [
+  { value: 'Koshi', label: 'Koshi (Province 1)' },
+  { value: 'Madhesh', label: 'Madhesh (Province 2)' },
+  { value: 'Bagmati', label: 'Bagmati (Province 3)' },
+  { value: 'Gandaki', label: 'Gandaki (Province 4)' },
+  { value: 'Lumbini', label: 'Lumbini (Province 5)' },
+  { value: 'Karnali', label: 'Karnali (Province 6)' },
+  { value: 'Sudurpashchim', label: 'Sudurpashchim (Province 7)' },
+];
 
-  const businessTypeOptions = [
-    { value: 'retail', label: 'Retail Store' },
-    { value: 'restaurant', label: 'Restaurant/Food Service' },
-    { value: 'service', label: 'Service Business' },
-    { value: 'manufacturing', label: 'Manufacturing' },
-    { value: 'wholesale', label: 'Wholesale' },
-    { value: 'consulting', label: 'Consulting' },
-    { value: 'other', label: 'Other' }
-  ];
+// Nepal districts (major ones)
+const districtOptions = [
+  { value: 'Kathmandu', label: 'Kathmandu' },
+  { value: 'Lalitpur', label: 'Lalitpur' },
+  { value: 'Bhaktapur', label: 'Bhaktapur' },
+  { value: 'Kaski', label: 'Kaski (Pokhara)' },
+  { value: 'Chitwan', label: 'Chitwan' },
+  { value: 'Morang', label: 'Morang' },
+  { value: 'Rupandehi', label: 'Rupandehi' },
+  { value: 'Jhapa', label: 'Jhapa' },
+  { value: 'Sunsari', label: 'Sunsari' },
+  { value: 'Parsa', label: 'Parsa' },
+  { value: 'Other', label: 'Other' },
+];
 
-  const handleInputChange = (field, value) => {
+const currencyOptions = [
+  { value: 'NPR', label: 'Nepali Rupee (Rs.)' },
+  { value: 'INR', label: 'Indian Rupee (₹)' },
+  { value: 'USD', label: 'US Dollar ($)' },
+];
+
+const businessTypeOptions = [
+  { value: 'Retail Store', label: 'Retail Store' },
+  { value: 'Restaurant/Food', label: 'Restaurant/Food' },
+  { value: 'Service Provider', label: 'Service Provider' },
+  { value: 'Manufacturing', label: 'Manufacturing' },
+  { value: 'Healthcare', label: 'Healthcare' },
+  { value: 'Other', label: 'Other' },
+];
+
+const BusinessProfileSection: React.FC<BusinessProfileSectionProps> = ({ onUpdate }) => {
+  const [shopProfile, setShopProfile] = useState<ShopProfile | null>(null);
+  const [formData, setFormData] = useState<UpdateShopProfileDTO>({});
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [hasChanges, setHasChanges] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch shop profile on mount
+  useEffect(() => {
+    fetchShopProfile();
+  }, []);
+
+  const fetchShopProfile = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await getActiveShopProfile();
+      setShopProfile(response.data);
+      setFormData({
+        name: response.data.name,
+        businessType: response.data.businessType,
+        panNumber: response.data.panNumber || '',
+        vatNumber: response.data.vatNumber || '',
+        currency: response.data.currency || 'NPR',
+        address: response.data.address || '',
+        city: response.data.city || '',
+        district: response.data.district || '',
+        province: response.data.province || '',
+        phone: response.data.phone || '',
+        email: response.data.email || '',
+        website: response.data.website || '',
+      });
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Failed to load business profile');
+      console.error('Error fetching shop profile:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: keyof UpdateShopProfileDTO, value: string): void => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
 
-  const handleSave = () => {
-    onUpdate(formData);
+  const handleSave = async (): Promise<void> => {
+    try {
+      setIsSaving(true);
+      const response = await updateActiveShopProfile(formData);
+      setShopProfile(response.data);
+      setIsEditing(false);
+      setHasChanges(false);
+      onUpdate?.();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Failed to update business profile');
+      console.error('Error updating shop profile:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = (): void => {
+    if (shopProfile) {
+      setFormData({
+        name: shopProfile.name,
+        businessType: shopProfile.businessType,
+        panNumber: shopProfile.panNumber || '',
+        vatNumber: shopProfile.vatNumber || '',
+        currency: shopProfile.currency || 'NPR',
+        address: shopProfile.address || '',
+        city: shopProfile.city || '',
+        district: shopProfile.district || '',
+        province: shopProfile.province || '',
+        phone: shopProfile.phone || '',
+        email: shopProfile.email || '',
+        website: shopProfile.website || '',
+      });
+    }
     setIsEditing(false);
     setHasChanges(false);
   };
 
-  const handleCancel = () => {
-    setFormData(businessData);
-    setIsEditing(false);
-    setHasChanges(false);
-  };
+  if (isLoading) {
+    return (
+      <div className="bg-card rounded-lg border border-border p-6">
+        <div className="flex items-center justify-center py-12">
+          <Icon name="Loader2" size={24} className="animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Loading business profile...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !shopProfile) {
+    return (
+      <div className="bg-card rounded-lg border border-border p-6">
+        <div className="flex flex-col items-center justify-center py-12">
+          <Icon name="AlertCircle" size={48} className="text-destructive mb-4" />
+          <p className="text-destructive">{error}</p>
+          <Button variant="outline" className="mt-4" onClick={fetchShopProfile}>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-card rounded-lg border border-border p-6">
@@ -69,6 +183,13 @@ const BusinessProfileSection = ({ businessData, onUpdate }) => {
           </Button>
         )}
       </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <p className="text-sm text-destructive">{error}</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Basic Information */}
         <div className="space-y-4">
@@ -77,8 +198,8 @@ const BusinessProfileSection = ({ businessData, onUpdate }) => {
           <Input
             label="Business Name"
             type="text"
-            value={formData?.businessName}
-            onChange={(e) => handleInputChange('businessName', e?.target?.value)}
+            value={formData?.name || ''}
+            onChange={(e) => handleInputChange('name', e?.target?.value)}
             disabled={!isEditing}
             required
             placeholder="Enter your business name"
@@ -87,39 +208,48 @@ const BusinessProfileSection = ({ businessData, onUpdate }) => {
           <Select
             label="Business Type"
             options={businessTypeOptions}
-            value={formData?.businessType}
+            value={formData?.businessType || ''}
             onChange={(value) => handleInputChange('businessType', value)}
             disabled={!isEditing}
             placeholder="Select business type"
           />
 
           <Input
-            label="Tax ID / Registration Number"
+            label="PAN Number"
             type="text"
-            value={formData?.taxId}
-            onChange={(e) => handleInputChange('taxId', e?.target?.value)}
+            value={formData?.panNumber || ''}
+            onChange={(e) => handleInputChange('panNumber', e?.target?.value)}
             disabled={!isEditing}
-            placeholder="Enter tax identification number"
+            placeholder="Permanent Account Number"
+          />
+
+          <Input
+            label="VAT Number"
+            type="text"
+            value={formData?.vatNumber || ''}
+            onChange={(e) => handleInputChange('vatNumber', e?.target?.value)}
+            disabled={!isEditing}
+            placeholder="VAT registration number (if applicable)"
           />
 
           <Select
-            label="Primary Currency"
+            label="Currency"
             options={currencyOptions}
-            value={formData?.currency}
+            value={formData?.currency || 'NPR'}
             onChange={(value) => handleInputChange('currency', value)}
             disabled={!isEditing}
-            placeholder="Select primary currency"
+            placeholder="Select currency"
           />
         </div>
 
-        {/* Contact Information */}
+        {/* Contact & Location Information */}
         <div className="space-y-4">
           <h4 className="font-medium text-foreground mb-3">Contact Information</h4>
           
           <Input
-            label="Business Address"
+            label="Address"
             type="text"
-            value={formData?.address}
+            value={formData?.address || ''}
             onChange={(e) => handleInputChange('address', e?.target?.value)}
             disabled={!isEditing}
             placeholder="Enter business address"
@@ -129,58 +259,78 @@ const BusinessProfileSection = ({ businessData, onUpdate }) => {
             <Input
               label="City"
               type="text"
-              value={formData?.city}
+              value={formData?.city || ''}
               onChange={(e) => handleInputChange('city', e?.target?.value)}
               disabled={!isEditing}
-              placeholder="Enter city"
+              placeholder="City or municipality"
             />
 
-            <Input
-              label="Postal Code"
-              type="text"
-              value={formData?.postalCode}
-              onChange={(e) => handleInputChange('postalCode', e?.target?.value)}
+            <Select
+              label="District"
+              options={districtOptions}
+              value={formData?.district || ''}
+              onChange={(value) => handleInputChange('district', value)}
               disabled={!isEditing}
-              placeholder="Enter postal code"
+              placeholder="Select district"
             />
           </div>
+
+          <Select
+            label="Province"
+            options={provinceOptions}
+            value={formData?.province || ''}
+            onChange={(value) => handleInputChange('province', value)}
+            disabled={!isEditing}
+            placeholder="Select province"
+          />
 
           <Input
             label="Phone Number"
             type="tel"
-            value={formData?.phone}
+            value={formData?.phone || ''}
             onChange={(e) => handleInputChange('phone', e?.target?.value)}
             disabled={!isEditing}
-            placeholder="Enter phone number"
+            placeholder="+977-"
           />
 
           <Input
             label="Email Address"
             type="email"
-            value={formData?.email}
+            value={formData?.email || ''}
             onChange={(e) => handleInputChange('email', e?.target?.value)}
             disabled={!isEditing}
-            placeholder="Enter email address"
+            placeholder="email@example.com"
           />
+
+          {/* <Input
+            label="Website"
+            type="url"
+            value={formData?.website || ''}
+            onChange={(e) => handleInputChange('website', e?.target?.value)}
+            disabled={!isEditing}
+            placeholder="https://www.example.com"
+          /> */}
         </div>
       </div>
+
       {/* Action Buttons */}
       {isEditing && (
         <div className="flex items-center justify-end space-x-3 mt-6 pt-6 border-t border-border">
           <Button
             variant="outline"
             onClick={handleCancel}
+            disabled={isSaving}
           >
             Cancel
           </Button>
           <Button
             variant="default"
             onClick={handleSave}
-            disabled={!hasChanges}
-            iconName="Save"
+            disabled={!hasChanges || isSaving}
+            iconName={isSaving ? "Loader2" : "Save"}
             iconPosition="left"
           >
-            Save Changes
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       )}
