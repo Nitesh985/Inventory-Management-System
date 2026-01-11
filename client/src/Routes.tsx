@@ -34,7 +34,6 @@ const Routes = () => {
           <Route path="/test" element={<TestPage />} />
           <Route path="*" element={<NotFound />} /> 
           <Route element={<ProtectedLayout />}>
-              <Route path="/business-registration" element={<BusinessRegistration />} />
               <Route path="/business-dashboard" element={<BusinessDashboard />} />
               
               <Route
@@ -50,11 +49,6 @@ const Routes = () => {
               <Route path="/expense-tracking" element={<ExpenseTracking />} />
               <Route path="/customer-khata" element={<CustomerKhata />} />
           </Route>
-          <Route path="/register" element={
-            // <Protected authentication={false}>
-              <RegisterPage />
-            // </Protected>
-            } />
           <Route path="/sign-up" element={
             // <Protected authentication={false}>
             <SignUp />

@@ -139,72 +139,7 @@ const RegistrationForm = ({ onSubmit, isLoading = false, className = '' }: Regis
         />
       </div>
 
-      {/* Account Credentials Section
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2 mb-4">
-          <Icon name="User" size={20} className="text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">Account Credentials</h3>
-        </div>
-
-        <Input
-          label="Email Address"
-          type="email"
-          placeholder="Enter your email address"
-          value={formData.email}
-          onChange={(e) => handleInputChange('email', e.target.value)}
-          error={errors.email}
-          description="This will be your login email"
-          required
-          disabled={isLoading}
-        />
-
-        <div className="space-y-2">
-          <div className="relative">
-            <Input
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Create a strong password"
-              value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
-              error={errors.password}
-              required
-              disabled={isLoading}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-9 text-muted-foreground hover:text-foreground transition-colors"
-              disabled={isLoading}
-            >
-              <Icon name={showPassword ? 'EyeOff' : 'Eye'} size={16} />
-            </button>
-          </div>
-          <PasswordStrengthIndicator password={formData.password} />
-        </div>
-
-        <div className="relative">
-          <Input
-            label="Confirm Password"
-            type={showConfirmPassword ? 'text' : 'password'}
-            placeholder="Confirm your password"
-            value={formData.confirmPassword}
-            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            error={errors.confirmPassword}
-            required
-            disabled={isLoading}
-          />
-          <button
-            type="button"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-9 text-muted-foreground hover:text-foreground transition-colors"
-            disabled={isLoading}
-          >
-            <Icon name={showConfirmPassword ? 'EyeOff' : 'Eye'} size={16} />
-          </button>
-        </div>
-      </div> */}
-
-      {/* Legal Agreements Section */}
+     {/* Legal Agreements Section */}
       <div className="space-y-4 border-t border-border pt-6">
         <div className="space-y-3">
           <Checkbox

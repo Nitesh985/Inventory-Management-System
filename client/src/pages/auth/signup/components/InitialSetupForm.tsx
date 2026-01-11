@@ -1,3 +1,4 @@
+import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,13 +13,12 @@ import Icon from '../../../../components/AppIcon';
 import 'react-phone-input-2/lib/style.css';
 import '@geoapify/geocoder-autocomplete/styles/minimal.css';
 
-// 1. Validation Schema
 const setupSchema = z.object({
   businessName: z.string().min(2, 'Business name is required'),
   businessType: z.string().min(1, 'Please select a business type'),
   phoneNumber: z.string().min(5, 'Valid phone number is required'),
   currency: z.string().min(1, 'Currency is required'),
-  address: z.string().min(3, 'Please select a valid address'),
+  address: z.string().min(3, 'Please select a valid address from the list'),
   countryCode: z.string().optional(),
 });
 
@@ -38,7 +38,8 @@ const InitialSetupForm = ({ onSubmit, isLoading }: InitialSetupFormProps) => {
       currency: 'NPR',
       countryCode: 'np',
       phoneNumber: '',
-      address: ''
+      address: '',
+      businessType: ''
     }
   });
 
@@ -74,30 +75,29 @@ const InitialSetupForm = ({ onSubmit, isLoading }: InitialSetupFormProps) => {
         <h3 className="text-lg font-semibold text-foreground">Workspace Details</h3>
       </div>
 
-      {/* Row 1: Business Name & Type (Merged from RegistrationForm) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
+      <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-1 gap-4 ">
+        <Input div className=''
           label="Business Name"
           placeholder="e.g. Digital Khata Store"
           {...register('businessName')}
           error={errors.businessName?.message}
           disabled={isLoading}
         />
+
         <Select
           label="Business Type"
           options={businessTypes}
           placeholder="Select Type"
           value={watch('businessType')}
-          onChange={(val: string) => setValue('businessType', val)}
+          onChange={(val) => setValue('businessType', val as string)}
           error={errors.businessType?.message}
           disabled={isLoading}
         />
       </div>
 
-      {/* Row 2: Phone & Currency */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-foreground/80 ml-1">Business Phone</label>
+          <label className="text-sm font-bold text-foreground/80 ml-1">Business Phone</label>
           <Controller
             control={control}
             name="phoneNumber"
@@ -125,23 +125,29 @@ const InitialSetupForm = ({ onSubmit, isLoading }: InitialSetupFormProps) => {
           label="Base Currency"
           options={currencies}
           value={watch('currency')}
-          onChange={(val: string) => setValue('currency', val)}
+          onChange={(val) => setValue('currency', val as string)}
           error={errors.currency?.message}
           disabled={isLoading}
         />
       </div>
 
-      {/* Row 3: Address Autocomplete */}
+      {/* FIXED ADDRESS AUTOCOMPLETE SECTION */}
       <div className="space-y-1.5">
         <label className="text-sm font-medium text-foreground/80 ml-1">Business Address</label>
-        <div className="geoapify-container-custom border border-border rounded-xl overflow-hidden">
+        <div className={`geoapify-container-custom border rounded-xl overflow-visible transition-all ${errors.address ? 'border-destructive' : 'border-border'}`}>
           <GeoapifyContext apiKey={apiKey}>
             <GeoapifyGeocoderAutocomplete
-              placeholder="Search for your city or street..."
+              placeholder="Start typing your address..."
               type="city"
-              countryCodes={selectedCountry ? [selectedCountry as any] : []}
-              lang="en"
-              placeSelect={(value) => setValue('address', value?.properties?.formatted || '')}
+              // countryCodes expects an array of strings
+              countryCodes={selectedCountry ? [selectedCountry] : undefined}
+              value={watch('address')}
+              placeSelect={(value) => {
+                const formatted = value?.properties?.formatted || "";
+                setValue('address', formatted, { shouldValidate: true });
+              }}
+              // Trigger search on change
+              suggestionsChange={(suggestions) => console.log('Suggestions:', suggestions)}
             />
           </GeoapifyContext>
         </div>
@@ -151,7 +157,7 @@ const InitialSetupForm = ({ onSubmit, isLoading }: InitialSetupFormProps) => {
       <div className="bg-muted/30 p-4 rounded-xl border border-border/50 flex items-start space-x-3">
         <Icon name="Info" size={18} className="text-primary mt-0.5" />
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Your workspace will be configured with <b>{currentCurrency}</b>. You can change regional settings later in the dashboard.
+          The base currency is set to <b>{currentCurrency}</b> based on your phone number.
         </p>
       </div>
 
@@ -160,19 +166,50 @@ const InitialSetupForm = ({ onSubmit, isLoading }: InitialSetupFormProps) => {
       </Button>
 
       <style>{`
-        .geoapify-wrapper .geocoder-container input {
-          background: hsl(var(--background)) !important;
+        /* 1. Reset Geoapify Wrapper */
+        .geoapify-autocomplete-items {
+          background-color: slate black !important;
+          border: 1px solid hsl(var(--border)) !important;
+          border-radius: 0.75rem !important;
+          margin-top: 8px !important;
+          color: hsl(var(--foreground)) !important;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+          z-index: 9999 !important;
+          position: absolute !important;
+          width: 100%;
+        }
+
+        /* 2. Style each suggestion item */
+        .geoapify-autocomplete-item {
+          padding: 12px 16px !important;
+          font-size: 0.875rem !important;
+          cursor: pointer !important;
+        }
+
+        .geoapify-autocomplete-item:hover {
+          background-color: hsl(var(--accent)) !important;
+          color: hsl(var(--accent-foreground)) !important;
+        }
+
+        /* 3. Style the Input inside the Geocoder */
+        .geocoder-container input {
+          background-color: transparent !important;
           color: hsl(var(--foreground)) !important;
           border: none !important;
           height: 44px !important;
           padding: 0 12px !important;
           width: 100% !important;
+          font-size: 0.875rem !important;
+          outline: none !important;
         }
-        .geoapify-autocomplete-items {
-          background-color: hsl(var(--card)) !important;
-          border: 1px solid hsl(var(--border)) !important;
-          color: hsl(var(--foreground)) !important;
-          z-index: 99;
+
+        .geocoder-container input::placeholder {
+          color: hsl(var(--muted-foreground)) !important;
+        }
+
+        /* Clear button inside input */
+        .geoapify-close-button {
+          color: hsl(var(--muted-foreground)) !important;
         }
       `}</style>
     </form>

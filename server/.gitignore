@@ -35,3 +35,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Some notes I am writing
 notes.md
+
+# Prettier configuration
+.prettierrc*

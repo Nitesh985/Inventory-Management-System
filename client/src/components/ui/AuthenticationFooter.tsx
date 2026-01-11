@@ -103,7 +103,7 @@ const AuthenticationFooter = ({
         {/* Copyright */}
         <div className="text-center pt-2">
           <p className="text-xs text-muted-foreground">
-            © 2024 Digital Khata. All rights reserved.
+            © 2026 Digital Khata. All rights reserved.
           </p>
         </div>
       </div>
