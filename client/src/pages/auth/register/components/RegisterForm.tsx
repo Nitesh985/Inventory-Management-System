@@ -30,8 +30,15 @@ const RegisterForm = ({
 
   const providerSignUp = async () => {
     await signIn.social({
-      provider: "google"
+      provider: "google",
+      callbackURL: "http://localhost:5173/business-dashboard"
     }, {
+      onRequest: ()=>{
+        setIsLoading(true)
+      },
+      onResponse: ()=>{
+        setIsLoading(false)
+      }
     })
   }
 

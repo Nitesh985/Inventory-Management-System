@@ -6,8 +6,6 @@ import app from './app.ts'
 
 
 
-
-// Connect to DB and start server
 connectToDB()
   .then(async () => {
     const port = process.env.PORT || 3000;
@@ -18,3 +16,4 @@ connectToDB()
   .catch((error) => {
     console.log("Connection to Mongodb failed ::", error);
   });
+

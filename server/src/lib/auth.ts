@@ -3,6 +3,7 @@ import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { sendEmail } from "../helpers/sendEmail.ts";
 
+
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI environment variable is not set");
 }
@@ -13,9 +14,15 @@ const db = client.db();
 export const auth = betterAuth({
   baseURL: "http://localhost:3000",
   trustedOrigins: ["http://localhost:5173"],
+  appUrl: "http://localhost:5173",
   user:{
+    changeEmail:{
+      enabled: true,
+      updateEmailWithoutVerification: true
+    },
     additionalFields:{
       activeShopId: { type: ["string", "null"], optional:true },
+      emailVerified: {type: "boolean"}
     }
   },
   database: mongodbAdapter(db, {
@@ -27,13 +34,9 @@ export const auth = betterAuth({
 
 
   // emailVerification:{
-  //   sendVerificationEmail: async ({ user, url, token }, request) => {
-  //     void sendEmail({
-  //       to: user.email,
-  //       subject: `Verify your email Mr. ${user.name.trim().split(/\s+/)[0] || ""}`,
-  //       text: `Please verify your email by clicking on the following link: ${url}`,
-  //       html: `<p>Please verify your email by clicking on the following link:</p><a href="${url}">${url}</a>`,
-  //     })
+  //   sendVerificationEmail: async ( { user, url, token }, request ) => {
+      
+
   //   }
   // },
   socialProviders: { 

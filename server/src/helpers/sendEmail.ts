@@ -1,4 +1,6 @@
 import nodemailer from "nodemailer";
+import "dotenv/config"
+
 
 export async function sendEmail({
   to,
@@ -11,19 +13,28 @@ export async function sendEmail({
   text?: string
   html?: string
 }) {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  await transporter.sendMail({
-    from: `📘 Digital Khata`,
-    to,
-    subject,
-    text,
-    html,
-  });
+  try{
+    console.log("We are here on sendEmail")
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS,
+      },
+    });
+  
+    const response = await transporter.sendMail({
+      from: `📘 Digital Khata`,
+      to,
+      subject,
+      text,
+      html,
+    });
+    
+    return response
+    
+  } catch(error){
+    console.error("Error from send Email")
+    throw error
+  }
 }

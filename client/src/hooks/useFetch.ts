@@ -1,30 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export function useFetch<T>(
   fetcher: () => Promise<T>,
   deps: any[] = []
 ) {
   const [data, setData] = useState<T | null>(null);
-  
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<any>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    fetcher()
-      .then((res) => {
-        console.log(res.data)
-        if (isMounted) setData(res.data);
-      })
-      .catch((err) => setError(err))
-      .finally(() => setLoading(false));
+    setError(null);
 
-    return () => {
-      isMounted = false;
-    };
+    try {
+      const res = await fetcher();
+      setData(res);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
   }, deps);
 
-  return { data, loading, error };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const refetch = () => {
+    fetchData();
+  };
+
+  return { data, loading, error, refetch };
 }

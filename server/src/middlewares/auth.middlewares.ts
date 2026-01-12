@@ -11,14 +11,13 @@ const verifyUserAuth = asyncHandler(async(req:Request, res:Response, next:NextFu
     headers: req.headers
   })
 
-  console.log(session)
   
   if (!session){
     throw new ApiError(401, "Unauthorized access!")
   }
 
   req.user = session.user
-  
+  console.log("We are here!")
   next()
 })
 

@@ -3,7 +3,7 @@ import { ApiError } from './index.ts';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export const sendEmail = async (email, username) => {
+export const ResendsendResend = async (email, username) => {
   const { data, error } = await resend.emails.send({
     from: 'Acme <onboarding@resend.dev>',
     to: email,

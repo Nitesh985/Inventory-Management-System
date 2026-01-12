@@ -1,12 +1,62 @@
-import React, { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import GoogleLogo from '@/assets/google-logo.png';
+import AppleLogo from '@/assets/apple-logo.png';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
+import Icon from '@/components/AppIcon';
 
-import Input from '../../../../components/ui/Input';
-import Button from '../../../../components/ui/Button';
-import Icon from '../../../../components/AppIcon';
+// Password strength checker function
+const checkPasswordStrength = (password: string) => {
+  let strength = 0;
+  const feedback: string[] = [];
+
+  if (!password) {
+    return { strength: 0, label: 'No password', color: 'gray', feedback: [] };
+  }
+
+  // Length check
+  if (password.length >= 8) strength += 20;
+  if (password.length >= 12) strength += 10;
+  if (password.length >= 16) strength += 10;
+  else feedback.push('Use at least 12 characters for stronger security');
+
+  // Lowercase letters
+  if (/[a-z]/.test(password)) strength += 15;
+  else feedback.push('Add lowercase letters (a-z)');
+
+  // Uppercase letters
+  if (/[A-Z]/.test(password)) strength += 15;
+  else feedback.push('Add uppercase letters (A-Z)');
+
+  // Numbers
+  if (/[0-9]/.test(password)) strength += 15;
+  else feedback.push('Add numbers (0-9)');
+
+  // Special characters
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) strength += 25;
+  else feedback.push('Add special characters (!@#$%^&* etc)');
+
+  // Determine strength label and color
+  let label = 'Weak';
+  let color = 'red';
+
+  if (strength >= 80) {
+    label = 'Strong';
+    color = 'green';
+  } else if (strength >= 60) {
+    label = 'Medium';
+    color = 'yellow';
+  } else if (strength >= 40) {
+    label = 'Fair';
+    color = 'orange';
+  }
+
+  return { strength, label, color, feedback };
+};
 
 // 1. Define the validation schema
 const signupSchema = z.object({
@@ -19,7 +69,7 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
-type SignupFormData = z.infer<typeof signupSchema>;
+export type SignupFormData = z.infer<typeof signupSchema>;
 
 interface SimpleSignupFormProps {
   onSubmit: (data: SignupFormData) => void;
@@ -28,119 +78,251 @@ interface SimpleSignupFormProps {
 
 const SimpleSignupForm = ({ onSubmit, isLoading }: SimpleSignupFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [password, setPassword] = useState('');
 
   // 2. Initialize React Hook Form
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
-    mode: 'onTouched', // Validates as the user types
+    mode: 'onTouched',
   });
 
+  // Watch password field for strength calculation
+  const passwordValue = watch('password') || password;
+  const passwordStrength = useMemo(() => checkPasswordStrength(passwordValue), [passwordValue]);
+
+  const getColorClasses = (color: string) => {
+    const colorMap: Record<string, { bar: string; text: string; bg: string }> = {
+      red: { bar: 'bg-red-500', text: 'text-red-600', bg: 'bg-red-100' },
+      orange: { bar: 'bg-orange-500', text: 'text-orange-600', bg: 'bg-orange-100' },
+      yellow: { bar: 'bg-yellow-500', text: 'text-yellow-600', bg: 'bg-yellow-100' },
+      green: { bar: 'bg-green-500', text: 'text-green-600', bg: 'bg-green-100' },
+      gray: { bar: 'bg-gray-300', text: 'text-gray-600', bg: 'bg-gray-100' },
+    };
+    return colorMap[color] || colorMap.gray;
+  };
+
+  const registerUser = async (data: SignupFormData) => {
+    onSubmit(data);
+  }
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input
-          label="Full Name"
-          placeholder="John Doe"
-          {...register('fullName')}
-          error={errors.fullName?.message}
-          disabled={isLoading}
-        />
-
-        <Input
-          label="Email Address"
-          type="email"
-          placeholder="name@company.com"
-          {...register('email')}
-          error={errors.email?.message}
-          disabled={isLoading}
-        />
-
-        <div className="relative">
+    <form onSubmit={handleSubmit(registerUser)} className="space-y-4">
+      {/* Full Name Field */}
+      <div className="space-y-1.5 animate-fade-in-delay" style={{ animationDelay: '0.05s' }}>
+        <label className="block text-sm font-semibold text-gray-700">Full Name</label>
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-300 rounded-lg opacity-0 group-focus-within:opacity-20 blur transition-opacity duration-300"></div>
           <Input
-            label="Password"
+            placeholder="John Doe"
+            {...register('fullName')}
+            error={errors.fullName?.message}
+            disabled={isLoading}
+            className="relative w-full py-3 px-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:shadow-lg transition-all text-sm bg-white/80 hover:bg-white hover:border-gray-300"
+          />
+        </div>
+      </div>
+
+      {/* Email Field */}
+      <div className="space-y-1.5 animate-fade-in-delay" style={{ animationDelay: '0.1s' }}>
+        <label className="block text-sm font-semibold text-gray-700">Email Address</label>
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-300 rounded-lg opacity-0 group-focus-within:opacity-20 blur transition-opacity duration-300"></div>
+          <Input
+            type="email"
+            placeholder="name@company.com"
+            {...register('email')}
+            error={errors.email?.message}
+            disabled={isLoading}
+            className="relative w-full py-3 px-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:shadow-lg transition-all text-sm bg-white/80 hover:bg-white hover:border-gray-300"
+          />
+        </div>
+      </div>
+
+      {/* Password Field */}
+      <div className="space-y-1.5 animate-fade-in-delay" style={{ animationDelay: '0.15s' }}>
+        <label className="block text-sm font-semibold text-gray-700">Password</label>
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-300 rounded-lg opacity-0 group-focus-within:opacity-20 blur transition-opacity duration-300"></div>
+          <Input
             type={showPassword ? 'text' : 'password'}
             placeholder="Min. 8 characters"
             {...register('password')}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              register('password').onChange?.(e);
+            }}
             error={errors.password?.message}
             disabled={isLoading}
+            className="relative w-full py-3 px-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:shadow-lg transition-all pr-12 text-sm bg-white/80 hover:bg-white hover:border-gray-300"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-9 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors"
+            tabIndex={-1}
           >
             <Icon name={showPassword ? 'EyeOff' : 'Eye'} size={16} />
           </button>
         </div>
+        {/* Password Strength Indicator */}
+        {passwordValue && (
+          <div className="mt-3 space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            {/* Strength Bar */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-gray-600">Strength:</span>
+              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${getColorClasses(passwordStrength.color).bar}`}
+                  style={{ width: `${Math.min(passwordStrength.strength, 100)}%` }}
+                ></div>
+              </div>
+              <span className={`text-xs font-bold ${getColorClasses(passwordStrength.color).text}`}>
+                {passwordStrength.label}
+              </span>
+            </div>
 
-        <Input
-          label="Confirm Password"
-          type="password"
-          placeholder="Repeat your password"
-          {...register('confirmPassword')}
-          error={errors.confirmPassword?.message}
-          disabled={isLoading}
-        />
+            {/* Password Suggestions */}
+            {passwordStrength.feedback.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-gray-700">Ways to make it stronger:</p>
+                <ul className="space-y-1">
+                  {passwordStrength.feedback.map((suggestion, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-orange-500 mt-0.5">•</span>
+                      <span className="text-xs text-gray-700">{suggestion}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-        <p className="text-[11px] text-muted-foreground text-left mt-6">
-          By clicking signup, you agree to our{' '}
-          <Link to="/terms" className="text-primary underline underline-offset-4">Terms</Link> and{' '}
-          <Link to="/privacy" className="text-primary underline underline-offset-4">Privacy Policy</Link>.
-        </p>
-
-        <Button
-          type="submit"
-          fullWidth
-          size="lg"
-          loading={isLoading}
-          iconName="UserPlus"
-        >
-          Create Account
-        </Button>
-      </form>
-
-      <div className="relative flex justify-center text-xs uppercase">
-        <span className="bg-card px-2 text-muted-foreground">Or </span>
+            {/* Success Message */}
+            {passwordStrength.feedback.length === 0 && passwordValue && (
+              <div className="flex items-center gap-2 pt-1">
+                <Icon name="CheckCircle" size={16} className="text-green-600" />
+                <span className="text-xs font-semibold text-green-600">Great password! You're all set.</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Button 
-          variant="outline" 
-          className="w-full flex items-center justify-center gap-2 border-border hover:bg-muted"
-          onClick={() => console.log('Google Signup')}
-          disabled={isLoading}
-        >
-          <Icon name="Chrome" size={18} className="text-[#4285F4]" />
-          <span className="text-sm font-medium">Google</span>
-        </Button>
-        <Button 
-          variant="outline" 
-          className="w-full flex items-center justify-center gap-2 border-border hover:bg-muted"
-          onClick={() => console.log('Apple Signup')}
-          disabled={isLoading}
-        >
-          <Icon name="Apple" size={18} className="text-foreground" />
-          <span className="text-sm font-medium">Apple</span>
-        </Button>
+      {/* Confirm Password Field */}
+      <div className="space-y-1.5 animate-fade-in-delay" style={{ animationDelay: '0.2s' }}>
+        <label className="block text-sm font-semibold text-gray-700">Confirm Password</label>
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-300 rounded-lg opacity-0 group-focus-within:opacity-20 blur transition-opacity duration-300"></div>
+          <Input
+            type={showConfirmPassword ? 'text' : 'password'}
+            placeholder="Repeat your password"
+            {...register('confirmPassword')}
+            error={errors.confirmPassword?.message}
+            disabled={isLoading}
+            className="relative w-full py-3 px-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:shadow-lg transition-all pr-12 text-sm bg-white/80 hover:bg-white hover:border-gray-300"
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors"
+            tabIndex={-1}
+          >
+            <Icon name={showConfirmPassword ? 'EyeOff' : 'Eye'} size={16} />
+          </button>
+        </div>
       </div>
 
-      <div className="text-center pt-2">
-        <p className="text-sm text-muted-foreground">
+      {/* Terms Agreement */}
+      <p className="text-xs text-gray-600 text-center leading-relaxed pt-2 animate-fade-in-delay" style={{ animationDelay: '0.25s' }}>
+        By creating an account, you agree to our{' '}
+        <Link to="/terms" className="text-blue-600 hover:text-blue-700 font-bold">Terms</Link> and{' '}
+        <Link to="/privacy" className="text-blue-600 hover:text-blue-700 font-bold">Privacy Policy</Link>
+      </p>
+
+      {/* Submit Button */}
+      <Button
+        type="submit"
+        fullWidth
+        size="lg"
+        loading={isLoading}
+        className="py-3 text-base font-bold bg-gradient-to-r from-blue-600 via-blue-600 to-blue-700 text-white hover:from-blue-700 hover:via-blue-700 hover:to-blue-800 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:scale-100 disabled:opacity-60 disabled:shadow-md mt-6 relative overflow-hidden group animate-fade-in-delay"
+        style={{ animationDelay: '0.3s' }}
+      >
+        <span className="relative z-10 flex items-center justify-center">
+          {isLoading ? (
+            <>
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+              Creating Account...
+            </>
+          ) : (
+            'Create Account'
+          )}
+        </span>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      </Button>
+
+      {/* Divider */}
+      <div className="relative flex justify-center items-center my-4 animate-fade-in-delay" style={{ animationDelay: '0.35s' }}>
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200"></div>
+        </div>
+        <span className="relative px-3 text-xs text-gray-500 bg-white font-bold">Or continue with</span>
+      </div>
+
+      {/* Social Signup Buttons */}
+      <div className="grid grid-cols-2 gap-2 animate-fade-in-delay" style={{ animationDelay: '0.4s' }}>
+        <button
+          type="button"
+          className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md transition-all font-bold text-gray-700 text-sm group space-x-3"
+          disabled={isLoading}
+          onClick={() => console.log('Google signup clicked')}
+        >
+          <img src={GoogleLogo} alt="Google" className="w-5 h-5 object-contain" />
+          <span>Google</span>
+        </button>
+        <button
+          type="button"
+          className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md transition-all font-bold text-gray-700 text-sm group"
+          disabled={isLoading}
+        >
+          <img src={AppleLogo} alt="Apple" className="w-8 h-8 object-contain" />
+          <span>Apple</span>
+        </button>
+      </div>
+
+      {/* Sign In Link */}
+      <div className="text-center pt-3 border-t border-gray-200 mt-4 animate-fade-in-delay" style={{ animationDelay: '0.45s' }}>
+        <p className="text-sm text-gray-700">
           Already have an account?{' '}
-          <Link to="/login" className="text-primary font-semibold hover:underline">
+          <Link to="/sign-in" className="text-blue-600 hover:text-blue-700 font-bold hover:underline transition-all duration-200">
             Sign in
           </Link>
         </p>
       </div>
-    </div>
 
-    
-
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(15px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fade-in-delay {
+          animation: fadeIn 0.6s ease-out forwards;
+          opacity: 0;
+        }
+      `}</style>
+    </form>
   );
 };
 

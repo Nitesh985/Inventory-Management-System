@@ -1,316 +1,358 @@
-// client/src/pages/auth/signup/index.tsx
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import GoogleLogo from '@/assets/google-logo.png';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
+import Icon from '@/components/AppIcon';
 import { Helmet } from 'react-helmet';
-import AuthenticationHeader from '../../../components/ui/AuthenticationHeader';
-import AuthenticationFooter from '../../../components/ui/AuthenticationFooter';
-import ConnectivityIndicator from '../../../components/ui/ConnectivityIndicator';
-import FormValidationFeedback from '../../../components/ui/FormValidationFeedback';
-import RegistrationForm from './components/RegistrationForm';
-import RegistrationProgress from './components/RegistrationProgress';
-import TrustSignals from './components/TrustSignals';
-import { RegisterFormData, RegistrationStep } from './types';
-import VerifyForm from './components/VerifyForm';
-import InitialSetupForm from './components/InitialSetupForm';
-import SimpleSignupForm from './components/SimpleSignup';
+import { useNavigate } from 'react-router-dom';
+import { signUp, signIn } from '@/lib/auth-client';
 
-const RegisterPage = () => {
+
+
+// Password strength checker function
+const checkPasswordStrength = (password: string) => {
+  let strength = 0;
+  const feedback: string[] = [];
+
+  if (!password) {
+    return { strength: 0, label: 'No password', color: 'gray', feedback: [] };
+  }
+
+  // Length check
+  if (password.length >= 8) strength += 20;
+  if (password.length >= 12) strength += 10;
+  if (password.length >= 16) strength += 10;
+  else feedback.push('Use at least 12 characters for stronger security');
+
+  // Lowercase letters
+  if (/[a-z]/.test(password)) strength += 15;
+  else feedback.push('Add lowercase letters (a-z)');
+
+  // Uppercase letters
+  if (/[A-Z]/.test(password)) strength += 15;
+  else feedback.push('Add uppercase letters (A-Z)');
+
+  // Numbers
+  if (/[0-9]/.test(password)) strength += 15;
+  else feedback.push('Add numbers (0-9)');
+
+  // Special characters
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) strength += 25;
+  else feedback.push('Add special characters (!@#$%^&* etc)');
+
+  // Determine strength label and color
+  let label = 'Weak';
+  let color = 'red';
+
+  if (strength >= 80) {
+    label = 'Strong';
+    color = 'green';
+  } else if (strength >= 60) {
+    label = 'Medium';
+    color = 'yellow';
+  } else if (strength >= 40) {
+    label = 'Fair';
+    color = 'orange';
+  }
+
+  return { strength, label, color, feedback };
+};
+
+// 1. Define the validation schema
+const signupSchema = z.object({
+  fullName: z.string().min(2, 'Full name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string().min(8, 'Please confirm your password'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type SignupFormData = z.infer<typeof signupSchema>;
+
+
+const SignupPage = () => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const [page, setPage] = useState(1);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [password, setPassword] = useState('');
   const [registrationError, setRegistrationError] = useState<string>('');
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // Registration steps for progress indicator
-  const [registrationSteps, setRegistrationSteps] = useState<RegistrationStep[]>([
-    {
-      id: 1,
-      title: 'Create Account',
-      description: 'Set up your business profile',
-      isActive: true,
-      isCompleted: false
-    },
-    {
-      id: 2,
-      title: 'Verify Email',
-      description: 'Confirm your email address',
-      isActive: false,
-      isCompleted: false
-    },
-    {
-      id: 3,
-      title: 'Initial Setup',
-      description: 'Configure your inventory',
-      isActive: false,
-      isCompleted: false
-    },
-    {
-      id: 4,
-      title: 'Start Using',
-      description: 'Begin managing your business',
-      isActive: false,
-      isCompleted: false
-    }
-  ]);
+  // 2. Initialize React Hook Form
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    mode: 'onTouched',
+  });
 
-  // Monitor connectivity status
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+  // Watch password field for strength calculation
+  const passwordValue = watch('password') || password;
+  const passwordStrength = useMemo(() => checkPasswordStrength(passwordValue), [passwordValue]);
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+  const getColorClasses = (color: string) => {
+    const colorMap: Record<string, { bar: string; text: string; bg: string }> = {
+      red: { bar: 'bg-red-500', text: 'text-red-600', bg: 'bg-red-100' },
+      orange: { bar: 'bg-orange-500', text: 'text-orange-600', bg: 'bg-orange-100' },
+      yellow: { bar: 'bg-yellow-500', text: 'text-yellow-600', bg: 'bg-yellow-100' },
+      green: { bar: 'bg-green-500', text: 'text-green-600', bg: 'bg-green-100' },
+      gray: { bar: 'bg-gray-300', text: 'text-gray-600', bg: 'bg-gray-100' },
     };
-  }, []);
+    return colorMap[color] || colorMap.gray;
+  };
 
-  const handlePageAdd = () => {
-    let nextPage:number
-    setPage(prev => {
-      nextPage = prev + 1
-      return nextPage
+
+    const signUpUser = async (data:SignupFormData) => {
+    const { data:resData, error} = await signUp.email({
+      name: data.fullName,
+      email: data.email,
+      password: data.password
+    }, {
+      onRequest: () => {
+        setIsLoading(true)
+      },
+      onResponse: ()=>{
+        setIsLoading(false)
+      }
     })
 
-    setRegistrationSteps((regSteps) => {
-     return regSteps.map((step)=> ({...step, isActive: step.id === nextPage, isCompleted: step.id < nextPage}) )
-    } )
-    
-  }
-
-
-
-  // const handleRegistration = async (formData: RegisterFormData) => {
-  //   handlePageAdd()
-  //   if (page !== 4) {
-  //     return
-  //   }
-  //   setIsLoading(true);
-  //   setRegistrationError('');
-
-  //   try {
-  //     // Simulate API call delay
-  //     await new Promise(resolve => setTimeout(resolve, 2000));
-
-  //     // Mock validation - in real app, this would be API validation
-  //     const existingEmails = ['admin@digitalkhata.com', 'test@example.com'];
-      
-  //     if (existingEmails.includes(formData.email.toLowerCase())) {
-  //       throw new Error('An account with this email address already exists. Please use a different email or try signing in.');
-  //     }
-
-  //     // Mock successful registration
-  //     console.log('Registration successful:', formData);
-      
-  //     // Store registration data in localStorage for demo purposes
-  //     localStorage.setItem('registrationData', JSON.stringify({
-  //       businessName: formData.businessName,
-  //       ownerName: formData.ownerName,
-  //       email: formData.email,
-  //       businessType: formData.businessType,
-  //       registeredAt: new Date().toISOString()
-  //     }));
-
-  //     // Navigate to login with success message
-  //     navigate('/login', { 
-  //       state: { 
-  //         message: 'Account created successfully! Please sign in to continue.',
-  //         type: 'success'
-  //       }
-  //     });
-
-  //   } catch (error) {
-  //     setRegistrationError(error instanceof Error ? error.message : 'Registration failed. Please try again.');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-  
-  const handleRegistration = async (formData: any) => {
-  if (page === 3) {
-    setIsLoading(true);
-    setRegistrationError('');
-
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // PERSIST DATA: Merge step 1 data with step 3 data
-      const existingData = JSON.parse(localStorage.getItem('registrationData') || '{}');
-      const finalData = { ...existingData, ...formData };
-      localStorage.setItem('registrationData', JSON.stringify(finalData));
-      
-      // Move to visual Step 4 (Finalizing)
-      handlePageAdd();
-
-      // Navigate to dashboard
-      setTimeout(() => {
-        navigate('/inventory-management');
-      }, 2000);
-
-    } catch (error) {
-      setRegistrationError('Final setup failed. Please try again.');
-    } finally {
-      setIsLoading(false);
+    if (error){
+      setRegistrationError(error?.message ?? "An unexpected error occurred. Please try again.")
     }
-    return;
+    if (resData){
+      console.log(resData.user.id)
+      navigate("/verify-email")
+    }
+    
+
   }
 
-  // Handle Step 1 (Signup) and Step 2 (Verify)
-  handlePageAdd();
-};
+  const signUpGoogle = async () => {
+    await signIn.social({
+      provider: "google",
+      callbackURL: "http://localhost:5173/business-dashboard"
+    })  
+  }
+
+
+
 
   return (
     <>
-      <Helmet>
-        <title>Create Account - Digital Khata | Business Management Platform</title>
-        <meta 
-          name="description" 
-          content="Join Digital Khata and transform your business with our comprehensive ERP solution. Create your account to start managing inventory, sales, and expenses with offline-first capabilities." 
-        />
-        <meta name="keywords" content="business registration, ERP signup, inventory management, digital transformation" />
-        <meta property="og:title" content="Create Account - Digital Khata" />
-        <meta property="og:description" content="Start your digital business transformation journey with Digital Khata's comprehensive management platform." />
-        <meta property="og:type" content="website" />
-      </Helmet>
-
-      <div className="min-h-screen bg-background flex flex-col">
-        {/* Header */}
-        <AuthenticationHeader 
-          showConnectivityStatus={true}
-          isOnline={isOnline}
-        />
-
-        {/* Main Content */}
-        <main className="flex-1 flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-6xl mx-auto">
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-
-      {/* LEFT SIDE CONTENT */}
-      <div className="space-y-8">
-
-        {/* Welcome */}
-        <div className="text-center lg:text-left space-y-3">
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">
-            Start Your Digital Journey
-          </h1>
-          <p className="text-muted-foreground text-base leading-relaxed">
-            Transform your business with our modern & easy-to-use management platform.
-          </p>
-        </div>
-
-        {/* Progress (Desktop) */}
-        <RegistrationProgress
-          steps={registrationSteps}
-          layout="vertical"
-          className="hidden lg:block"
-        />
-
-        {/* Trust Signals */}
-        <TrustSignals />
-
-        {/* Connectivity */}
-        <ConnectivityIndicator 
-          position="inline" 
-          showLabel 
-          className="justify-center lg:justify-start"
-        />
-      </div>
-
-      {/* RIGHT SIDE FORM CARD */}
-      <div className="lg:col-span-2">
-
-        <div className="bg-card border border-border rounded-2xl shadow-md p-10 space-y-10">
-
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl lg:text-3xl font-semibold text-foreground">
-              Create Your Business Account
-            </h2>
-            <p className="text-muted-foreground text-sm lg:text-base">
-              Join thousands of businesses already using Digital Khata.
-            </p>
+        {/* Error Message */}
+        {registrationError && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-200 rounded-lg flex items-start space-x-3 shadow-md animate-pulse" role="alert">
+            <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <p className="text-sm font-bold text-red-900">{registrationError}</p>
           </div>
-
-          {/* Error */}
-          {registrationError && (
-            <FormValidationFeedback
-              type="error"
-              message={registrationError}
-            />
-          )}
-
-          {/* Offline Warning */}
-          {!isOnline && (
-            <FormValidationFeedback
-              type="warning"
-              message="You're offline. Your form data will be stored locally."
-            />
-          )}
-
-
-          {/* FORM */}
-          {/* {page===1 && <div className="mt-4">
-            <RegistrationForm
-              onSubmit={handleRegistration}
-              isLoading={isLoading}
-            />
-          </div>} */}
-
-          {page === 1 && (
-  <div className="mt-4">
-    <SimpleSignupForm
-      onSubmit={handleRegistration}
-      isLoading={isLoading}
-    />
-  </div>
-)}
-
-          {page===2 && <div className="mt-4">
-            <VerifyForm 
-              onSubmit={handleRegistration}
-              isLoading={isLoading}
-
-            /> </div>}
-
-          {page===3 && <div className="mt-4">
-            <InitialSetupForm 
-              onSubmit={handleRegistration}
-              isLoading={isLoading}
-              /> </div>}
-
-          
-          {page === 4 && (
-            <div className="flex flex-col items-center justify-center py-10 space-y-4 animate-in fade-in">
-              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <h2 className="text-2xl font-bold text-foreground">Finalizing Your Workspace...</h2>
-              <p className="text-muted-foreground">Preparing your inventory management dashboard.</p>
+        )}
+  
+  
+        {/* Form Content */}
+          <div className="animate-in fade-in duration-500">
+            <form onSubmit={handleSubmit(signUpUser)} className="space-y-4">
+              {/* Full Name Field */}
+              <div className="space-y-1.5 animate-fade-in-delay" style={{ animationDelay: '0.05s' }}>
+                <label className="block text-sm font-semibold text-gray-700">Full Name</label>
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-300 rounded-lg opacity-0 group-focus-within:opacity-20 blur transition-opacity duration-300"></div>
+                  <Input
+                    placeholder="John Doe"
+                    {...register('fullName')}
+                    error={errors.fullName?.message}
+                    disabled={isLoading}
+                    className="relative w-full py-3 px-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:shadow-lg transition-all text-sm bg-white/80 hover:bg-white hover:border-gray-300"
+                  />
+                </div>
+              </div>
+        
+              {/* Email Field */}
+              <div className="space-y-1.5 animate-fade-in-delay" style={{ animationDelay: '0.1s' }}>
+                <label className="block text-sm font-semibold text-gray-700">Email Address</label>
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-300 rounded-lg opacity-0 group-focus-within:opacity-20 blur transition-opacity duration-300"></div>
+                  <Input
+                    type="email"
+                    placeholder="name@company.com"
+                    {...register('email')}
+                    error={errors.email?.message}
+                    disabled={isLoading}
+                    className="relative w-full py-3 px-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:shadow-lg transition-all text-sm bg-white/80 hover:bg-white hover:border-gray-300"
+                  />
+                </div>
+              </div>
+        
+              {/* Password Field */}
+              <div className="space-y-1.5 animate-fade-in-delay" style={{ animationDelay: '0.15s' }}>
+                <label className="block text-sm font-semibold text-gray-700">Password</label>
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-300 rounded-lg opacity-0 group-focus-within:opacity-20 blur transition-opacity duration-300"></div>
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Min. 8 characters"
+                    {...register('password')}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      register('password').onChange?.(e);
+                    }}
+                    error={errors.password?.message}
+                    disabled={isLoading}
+                    className="relative w-full py-3 px-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:shadow-lg transition-all pr-12 text-sm bg-white/80 hover:bg-white hover:border-gray-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    <Icon name={showPassword ? 'EyeOff' : 'Eye'} size={16} />
+                  </button>
+                </div>
+                {/* Password Strength Indicator */}
+                {passwordValue && (
+                  <div className="mt-3 space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    {/* Strength Bar */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-gray-600">Strength:</span>
+                      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-300 ${getColorClasses(passwordStrength.color).bar}`}
+                          style={{ width: `${Math.min(passwordStrength.strength, 100)}%` }}
+                        ></div>
+                      </div>
+                      <span className={`text-xs font-bold ${getColorClasses(passwordStrength.color).text}`}>
+                        {passwordStrength.label}
+                      </span>
+                    </div>
+        
+                    {/* Password Suggestions */}
+                    {passwordStrength.feedback.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-gray-700">Ways to make it stronger:</p>
+                        <ul className="space-y-1">
+                          {passwordStrength.feedback.map((suggestion, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-orange-500 mt-0.5">•</span>
+                              <span className="text-xs text-gray-700">{suggestion}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+        
+                    {/* Success Message */}
+                    {passwordStrength.feedback.length === 0 && passwordValue && (
+                      <div className="flex items-center gap-2 pt-1">
+                        <Icon name="CheckCircle" size={16} className="text-green-600" />
+                        <span className="text-xs font-semibold text-green-600">Great password! You're all set.</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+        
+              {/* Confirm Password Field */}
+              <div className="space-y-1.5 animate-fade-in-delay" style={{ animationDelay: '0.2s' }}>
+                <label className="block text-sm font-semibold text-gray-700">Confirm Password</label>
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-300 rounded-lg opacity-0 group-focus-within:opacity-20 blur transition-opacity duration-300"></div>
+                  <Input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Repeat your password"
+                    {...register('confirmPassword')}
+                    error={errors.confirmPassword?.message}
+                    disabled={isLoading}
+                    className="relative w-full py-3 px-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:shadow-lg transition-all pr-12 text-sm bg-white/80 hover:bg-white hover:border-gray-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    <Icon name={showConfirmPassword ? 'EyeOff' : 'Eye'} size={16} />
+                  </button>
+                </div>
+              </div>
+        
+              {/* Terms Agreement */}
+              <p className="text-xs text-gray-600 text-center leading-relaxed pt-2 animate-fade-in-delay" style={{ animationDelay: '0.25s' }}>
+                By creating an account, you agree to our{' '}
+                <Link to="/terms" className="text-blue-600 hover:text-blue-700 font-bold">Terms</Link> and{' '}
+                <Link to="/privacy" className="text-blue-600 hover:text-blue-700 font-bold">Privacy Policy</Link>
+              </p>
+        
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                fullWidth
+                size="lg"
+                className="py-3 text-base font-bold bg-gradient-to-r from-blue-600 via-blue-600 to-blue-700 text-white hover:from-blue-700 hover:via-blue-700 hover:to-blue-800 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:scale-100 disabled:opacity-60 disabled:shadow-md mt-6 relative overflow-hidden group animate-fade-in-delay"
+                style={{ animationDelay: '0.3s' }}
+              >
+                <span className="relative z-10 flex items-center justify-center">
+                  {isLoading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                      Creating Account...
+                    </>
+                  ) : (
+                    'Create Account'
+                  )}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </Button>
+        
+              {/* Divider */}
+              <div className="relative flex justify-center items-center my-4 animate-fade-in-delay" style={{ animationDelay: '0.35s' }}>
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <span className="relative px-3 text-xs text-gray-500 bg-white font-bold">Or</span>
+              </div>
+        
+              {/* Social Signup Buttons */}
+              <div className="flex items-center justify-center gap-2 animate-fade-in-delay" style={{ animationDelay: '0.4s' }}>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-2 py-2.5 px-4 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md transition-all font-bold text-gray-700 text-sm group space-x-3"
+                  disabled={isLoading}
+                  onClick={signUpGoogle}
+                >
+                  <img src={GoogleLogo} alt="Google" className="w-5 h-5 object-contain" />
+                  <span>Continue with Google</span>
+                </button>
+              </div>
+        
+              {/* Sign In Link */}
+              <div className="text-center pt-3 border-t border-gray-200 mt-4 animate-fade-in-delay" style={{ animationDelay: '0.45s' }}>
+                <p className="text-sm text-gray-700">
+                  Already have an account?{' '}
+                  <Link to="/sign-in" className="text-blue-600 hover:text-blue-700 font-bold hover:underline transition-all duration-200">
+                    Sign in
+                  </Link>
+                </p>
+              </div>   
+              </form>
             </div>
-          )}    
 
-        </div>
-
-        {/* Mobile Progress */}
-        <div className="lg:hidden mt-10">
-          <RegistrationProgress steps={registrationSteps} currentPage={page} />
-        </div>
-
-      </div>
-    </div>
-
-  </div>
-</main>
-
-
-
-        {/* Footer */}
-        <AuthenticationFooter currentPage="register" />
-      </div>
     </>
+
   );
 };
 
-export default RegisterPage;
+
+
+
+export default SignupPage;
