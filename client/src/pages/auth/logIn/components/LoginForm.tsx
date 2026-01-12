@@ -7,6 +7,8 @@ import FormValidationFeedback from '../../../../components/ui/FormValidationFeed
 import type { LoginFormProps, LoginFormData } from '../types';
 import GoogleLogo from '@/assets/google-logo.png';
 import AppleLogo from '@/assets/apple-logo.png';
+import {Link} from "react-router-dom"
+
 
 
 
@@ -161,28 +163,20 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, submitGoogle, errors, i
         {/* Divider */}
         <div className="flex items-center my-6">
           <div className="flex-1 border-t border-gray-300"></div>
-          <span className="px-3 text-sm text-gray-500 font-medium">Or continue with</span>
+          <span className="px-3 text-sm text-gray-500 font-medium">Or</span>
           <div className="flex-1 border-t border-gray-300"></div>
         </div>
 
         {/* Google Login Button */}
-        <div className="grid grid-cols-2 gap-2 animate-fade-in-delay" style={{ animationDelay: '0.4s' }}>
+        <div className="flex items-center justify-center gap-2 animate-fade-in-delay" style={{ animationDelay: '0.4s' }}>
         <button
           type="button"
-          className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md transition-all font-bold text-gray-700 text-sm group space-x-3"
+          className="flex w-full items-center justify-center gap-2 py-2.5 px-4 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md transition-all font-bold text-gray-700 text-sm group space-x-3"
           disabled={isLoading}
           onClick={signInWithGoogle}
         >
           <img src={GoogleLogo} alt="Google" className="w-5 h-5 object-contain" />
-          <span>Google</span>
-        </button>
-        <button
-          type="button"
-          className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md transition-all font-bold text-gray-700 text-sm group"
-          disabled={isLoading}
-        >
-          <img src={AppleLogo} alt="Apple" className="w-8 h-8 object-contain" />
-          <span>Apple</span>
+          <span>Continue with Google</span>
         </button>
       </div>
 
@@ -204,12 +198,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, submitGoogle, errors, i
       <div className="mt-8 text-center border-t border-gray-200 pt-6">
         <p className="text-sm text-gray-700">
           Don't have an account?{' '}
-          <a
-            href="/sign-up"
+          <Link
+            to="/sign-up"
             className="font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all duration-200"
           >
             Create one
-          </a>
+          </Link>
         </p>
       </div>
 

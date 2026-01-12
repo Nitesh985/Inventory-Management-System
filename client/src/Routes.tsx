@@ -17,8 +17,10 @@ import {
   CustomerCredit as CustomerKhata,
   TestPage,
   Signup as SignUp,
-  Register as RegisterPage } from "./pages";
+  Register as RegisterPage, 
+  EmailVerification} from "./pages";
 import ProtectedLayout from "./ProtectedLayout";
+import AuthLayout from "./pages/auth/AuthLayout";
 
 
 
@@ -49,11 +51,16 @@ const Routes = () => {
               <Route path="/expense-tracking" element={<ExpenseTracking />} />
               <Route path="/customer-khata" element={<CustomerKhata />} />
           </Route>
-          <Route path="/sign-up" element={
-            // <Protected authentication={false}>
-            <SignUp />
-            // </Protected>
-            } />
+          <Route element={<AuthLayout />}>
+            <Route path="/sign-up" element={
+              // <Protected authentication={false}>
+              <SignUp />
+              // </Protected>
+              } />
+            <Route path="/verify-email" element={<EmailVerification /> }/>
+            <Route path="/business-registration" element={<BusinessRegistration />} />
+          </Route>
+          
           <Route path="/sign-in" element={
             // <Protected authentication={false}>
             <SignInPage />

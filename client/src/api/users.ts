@@ -41,6 +41,25 @@ export interface ApiResponse<T> {
   message: string;
 }
 
+async function sendVerificationCode (){
+  try{
+    const res = await api.get("/send-verification-code")
+    return res.data
+  } catch(error) {
+    console.error(error)
+    throw error
+  }
+}
+
+async function verifyOtpCode({inputCode}:{inputCode:string}){
+  try{
+    const res = await api.get("/verify-code", {inputCode})
+    return res.data
+  } catch(error) {
+    console.error(error)
+    throw error
+  }
+}
 
 async function registerUser(
   data: RegisterUserDTO
@@ -72,4 +91,6 @@ export {
   registerUser,
   getUserProfile,
   updateUserProfile,
+  sendVerificationCode,
+  verifyOtpCode
 };

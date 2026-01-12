@@ -77,12 +77,8 @@ const LoginPage = () => {
     setIsLoading(true)
 
     await signIn.social({
-      provider: "google"
-    }, {
-      onSuccess: ()=> {
-        setIsLoading(false)
-        navigate("/business-dashboard", {replace:true})
-      }
+      provider: "google",
+      callbackURL: "http://localhost:5173/business-dashboard"
     })
   }
 
@@ -190,72 +186,6 @@ const LoginPage = () => {
   );
 
   
-
-
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <LoginHeader isOnline={isOnline} />
-
-      {/* Offline Notice */}
-      <OfflineNotice isVisible={!isOnline} />
-
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            {/* Left Column - Login Form */}
-            <div className="order-2 lg:order-1">
-              <LoginForm
-                onSubmit={submitLoginForm}
-                errors={errors}
-                isLoading={isLoading}
-                isOnline={isOnline}
-                successMessage={successMessage}
-              />
-              
-              {/* Footer Links */}
-              <div className="mt-8">
-                <LoginFooter />
-              </div>
-            </div>
-
-            {/* Right Column - Trust Signals &amp; Branding */}
-            <div className="order-2 lg:order-2 space-y-8 ml-25">
-              {/* Welcome Message */}
-              <div className="text-center lg:text-left">
-                <h2 className="text-2xl font-bold text-foreground mb-4">
-                  Manage Your Business
-                </h2>
-                <p className="text-sm text-justify font-bold mb-8 ">
-                  Digital Khata helps you track inventory, record sales, manage expenses, and generate AI-powered business insights - all with offline-first capabilities.
-                </p>
-                
-                {/* Key Features */}
-                <div className="space-y-5 text-sm text-left">
-                  {[
-                    'Offline-first data storage',
-                    'Real-time inventory management',
-                    'AI-powered business reports',
-                    'Automatic cloud synchronization'
-                  ].map((feature, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <span className="text-muted-foreground">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Trust Signals */}
-              <TrustSignals />
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
 };
 
 export default LoginPage;

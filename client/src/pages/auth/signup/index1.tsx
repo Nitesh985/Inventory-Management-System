@@ -14,7 +14,7 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(2);
   const [registrationError, setRegistrationError] = useState<string>('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
@@ -98,11 +98,7 @@ const RegisterPage = () => {
 
   
   const handleRegistration = async (formData: any) => {
-  if (page === 1){
-    signUpUser(formData)
-  } else if (page === 2){
-    
-  }
+  
 
   // Handle Step 1 (Signup) and Step 2 (Verify)
   handlePageAdd();
