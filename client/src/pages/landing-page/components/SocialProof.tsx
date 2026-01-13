@@ -1,6 +1,6 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
-import { SocialProofProps, TestimonialProps, StatisticProps, BusinessStoryProps } from '../types';
+import type { SocialProofProps, TestimonialProps, StatisticProps, BusinessStoryProps } from '../types';
 
 const SocialProof = ({ className = '' }: SocialProofProps) => {
   const statistics: StatisticProps[] = [

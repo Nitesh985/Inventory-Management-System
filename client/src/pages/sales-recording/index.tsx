@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 
 import Icon from '@/components/AppIcon';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import CustomerSelector from '@/components/customer/CustomerSelector';
+import Header from '@/components/ui/Header';
 import Sidebar from '@/components/ui/Sidebar';
 
 import ProductSelector from './components/ProductSelector';
@@ -14,9 +16,7 @@ import TransactionActions from './components/TransactionActions';
 import { useMutation } from '@/hooks/useMutation';
 import { createSale } from '@/api/sales';
 
-/* ----------------------------------
- * Local Types (minimal & safe)
- * ---------------------------------- */
+
 interface LineItem {
   id: string;
   productId?: string;
@@ -34,6 +34,8 @@ interface Customer {
 const SalesRecording: React.FC = () => {
   const navigate = useNavigate();
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [selectedCustomer, setSelectedCustomer] = useState<string>('');
   const [transactionDate, setTransactionDate] = useState<string>(
     new Date().toISOString().split('T')[0]
@@ -155,134 +157,134 @@ const SalesRecording: React.FC = () => {
 
   return (
     <>
+      <Helmet>
+        <title>Sales Recording - Digital Khata</title>
+        <meta name="description" content="Record and manage business sales transactions with customer details, product selection, and payment tracking for efficient sales management." />
+      </Helmet>
       <div className="min-h-screen bg-background">
-      {/*<Sidebar onToggle={()=>alert("Toggled")}> 
-    </Sidebar>  */}
-      {/* Header */}
-      <div className="bg-card border-b border-border sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/business-dashboard')}
-              >
-                <Icon name="ArrowLeft" size={20} />
-              </Button>
-              <div>
-                <h1 className="text-xl font-semibold text-foreground">
-                  Sales Recording
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Record new sales transactions
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="bg-success/10 px-3 py-1 rounded-full flex items-center space-x-2">
-                <Icon name="Wifi" size={14} className="text-success" />
-                <span className="text-xs font-medium text-success">
-                  Online
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        <Header 
+          onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          syncStatus="online"
+        />
+        
+        <Sidebar 
+          isCollapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          syncStatus="online"
+        />
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Transaction Details */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Transaction Details
-                </h2>
-                <div className="text-sm text-muted-foreground">
-                  {new Date().toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+        <main className={`pt-16 pb-20 lg:pb-8 transition-all duration-300 ${
+          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72'
+        }`}>
+          <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+            {/* Page Header */}
+            <div className="mb-8">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Icon name="ShoppingCart" size={24} className="text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground">Sales Recording</h1>
+                  <p className="text-muted-foreground">
+                    Record new sales transactions with customer details and payment tracking
+                  </p>
                 </div>
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Transaction Date"
-                  type="date"
-                  value={transactionDate}
-                  onChange={e => setTransactionDate(e.target.value)}
-                  required
-                />
-                <div className="flex items-end">
-                  <div className="bg-muted px-3 py-2 rounded-lg border border-border flex items-center space-x-2">
-                    <Icon
-                      name="Hash"
-                      size={16}
-                      className="text-muted-foreground"
+            {/* Main Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Transaction Details */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-foreground">
+                      Transaction Details
+                    </h2>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date().toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Transaction Date"
+                      type="date"
+                      value={transactionDate}
+                      onChange={e => setTransactionDate(e.target.value)}
+                      required
                     />
-                    <span className="text-sm font-medium text-foreground">
-                      SALE-{Date.now().toString().slice(-6)}
-                    </span>
+                    <div className="flex items-end">
+                      <div className="bg-muted px-3 py-2 rounded-lg border border-border flex items-center space-x-2">
+                        <Icon
+                          name="Hash"
+                          size={16}
+                          className="text-muted-foreground"
+                        />
+                        <span className="text-sm font-medium text-foreground">
+                          SALE-{Date.now().toString().slice(-6)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                {/* Customer Selection */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <CustomerSelector
+                    selectedCustomer={selectedCustomer}
+                    onCustomerSelect={setSelectedCustomer}
+                    onAddCustomer={handleAddCustomer}
+                  />
+                </div>
+
+                {/* Product Selection */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <ProductSelector
+                    lineItems={lineItems}
+                    onAddLineItem={handleAddLineItem}
+                    onUpdateLineItem={handleUpdateLineItem}
+                    onRemoveLineItem={handleRemoveLineItem}
+                  />
+                </div>
+
+                {/* Payment Method */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <PaymentMethodSelector
+                    paymentMethod={paymentMethod}
+                    onPaymentMethodChange={setPaymentMethod}
+                    amountReceived={amountReceived}
+                    onAmountReceivedChange={setAmountReceived}
+                    totalAmount={totalAmount}
+                  />
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-6">
+                <TransactionSummary lineItems={lineItems} taxRate={taxRate} />
+
+                <TransactionActions
+                  onRecordSale={handleRecordSale}
+                  onSaveAsDraft={handleSaveAsDraft}
+                  onPrintReceipt={handlePrintReceipt}
+                  onClearTransaction={handleClearTransaction}
+                  isValid={isValidTransaction()}
+                  isProcessing={isProcessing}
+                  hasItems={lineItems.length > 0}
+                />
               </div>
             </div>
-
-            {/* Customer Selection */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <CustomerSelector
-                selectedCustomer={selectedCustomer}
-                onCustomerSelect={setSelectedCustomer}
-                onAddCustomer={handleAddCustomer}
-              />
-            </div>
-
-            {/* Product Selection */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <ProductSelector
-                lineItems={lineItems}
-                onAddLineItem={handleAddLineItem}
-                onUpdateLineItem={handleUpdateLineItem}
-                onRemoveLineItem={handleRemoveLineItem}
-              />
-            </div>
-
-            {/* Payment Method */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <PaymentMethodSelector
-                paymentMethod={paymentMethod}
-                onPaymentMethodChange={setPaymentMethod}
-                amountReceived={amountReceived}
-                onAmountReceivedChange={setAmountReceived}
-                totalAmount={totalAmount}
-              />
-            </div>
           </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
-            <TransactionSummary lineItems={lineItems} taxRate={taxRate} />
-
-            <TransactionActions
-              onRecordSale={handleRecordSale}
-              onSaveAsDraft={handleSaveAsDraft}
-              onPrintReceipt={handlePrintReceipt}
-              onClearTransaction={handleClearTransaction}
-              isValid={isValidTransaction()}
-              isProcessing={isProcessing}
-              hasItems={lineItems.length > 0}
-            />
-          </div>
-        </div>
+        </main>
       </div>
-      </div></>
+    </>
   );
 };
 

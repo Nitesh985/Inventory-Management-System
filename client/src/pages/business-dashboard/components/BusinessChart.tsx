@@ -173,13 +173,13 @@ const BusinessChart: React.FC = () => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
+    <div className="w-full h-auto bg-card border border-border rounded-lg p-6 ">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0 ">
         <h2 className="text-lg font-semibold text-foreground">Business Performance</h2>
         
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 ">
           {/* Chart Type Selector */}
-          <div className="flex space-x-1 bg-muted p-1 rounded-lg">
+          <div className="flex space-x-1 bg-muted p-1 rounded-lg ">
             {chartTypes?.map((type) => (
               <button
                 key={type?.key}

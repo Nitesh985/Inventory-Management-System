@@ -153,7 +153,7 @@ const InventoryAlerts = () => {
                     <span className="px-2 py-1 bg-muted rounded">
                       {alert?.category}
                     </span>
-                    <span>Updated: {new Date(alert.lastUpdated)?.toLocaleDateString('en-US')}</span>
+                    {/* <span>Updated: {new Date(alert.lastUpdated)?.toLocaleDateString('en-US')}</span> */}
                   </div>
                 </div>
               </div>
@@ -186,17 +186,17 @@ const InventoryAlerts = () => {
       )}
       <div className="mt-6 pt-4 border-t border-border">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
+          {/* <span className="text-muted-foreground">
             Last inventory sync: Today at 12:45 PM
-          </span>
-          <Button
+          </span> */}
+          {/* <Button
             variant="ghost"
             size="sm"
             onClick={() => window.location?.reload()}
           >
             <Icon name="RefreshCw" size={14} className="mr-2" />
             Refresh
-          </Button>
+          </Button> */}
         </div>
       </div>
     </div>

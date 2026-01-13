@@ -4,9 +4,8 @@ import Button from '@/components/ui/Button';
 import Icon from '@/components/AppIcon';
 import { useNavigate } from 'react-router-dom';
 import { useFetch } from '@/hooks/useFetch';
-import { getVerificationCode, verifyOtpCode } from '@/api/users';
+import { sendVerificationCode, verifyOtpCode } from '@/api/users';
 import axios from 'axios'
-import { sendVerificationCode } from '@/api/users';
 import { useMutation } from '@/hooks/useMutation';
 
 
