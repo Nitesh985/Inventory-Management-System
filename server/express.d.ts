@@ -8,7 +8,8 @@ declare global {
         name: string;
         email: string;
         activeShopId?: string;
-        otpCode: string;
+        onBoardingStep: number;
+        emailVerified: boolean;
       };
     }
   }

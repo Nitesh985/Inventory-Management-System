@@ -14,7 +14,7 @@ export function useFetch<T>(
 
     try {
       const res = await fetcher();
-      setData(res);
+      setData(res.data);
     } catch (err) {
       setError(err);
     } finally {

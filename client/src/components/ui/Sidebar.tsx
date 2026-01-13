@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import Icon from "../AppIcon";
 import Button from "./Button";
 import Logo from "../../assets/logo.png";
+
 
 interface SidebarProps {
   isCollapsed?: boolean;
@@ -11,9 +12,16 @@ interface SidebarProps {
   onMobileOpenChange?: (isOpen: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, syncStatus = "online", onMobileOpenChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  isCollapsed = false,
+  onToggle,
+  syncStatus = "online",
+  onMobileOpenChange,
+}) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate()
+  
 
   const navigationSections = [
     {
@@ -44,11 +52,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, syncSt
           path: "/expense-tracking",
           icon: "Receipt",
         },
-       {
+        {
           label: "Customer Khata",
           path: "/customer-khata",
           icon: "Users",
-        }, 
+        },
       ],
     },
     {
@@ -127,7 +135,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, syncSt
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
-      
             <img src={Logo} alt="Digital Khata" className="w-12 h-12" />
           </div>
           {!isCollapsed && (
@@ -164,13 +171,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, syncSt
               {section?.items?.map((item) => {
                 const isActive = location?.pathname === item?.path;
                 return (
-                  <Button 
+                  <Button
                     key={item?.path}
                     variant={isActive ? "default" : "ghost"}
                     size="sm"
                     className={`w-full justify-start ${isCollapsed ? "px-2" : "px-3"}`}
                     onClick={() => {
-                      window.location.href = item?.path;
+                      navigate(item.path)
                       handleMobileClose();
                     }}
                   >
@@ -257,11 +264,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, syncSt
                   </h1>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleMobileClose}
-              >
+              <Button variant="ghost" size="icon" onClick={handleMobileClose}>
                 <Icon name="X" size={20} />
               </Button>
             </div>
@@ -276,20 +279,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, syncSt
             section?.items?.map((item) => {
               const isActive = location?.pathname === item?.path;
               return (
-                <Button
-                  key={item?.path}
-                  variant="ghost"
-                  size="sm"
-                  className={`flex flex-col items-center space-y-1 min-w-0 flex-1 ${
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  }`}
-                  onClick={() => (window.location.href = item?.path)}
-                >
-                  <Icon name={item?.icon} size={20} />
-                  <span className="text-xs truncate">
-                    {item?.label?.split(" ")?.[0]}
-                  </span>
-                </Button>
+                <Link to={item?.path}>
+                  <Button
+                    key={item?.path}
+                    variant="ghost"
+                    size="sm"
+                    className={`flex flex-col items-center space-y-1 min-w-0 flex-1 ${
+                      isActive ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    <Icon name={item?.icon} size={20} />
+                    <span className="text-xs truncate">
+                      {item?.label?.split(" ")?.[0]}
+                    </span>
+                  </Button>
+                </Link>
               );
             }),
           )}

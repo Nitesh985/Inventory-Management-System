@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useSession } from "@/lib/auth-client";
 
 import Button from "../../components/ui/Button";
 import Header from "../../components/ui/Header";
@@ -65,7 +66,11 @@ interface Filters {
 }
 
 const InventoryManagement: React.FC = () => {
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const { data: session, isPending } = useSession();
+  // const [onboardingCompleted, setOnboardingCompleted] = useState(true)
+  const onboardingCompleted = session?.user?.onBoardingCompleted;
+
+
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [showProductModal, setShowProductModal] = useState<boolean>(false);
@@ -350,14 +355,19 @@ const InventoryManagement: React.FC = () => {
   const handleImportComplete = (results: unknown[]): void => {
     console.log("Import completed:", results || []);
   };
+  
+  if (isPending) {
+    return <div>Loading...</div>;
+  }
+
 
   return (
     <div className="relative min-h-screen bg-background">
-      <div  className={`transition-all duration-300 ${
-         !onboardingCompleted
-           ? "blur-sm pointer-events-none select-none"
-           : ""
-       }`} >
+      <div
+        className={`transition-all duration-300 ${
+          !onboardingCompleted ? "blur-sm pointer-events-none select-none" : ""
+        }`}
+      >
         <Header
           onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
           syncStatus={syncStatus}
@@ -467,9 +477,7 @@ const InventoryManagement: React.FC = () => {
           />
         </div>
       )}
-
     </div>
-    
   );
 };
 

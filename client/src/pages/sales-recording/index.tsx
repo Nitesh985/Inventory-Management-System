@@ -5,6 +5,7 @@ import Icon from '@/components/AppIcon';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import CustomerSelector from '@/components/customer/CustomerSelector';
+import Sidebar from '@/components/ui/Sidebar';
 
 import ProductSelector from './components/ProductSelector';
 import TransactionSummary from './components/TransactionSummary';
@@ -153,7 +154,10 @@ const SalesRecording: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <div className="min-h-screen bg-background">
+      {/*<Sidebar onToggle={()=>alert("Toggled")}> 
+    </Sidebar>  */}
       {/* Header */}
       <div className="bg-card border-b border-border sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -278,7 +282,7 @@ const SalesRecording: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div></>
   );
 };
 

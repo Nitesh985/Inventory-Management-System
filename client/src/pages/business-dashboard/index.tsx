@@ -31,62 +31,131 @@ const BusinessDashboard: React.FC = () => {
   // Fetch calculated metrics from API
   const { data: metricsData, loading } = useFetch(getDashboardMetrics);
 
+  const safeMetrics = {
+    revenue: metricsData?.revenue ?? { total: 0, change: "", changeType: "neutral" },
+    expenses: metricsData?.expenses ?? { total: 0, change: "", changeType: "neutral" },
+    profit: metricsData?.profit ?? { total: 0, change: "", changeType: "neutral" },
+    products: metricsData?.products ?? { total: 0, lowStock: 0 },
+    todaysSales: metricsData?.todaysSales ?? { total: 0, change: "", changeType: "neutral" },
+  };
+
+  
   // Build business metrics array from API data
-  const businessMetrics: BusinessMetric[] = metricsData ? [
+  // const businessMetrics: BusinessMetric[] = metricsData ? [
+  //   {
+  //     title: "Total Revenue",
+  //     value: `Rs. ${Math.round(metricsData?.revenue?.total).toLocaleString()}`,
+  //     change: metricsData?.revenue?.change,
+  //     changeType: metricsData?.revenue?.changeType,
+  //     icon: "DollarSign",
+  //     iconColor: "text-success",
+  //     trend: true
+  //   },
+  //   {
+  //     title: "Total Expenses",
+  //     value: `Rs. ${Math.round(metricsData.expenses.total).toLocaleString()}`,
+  //     change: metricsData.expenses.change,
+  //     changeType: metricsData.expenses.changeType,
+  //     icon: "CreditCard",
+  //     iconColor: "text-error",
+  //     trend: true
+  //   },
+  //   {
+  //     title: "Net Profit",
+  //     value: `Rs. ${Math.round(metricsData.profit.total).toLocaleString()}`,
+  //     change: metricsData.profit.change,
+  //     changeType: metricsData.profit.changeType,
+  //     icon: "TrendingUp",
+  //     iconColor: "text-primary",
+  //     trend: true
+  //   },
+  //   {
+  //     title: "Active Products",
+  //     value: metricsData.products.total.toLocaleString(),
+  //     change: `${metricsData.products.total} total items`,
+  //     changeType: "neutral",
+  //     icon: "Package",
+  //     iconColor: "text-accent"
+  //   },
+  //   {
+  //     title: "Low Stock Items",
+  //     value: metricsData.products.lowStock.toString(),
+  //     change: metricsData.products.lowStock > 0 ? `${metricsData.products.lowStock} need restock` : "Stock is healthy",
+  //     changeType: metricsData.products.lowStock > 0 ? "negative" : "positive",
+  //     icon: "AlertTriangle",
+  //     iconColor: metricsData.products.lowStock > 0 ? "text-warning" : "text-success"
+  //   },
+  //   {
+  //     title: "Today's Sales",
+  //     value: `Rs. ${Math.round(metricsData.todaysSales.total).toLocaleString()}`,
+  //     change: `${metricsData.todaysSales.change} vs yesterday`,
+  //     changeType: metricsData.todaysSales.changeType,
+  //     icon: "ShoppingCart",
+  //     iconColor: "text-success",
+  //     trend: true
+  //   }
+  // ] : [];
+  
+  const businessMetrics: BusinessMetric[] = [
     {
       title: "Total Revenue",
-      value: `Rs. ${Math.round(metricsData.revenue.total).toLocaleString()}`,
-      change: metricsData.revenue.change,
-      changeType: metricsData.revenue.changeType,
+      value: `Rs. ${Math.round(safeMetrics.revenue.total).toLocaleString()}`,
+      change: safeMetrics.revenue.change,
+      changeType: safeMetrics.revenue.changeType,
       icon: "DollarSign",
       iconColor: "text-success",
       trend: true
     },
     {
       title: "Total Expenses",
-      value: `Rs. ${Math.round(metricsData.expenses.total).toLocaleString()}`,
-      change: metricsData.expenses.change,
-      changeType: metricsData.expenses.changeType,
+      value: `Rs. ${Math.round(safeMetrics.expenses.total).toLocaleString()}`,
+      change: safeMetrics.expenses.change,
+      changeType: safeMetrics.expenses.changeType,
       icon: "CreditCard",
       iconColor: "text-error",
       trend: true
     },
     {
       title: "Net Profit",
-      value: `Rs. ${Math.round(metricsData.profit.total).toLocaleString()}`,
-      change: metricsData.profit.change,
-      changeType: metricsData.profit.changeType,
+      value: `Rs. ${Math.round(safeMetrics.profit.total).toLocaleString()}`,
+      change: safeMetrics.profit.change,
+      changeType: safeMetrics.profit.changeType,
       icon: "TrendingUp",
       iconColor: "text-primary",
       trend: true
     },
     {
       title: "Active Products",
-      value: metricsData.products.total.toLocaleString(),
-      change: `${metricsData.products.total} total items`,
+      value: safeMetrics.products.total.toLocaleString(),
+      change: `${safeMetrics.products.total} total items`,
       changeType: "neutral",
       icon: "Package",
       iconColor: "text-accent"
     },
     {
       title: "Low Stock Items",
-      value: metricsData.products.lowStock.toString(),
-      change: metricsData.products.lowStock > 0 ? `${metricsData.products.lowStock} need restock` : "Stock is healthy",
-      changeType: metricsData.products.lowStock > 0 ? "negative" : "positive",
+      value: safeMetrics.products.lowStock.toString(),
+      change:
+        safeMetrics.products.lowStock > 0
+          ? `${safeMetrics.products.lowStock} need restock`
+          : "Stock is healthy",
+      changeType:
+        safeMetrics.products.lowStock > 0 ? "negative" : "positive",
       icon: "AlertTriangle",
-      iconColor: metricsData.products.lowStock > 0 ? "text-warning" : "text-success"
+      iconColor:
+        safeMetrics.products.lowStock > 0 ? "text-warning" : "text-success"
     },
     {
       title: "Today's Sales",
-      value: `Rs. ${Math.round(metricsData.todaysSales.total).toLocaleString()}`,
-      change: `${metricsData.todaysSales.change} vs yesterday`,
-      changeType: metricsData.todaysSales.changeType,
+      value: `Rs. ${Math.round(safeMetrics.todaysSales.total).toLocaleString()}`,
+      change: `${safeMetrics.todaysSales.change} vs yesterday`,
+      changeType: safeMetrics.todaysSales.changeType,
       icon: "ShoppingCart",
       iconColor: "text-success",
       trend: true
     }
-  ] : [];
-  
+  ];
+
 
 
   return (

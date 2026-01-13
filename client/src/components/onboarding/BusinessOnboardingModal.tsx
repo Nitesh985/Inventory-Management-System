@@ -2,6 +2,7 @@ import { useState } from "react";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import Logo from "@/assets/logo.png";
+import axios from "axios";
 
 interface Props {
   onComplete: () => void;
@@ -29,6 +30,11 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
     phone: "",
     email: "",
   });
+  
+  const handleSubmit = async () => {
+    await axios.post("/api/shops", form)
+    onComplete()
+  }
 
   return (
     <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in duration-300">
@@ -69,82 +75,84 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
 
         {/* STEP 1 */}
         {step === 1 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Business details
-              </h2>
-              <p className="text-gray-600 text-sm mt-1">
-                Basic information about your business
-              </p>
-            </div>
-        
-            {/* Business Name & Type */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <Input
-                placeholder="Business name"
-                value={form.name}
-                onChange={(e) =>
-                  setForm({ ...form, name: e.target.value })
-                }
-                className={inputClass} // SAME height
-              />
-        
-              <select
-                value={form.businessType}
-                onChange={(e) =>
-                  setForm({ ...form, businessType: e.target.value })
-                }
-                className={inputClass} // SAME height
-              >
-                <option value="">Select business type</option>
-                <option>Retail Store</option>
-                <option>Service Provider</option>
-                <option>Restaurant</option>
-                <option>Manufacturing</option>
-                <option>Other</option>
-              </select>
-            </div>
-        
-            {/* Preferences */}
-            <div className="flex flex-wrap items-center gap-6">
-              {/* Bikram Sambat */}
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.useBS}
+          <div>
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Business details
+                </h2>
+                <p className="text-gray-600 text-sm mt-1">
+                  Basic information about your business
+                </p>
+              </div>
+          
+              {/* Business Name & Type */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <Input
+                  placeholder="Business name"
+                  value={form.name}
                   onChange={(e) =>
-                    setForm({ ...form, useBS: e.target.checked })
+                    setForm({ ...form, name: e.target.value })
                   }
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className={inputClass} // SAME height
                 />
-                <span className="text-sm font-medium text-gray-700">
-                  Use Bikram Sambat (BS)
-                </span>
-              </label>
-        
-              {/* Currency selector */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Currency
-                </span>
-        
+          
                 <select
-                  value={form.currency}
+                  value={form.businessType}
                   onChange={(e) =>
-                    setForm({ ...form, currency: e.target.value })
+                    setForm({ ...form, businessType: e.target.value })
                   }
-                  className="h-9 px-3 rounded-lg border border-gray-300
-                             text-sm bg-white focus:outline-none
-                             focus:ring-2 focus:ring-blue-500"
+                  className={inputClass} // SAME height
                 >
-                  <option value="NPR">NPR</option>
-                  <option value="INR">INR</option>
-                  <option value="USD">USD</option>
+                  <option value="">Select business type</option>
+                  <option>Retail Store</option>
+                  <option>Service Provider</option>
+                  <option>Restaurant</option>
+                  <option>Manufacturing</option>
+                  <option>Other</option>
                 </select>
               </div>
+          
+              {/* Preferences */}
+              <div className="flex flex-wrap items-center gap-6">
+                {/* Bikram Sambat */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.useBS}
+                    onChange={(e) =>
+                      setForm({ ...form, useBS: e.target.checked })
+                    }
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Use Bikram Sambat (BS)
+                  </span>
+                </label>
+          
+                {/* Currency selector */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">
+                    Currency
+                  </span>
+          
+                  {/*<select
+                    value={form.currency}
+                    onChange={(e) =>
+                      setForm({ ...form, currency: e.target.value })
+                    }
+                    className="h-9 px-3 rounded-lg border border-gray-300
+                               text-sm bg-white focus:outline-none
+                               focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="NPR">NPR</option>
+                    <option value="INR">INR</option>
+                    <option value="USD">USD</option>
+                  </select>*/}
+                </div>
+              </div>
             </div>
-          </div>
+          </div> 
         )}
 
 
@@ -158,33 +166,25 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
                 placeholder="Province"
                 className={inputClass}
                 value={form.province}
-                onChange={(e) =>
-                  setForm({ ...form, province: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, province: e.target.value })}
               />
               <Input
                 placeholder="District"
                 className={inputClass}
                 value={form.district}
-                onChange={(e) =>
-                  setForm({ ...form, district: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, district: e.target.value })}
               />
               <Input
                 placeholder="City"
                 className={inputClass}
                 value={form.city}
-                onChange={(e) =>
-                  setForm({ ...form, city: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
               />
               <Input
                 placeholder="Full address"
                 className={inputClass}
                 value={form.address}
-                onChange={(e) =>
-                  setForm({ ...form, address: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
               />
             </div>
           </div>
@@ -199,33 +199,25 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
                 placeholder="PAN number"
                 className={inputClass}
                 value={form.panNumber}
-                onChange={(e) =>
-                  setForm({ ...form, panNumber: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, panNumber: e.target.value })}
               />
               <Input
                 placeholder="VAT number (optional)"
                 className={inputClass}
                 value={form.vatNumber}
-                onChange={(e) =>
-                  setForm({ ...form, vatNumber: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, vatNumber: e.target.value })}
               />
               <Input
                 placeholder="Phone number"
                 className={inputClass}
                 value={form.phone}
-                onChange={(e) =>
-                  setForm({ ...form, phone: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
               <Input
                 placeholder="Email address"
                 className={inputClass}
                 value={form.email}
-                onChange={(e) =>
-                  setForm({ ...form, email: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
             </div>
           </div>
@@ -256,7 +248,7 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
               Continue
             </Button>
           ) : (
-            <Button size="lg" onClick={onComplete}>
+            <Button size="lg" onClick={handleSubmit}>
               Enter Dashboard
             </Button>
           )}

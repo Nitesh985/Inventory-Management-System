@@ -116,6 +116,11 @@ const AIReportsDashboard: React.FC = () => {
         );
     }
   };
+  return (
+    <div>
+      AI-Reports-Dashboard
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-background">

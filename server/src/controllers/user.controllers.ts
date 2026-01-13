@@ -132,6 +132,7 @@ const checkVerificationCode = asyncHandler (async (req: Request, res: Response)=
 })
 
 
+
 const registerUser = async (req: Request, res: Response) => {
   try {
     const { email, fullName, contactNo } = req.body;

@@ -21,8 +21,21 @@ interface Transaction {
 
 const RecentTransactions = () => {
   const [activeTab, setActiveTab] = useState('all');
-  const { data: salesData, loading: salesLoading } = useFetch(getSales, []);
-  const { data: expensesData, loading: expensesLoading } = useFetch(getExpenses, []);
+  const { data: salesResponse, loading: salesLoading } = useFetch(getSales, []);
+  const { data: expensesResponse, loading: expensesLoading } = useFetch(getExpenses, []);
+  
+  const salesData = useMemo(() => {
+    if (Array.isArray(salesResponse)) return salesResponse;
+    if (Array.isArray(salesResponse?.data)) return salesResponse.data;
+    return [];
+  }, [salesResponse]);
+  
+  const expensesData = useMemo(() => {
+    if (Array.isArray(expensesResponse)) return expensesResponse;
+    if (Array.isArray(expensesResponse?.data)) return expensesResponse.data;
+    return [];
+  }, [expensesResponse]);
+
 
   const transactions: Transaction[] = useMemo(() => {
     const salesTransactions: Transaction[] = (salesData || []).map((sale: any) => ({
@@ -37,7 +50,7 @@ const RecentTransactions = () => {
       category: sale.category || 'Sales'
     }));
 
-    const expenseTransactions: Transaction[] = (expensesData || []).map((expense: any) => ({
+    const expenseTransactions: Transaction[] = (expensesData || [])?.map((expense: any) => ({
       id: expense._id || `exp-${Date.now()}`,
       type: 'expense' as const,
       description: expense.description || expense.name || 'Expense',

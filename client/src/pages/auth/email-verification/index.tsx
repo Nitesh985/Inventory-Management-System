@@ -15,8 +15,10 @@ const EmailVerification = () => {
   const [code, setCode] = useState('');
   const navigate = useNavigate()
   const [resendTimer, setResendTimer] = useState(120);
-  const {mutate:sendVerifyCode, loading:sendCodeLoading} = useMutation<any, void>(sendVerificationCode)
-  const {mutate:mutateVerifyCode, loading:verifyCodeLoading, data:verifyCodeRes} = useMutation(verifyOtpCode)
+  const [sendCodeLoading, setSendCodeLoading] = useState(false)
+  const [verifyCodeLoading, setVerifyCodeLoading] = useState(false)
+  // const {mutate:sendVerifyCode, loading:sendCodeLoading} = useMutation<any, void>(sendVerificationCode)
+  // const {mutate:mutateVerifyCode, loading:verifyCodeLoading, data:verifyCodeRes} = useMutation(verifyOtpCode)
   
   
   // const resendEmail = async () => {
@@ -33,19 +35,20 @@ const EmailVerification = () => {
   }, [resendTimer]);
 
   useEffect(()=>{
-    sendVerifyCode()
+    // sendVerifyCode()
+    axios.post("/api/users/send-verification-code")
   }, [])
 
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (code.length === 6) {
-      
-      await mutateVerifyCode({inputCode:code})
-      console.log(verifyCodeRes)
-      const verified = verifyCodeRes?.success
+      const verifyCodeRes = await axios.post("/api/users/verify-code", {inputCode:code})
+      // await mutateVerifyCode({inputCode:code})
+      // console.log(verifyCodeRes)
+      const verified = verifyCodeRes?.data?.success
       if (verified){
-        navigate("/business-registration")
+        navigate("/inventory-management")
       }
     }
   };

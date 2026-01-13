@@ -19,10 +19,17 @@ interface Alert {
 }
 
 const InventoryAlerts = () => {
-  const { data: products, loading } = useFetch(getAllProducts, []);
+  const { data: productsData, loading } = useFetch(getAllProducts, []);
+  
+  const products = useMemo(() => {
+    if (Array.isArray(productsData)) return productsData;
+    if (Array.isArray(productsData?.data)) return productsData.data;
+    return [];
+  }, [productsData]);
+
 
   const alerts: Alert[] = useMemo(() => {
-    if (!products || products.length === 0) return [];
+    if (!products || products?.length === 0) return [];
     
     return products
       .filter((product: any) => {
