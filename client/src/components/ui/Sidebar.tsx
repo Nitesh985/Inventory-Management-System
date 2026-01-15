@@ -202,20 +202,20 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div
           className={`flex items-center ${isCollapsed ? "justify-center" : "space-x-3"} p-2 rounded-lg bg-muted`}
         >
-          <Icon
+          {/* <Icon
             name={getSyncStatusIcon()}
             size={16}
             className={`${getSyncStatusColor()} ${syncStatus === "syncing" ? "animate-spin" : ""} flex-shrink-0`}
-          />
+          /> */}
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground capitalize">
-                {syncStatus}
+                {/* {syncStatus} */}
               </p>
               <p className="text-xs text-muted-foreground">
-                {syncStatus === "online" && "All data synchronized"}
+                {/* {syncStatus === "online" && "All data synchronized"}
                 {syncStatus === "syncing" && "Synchronizing data..."}
-                {syncStatus === "offline" && "Working offline"}
+                {syncStatus === "offline" && "Working offline"} */}
               </p>
             </div>
           )}

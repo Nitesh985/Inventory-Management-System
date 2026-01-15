@@ -106,13 +106,13 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) 
         <div className="flex items-center space-x-3">
           {/* Sync Status Indicator */}
           <div className="flex items-center space-x-2 px-2 py-1 rounded-md bg-muted">
-            <Icon
+            {/* <Icon
               name={getSyncStatusIcon()}
               size={14}
               className={`${getSyncStatusColor()} ${syncStatus === "syncing" ? "animate-spin" : ""}`}
-            />
+            /> */}
             <span className="text-xs font-medium text-muted-foreground capitalize hidden sm:block">
-              {syncStatus}
+              {/* {syncStatus} */}
             </span>
           </div>
 

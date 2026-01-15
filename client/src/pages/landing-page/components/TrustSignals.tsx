@@ -1,7 +1,8 @@
 import React from 'react';
+import type { FC } from 'react';
 import Icon from '../../../components/AppIcon';
 
-const TrustSignals: React.FC = () => {
+const TrustSignals: FC = () => {
   return (
     <section className="max-w-7xl mx-auto px-4 py-16 sm:py-20">
       <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-10 text-center">

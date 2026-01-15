@@ -1,6 +1,6 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
-import { FeaturesShowcaseProps, FeatureItemProps } from '../types';
+import type { FeaturesShowcaseProps, FeatureItemProps } from '../types';
 
 const FeatureItem = ({ icon, title, description }: FeatureItemProps) => (
   <div className="group relative bg-white border border-gray-200 rounded-lg sm:rounded-2xl p-4 sm:p-6 hover:shadow-2xl hover:border-blue-400 transition-all duration-300 transform hover:-translate-y-1">

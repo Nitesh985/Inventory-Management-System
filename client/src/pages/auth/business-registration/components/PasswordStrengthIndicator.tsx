@@ -1,6 +1,5 @@
 import React from 'react';
 import Icon from '../../../../components/AppIcon';
-import { PasswordStrength } from '../types';
 
 interface PasswordStrengthIndicatorProps {
   password: string;
@@ -8,7 +7,7 @@ interface PasswordStrengthIndicatorProps {
 }
 
 const PasswordStrengthIndicator = ({ password, className = '' }: PasswordStrengthIndicatorProps) => {
-  const calculatePasswordStrength = (password: string): PasswordStrength => {
+  const calculatePasswordStrength = (password: string) => {
     const requirements = {
       length: password.length >= 8,
       uppercase: /[A-Z]/.test(password),

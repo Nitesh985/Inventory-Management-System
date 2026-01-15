@@ -67,8 +67,8 @@ interface Filters {
 
 const InventoryManagement: React.FC = () => {
   const { data: session, isPending } = useSession();
-  // const [onboardingCompleted, setOnboardingCompleted] = useState(true)
-  const onboardingCompleted = session?.user?.onBoardingCompleted;
+  const [onboardingCompleted, setOnboardingCompleted] = useState(true)
+  // const onboardingCompleted = session?.user?.onBoardingCompleted;
 
 
 

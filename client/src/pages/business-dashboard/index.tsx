@@ -7,11 +7,11 @@ import QuickActions from './components/QuickActions';
 import RecentTransactions from './components/RecentTransactions';
 import InventoryAlerts from './components/InventoryAlerts';
 import BusinessChart from './components/BusinessChart';
-import SyncStatus from './components/SyncStatus';
+// import SyncStatus from './components/SyncStatus';
 import { useFetch } from '@/hooks/useFetch';
 import { getDashboardMetrics } from '@/api/dashboard';
 
-type SyncStatusType = 'online' | 'syncing' | 'offline';
+// type SyncStatusType = 'online' | 'syncing' | 'offline';
 type ChangeType = 'positive' | 'negative' | 'neutral';
 
 interface BusinessMetric {
@@ -26,7 +26,7 @@ interface BusinessMetric {
 
 const BusinessDashboard: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
-  const [syncStatus, setSyncStatus] = useState<SyncStatusType>('online');
+  // const [syncStatus, setSyncStatus] = useState<SyncStatusType>('online');
 
   // Fetch calculated metrics from API
   const { data: metricsData, loading } = useFetch(getDashboardMetrics);
@@ -166,12 +166,12 @@ const BusinessDashboard: React.FC = () => {
       </Helmet>
       <Header 
         onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        syncStatus={syncStatus}
+        // syncStatus={syncStatus}
       />
       <Sidebar 
         isCollapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        syncStatus={syncStatus}
+        // syncStatus={syncStatus}
       />
       <main className={`pt-16 pb-20 lg:pb-8 transition-all duration-300 ${
         sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72'
@@ -189,14 +189,14 @@ const BusinessDashboard: React.FC = () => {
                 </p>
               </div>
               <div className="mt-4 sm:mt-0">
-                <div className="text-sm text-muted-foreground">
+                {/* <div className="text-sm text-muted-foreground">
                   Last updated: {new Date()?.toLocaleString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
                   })}
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -237,7 +237,7 @@ const BusinessDashboard: React.FC = () => {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 ">
             {/* Left Column - Chart */}
             <div className="lg:col-span-2">
               <BusinessChart />
@@ -245,7 +245,7 @@ const BusinessDashboard: React.FC = () => {
             
             {/* Right Column - Sync Status */}
             <div>
-              <SyncStatus />
+              {/* <SyncStatus /> */}
             </div>
           </div>
 
