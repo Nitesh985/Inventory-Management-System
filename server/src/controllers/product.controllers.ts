@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler.ts'
 import { ApiError } from '../utils/ApiError.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import Product from '../models/product.models.ts'
+import Inventory from '../models/inventory.models.ts'
 import mongoose from 'mongoose'
 
 const createProduct = asyncHandler(async (req: Request, res: Response) => {
@@ -28,6 +29,7 @@ const createProduct = asyncHandler(async (req: Request, res: Response) => {
     reorderLevel: reorderLevel ?? 0,
     deleted: false
   })
+  
 
   return res.status(201).json(new ApiResponse(201, product, 'Product created'))
 })

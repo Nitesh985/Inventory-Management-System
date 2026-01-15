@@ -8,14 +8,17 @@ interface Props {
   onComplete: () => void;
 }
 
+const businessTypes = ["Retail Store", "Service Provider", "Manufacturing", "Restaurant/Food", "Healthcare", "Other"]
+
 const inputClass =
   "w-full py-3 px-4 border-2 border-gray-200 rounded-lg " +
   "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 " +
   "focus:shadow-lg transition-all text-sm bg-white/90 " +
   "hover:bg-white hover:border-gray-300";
 
-export default function BusinessOnboardingModal({ onComplete }: Props) {
+export default function BusinessOnboardingModal() {
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false)
 
   const [form, setForm] = useState({
     name: "",
@@ -31,15 +34,26 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
     email: "",
   });
   
-  const handleSubmit = async () => {
-    await axios.post("/api/shops", form)
-    onComplete()
+  const handleSubmit = async (e) => {
+    try{      
+      e.preventDefault()
+      setLoading(true)
+      const res = await axios.post("/api/shops", form)
+      if (res.data.success) window.location.reload()
+    
+    } catch(error){
+      console.error(error)
+    } finally{
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in duration-300">
+    <form
+      onSubmit={handleSubmit}
+      className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in duration-300">
       {/* HEADER */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-10 py-7 text-white">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-500 px-10 py-7 text-white">
         <div className="flex items-center gap-4">
           <img src={Logo} className="h-12 w-12 bg-white rounded-xl p-1" />
           <div>
@@ -61,7 +75,7 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
               className={`flex-1 py-2.5 text-center rounded-full text-sm font-semibold transition
                 ${
                   step === i + 1
-                    ? "bg-blue-600 text-white shadow"
+                    ? "bg-blue-500 text-white shadow"
                     : step > i + 1
                     ? "bg-blue-100 text-blue-700"
                     : "bg-gray-100 text-gray-500"
@@ -75,7 +89,7 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
 
         {/* STEP 1 */}
         {step === 1 && (
-          <div>
+          <div >
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
@@ -94,7 +108,7 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
                   onChange={(e) =>
                     setForm({ ...form, name: e.target.value })
                   }
-                  className={inputClass} // SAME height
+                  className={`${inputClass} py-6`} // SAME height
                 />
           
                 <select
@@ -105,11 +119,9 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
                   className={inputClass} // SAME height
                 >
                   <option value="">Select business type</option>
-                  <option>Retail Store</option>
-                  <option>Service Provider</option>
-                  <option>Restaurant</option>
-                  <option>Manufacturing</option>
-                  <option>Other</option>
+                  {businessTypes.map(businessType=>(
+                    <option>{ businessType }</option>
+                  ))}
                 </select>
               </div>
           
@@ -159,7 +171,7 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
 
         {/* STEP 2 */}
         {step === 2 && (
-          <div className="space-y-6">
+          <div  className="space-y-6">
             <h2 className="text-2xl font-bold">Business location</h2>
             <div className="grid md:grid-cols-2 gap-6">
               <Input
@@ -192,7 +204,7 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
 
         {/* STEP 3 */}
         {step === 3 && (
-          <div className="space-y-6">
+          <div  className="space-y-6">
             <h2 className="text-2xl font-bold">Legal & contact</h2>
             <div className="grid md:grid-cols-2 gap-6">
               <Input
@@ -244,16 +256,16 @@ export default function BusinessOnboardingModal({ onComplete }: Props) {
           )}
 
           {step < 4 ? (
-            <Button size="lg" onClick={() => setStep(step + 1)}>
+            <Button type="button" size="lg" onClick={() => setStep(step + 1)}>
               Continue
             </Button>
           ) : (
-            <Button size="lg" onClick={handleSubmit}>
-              Enter Dashboard
+            <Button type="submit" size="lg">
+              {loading?"Please Wait...":"Enter Inventory"}
             </Button>
           )}
         </div>
       </div>
-    </div>
+    </form>
   );
 }

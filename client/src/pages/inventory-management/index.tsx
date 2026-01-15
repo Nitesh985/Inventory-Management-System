@@ -473,7 +473,6 @@ const InventoryManagement: React.FC = () => {
       {!onboardingCompleted && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <BusinessOnboardingModal
-            onComplete={() => setOnboardingCompleted(true)}
           />
         </div>
       )}

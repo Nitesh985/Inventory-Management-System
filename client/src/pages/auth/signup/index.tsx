@@ -10,6 +10,7 @@ import Icon from '@/components/AppIcon';
 import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import { signUp, signIn } from '@/lib/auth-client';
+import axios from 'axios';
 
 
 
@@ -129,7 +130,7 @@ const SignupPage = () => {
       setRegistrationError(error?.message ?? "An unexpected error occurred. Please try again.")
     }
     if (resData){
-      console.log(resData.user.id)
+      await axios.post("/api/users/send-verification-code")
       navigate("/verify-email")
     }
     
@@ -139,9 +140,11 @@ const SignupPage = () => {
   const signUpGoogle = async () => {
     await signIn.social({
       provider: "google",
-      callbackURL: "http://localhost:5173/business-dashboard"
-    })  
+      callbackURL: "http://localhost:5173/inventory-management"
+    })
+
   }
+  
 
 
 

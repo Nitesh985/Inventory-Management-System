@@ -28,7 +28,7 @@ const shopSchema = new Schema<IShop>(
     name: { type: String, required: true },
     useBS: { type: Boolean, default: false },
     ownerId: { type: Schema.Types.ObjectId, ref:"User", required: true },
-    businessType: { type: String, enum: ["Retail Store", "Service Provider", "Manufacturing", "Restaurant", "Healthcare", "Other"], default: "Other" },
+    businessType: { type: String, enum: ["Retail Store", "Service Provider", "Manufacturing", "Restaurant/Food", "Healthcare", "Other"], default: "Other" },
     supplierIds: [
       { type: Schema.Types.ObjectId, ref: "Supplier"}
     ],

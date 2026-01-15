@@ -11,7 +11,7 @@ import { sendEmail } from '../helpers/sendEmail.ts'
 import { EmailOtp } from '../models/email-otp.models.ts'
 
 
-const EMAIL_CODE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const EMAIL_CODE_TTL_MS = 1 * 60 * 1000; // 1 minute
 const MAX_OTP_ATTEMPTS = 5
 
 function createCryptoHash(code:string){
