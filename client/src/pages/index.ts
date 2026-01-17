@@ -18,6 +18,7 @@ export { default as ExpenseTracking } from "./expense-tracking";
 export { default as InventoryManagement } from "./inventory-management";
 export { default as LandingPage } from "./landing-page";
 export { default as SalesRecording } from "./sales-recording";
+export { default as SalesManagement } from "./sales-management";
 
 // Test pages
 export { default as TestPage } from "./test-pages/TestPage";

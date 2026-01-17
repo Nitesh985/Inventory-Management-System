@@ -18,7 +18,8 @@ import {
   TestPage,
   Signup as SignUp,
   Register as RegisterPage, 
-  EmailVerification} from "./pages";
+  EmailVerification,
+  SalesManagement} from "./pages";
 import ProtectedLayout from "./ProtectedLayout";
 import AuthLayout from "./pages/auth/AuthLayout";
 
@@ -47,6 +48,7 @@ const Routes = () => {
                 element={<AIReportsDashboard />}
               />
               <Route path="/business-settings" element={<BusinessSettings />} />
+              <Route path="/sales-management" element={<SalesManagement />} />
               <Route path="/sales-recording" element={<SalesRecording />} />
               <Route path="/expense-tracking" element={<ExpenseTracking />} />
               <Route path="/customer-khata" element={<CustomerKhata />} />

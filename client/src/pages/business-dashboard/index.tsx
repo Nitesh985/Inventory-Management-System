@@ -163,6 +163,7 @@ const BusinessDashboard: React.FC = () => {
       <Helmet>
         <title>Business Dashboard - Digital Khata</title>
         <meta name="description" content="Monitor your business performance with comprehensive metrics, recent transactions, and inventory alerts in your Digital Khata dashboard." />
+          <link rel="icon" type="image/jpeg" href="/src/assets/logo.jpeg" />
       </Helmet>
       <Header 
         onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)}

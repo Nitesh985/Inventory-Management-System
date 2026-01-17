@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: "/api/products",
 });
 
 
@@ -43,33 +43,45 @@ export interface Product {
 
 
 async function createProduct(data: CreateProductDTO) {
-  const res = await api.post("/products", data);
+  const res = await api.post("/", data);
   return res.data;
 }
 
 
 async function getAllProducts(params?: { shopId?: string }) {
-  const res = await api.get("/products", { params });
+  const res = await api.get("/", { params });
   return res.data;
 }
 
 
 async function getProductById(productId: string) {
-  const res = await api.get(`/products/${productId}`);
+  const res = await api.get(`/${productId}`);
   return res.data;
 }
 
 
 async function updateProduct(productId: string, data: UpdateProductDTO) {
-  const res = await api.put(`/products/${productId}`, data);
+  const res = await api.put(`/${productId}`, data);
   return res.data;
 }
 
 
 async function deleteProduct(productId: string) {
-  const res = await api.delete(`/products/${productId}`);
+  const res = await api.delete(`/${productId}`);
   return res.data;
 }
+
+async function checkSkuAvailability(sku: string, excludeProductId?: string | number) {
+  const res = await api.get("/check-sku", {
+    params: { sku, excludeProductId }
+  });
+  return res.data;
+}
+
+const generateSku = async (payload) => {
+  const { data } = await api.post("/products/generate-sku", payload);
+  return data;
+};
 
 
 export {
@@ -78,4 +90,6 @@ export {
   getProductById,
   updateProduct,
   deleteProduct,
+  checkSkuAvailability,
+  generateSku
 };

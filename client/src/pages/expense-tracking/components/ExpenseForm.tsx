@@ -91,10 +91,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onSaveDraft, isLoad
       newErrors.category = 'Please select or enter a category';
     }
     
-    if (!formData?.vendor) {
-      newErrors.vendor = 'Please select a vendor';
-    }
-    
     if (!formData?.date) {
       newErrors.date = 'Please select a date';
     }
@@ -201,7 +197,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onSaveDraft, isLoad
             error={errors?.vendor}
             placeholder="Select vendor"
             searchable
-            required
           />
         </div>
 

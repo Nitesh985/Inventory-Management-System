@@ -1,22 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
-import Input from '../../../components/ui/Input';
-import Select from '../../../components/ui/Select';
+import Icon from '@/components/AppIcon';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import { useFetch } from "@/hooks/useFetch";
+import { getCategories } from "@/api/category";
+import { checkSkuAvailability } from '@/api/products';
+
+
+
 
 interface Product {
-  id?: string | number;
+  _id?: string | number;
   name?: string;
   sku?: string;
   category?: string;
   description?: string;
-  currentStock?: number;
+  stock: number;
   minStock?: number;
-  maxStock?: number;
-  unitPrice?: number;
-  costPrice?: number;
+  price?: number;
+  cost?: number;
   supplier?: string;
-  location?: string;
 }
 
 interface ProductFormModalProps {
@@ -31,13 +35,11 @@ interface FormData {
   sku: string;
   category: string;
   description: string;
-  unit: string;
+  stock: string;
   minStock: string;
-  maxStock: string;
   price: string;
   cost: string;
   supplier: string;
-  location: string;
 }
 
 interface FormErrors {
@@ -47,36 +49,59 @@ interface FormErrors {
 // TODO: Add reorderLevel
 // TODO: Add reserve section
 
+const generateSKU = (name: string, category: string) => {
+  const namePart = name
+    ?.trim()
+    ?.toUpperCase()
+    ?.replace(/[^A-Z0-9]/g, '')
+    ?.slice(0, 4) || 'ITEM';
+
+  const categoryPart = category
+    ?.toUpperCase()
+    ?.slice(0, 3) || 'GEN';
+
+  const randomPart = Math.floor(1000 + Math.random() * 9000);
+
+  return `${categoryPart}-${namePart}-${randomPart}`;
+};
+
+
+
 const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, product = null, onSave }) => {
+  
   const [formData, setFormData] = useState<FormData>({
     name: '',
     sku: '',
     category: '',
     description: '',
-    unit: '',
+    stock: '',
     minStock: '',
-    maxStock: '',
     price: '',
     cost: '',
     supplier: '',
-    location: ''
   });
+  const {
+    data: categoryData,
+    loading: categoryLoading,
+    error: categoryError
+  } = useFetch(getCategories, []);
+  const categories = (categoryData || []).map((cat) => ({
+    value: cat.name,
+    label: cat.name,
+  }));
+  const [isSkuManual, setIsSkuManual] = useState(false);
+  const [skuStatus, setSkuStatus] = useState<
+    "idle" | "checking" | "available" | "taken"
+  >("idle");
 
+
+
+  
+  
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const categories = [
-    { value: 'electronics', label: 'Electronics' },
-    { value: 'clothing', label: 'Clothing & Apparel' },
-    { value: 'food', label: 'Food & Beverages' },
-    { value: 'books', label: 'Books & Stationery' },
-    { value: 'home', label: 'Home & Garden' },
-    { value: 'sports', label: 'Sports & Recreation' },
-    { value: 'health', label: 'Health & Beauty' },
-    { value: 'automotive', label: 'Automotive' },
-    { value: 'toys', label: 'Toys & Games' },
-    { value: 'other', label: 'Other' }
-  ];
+
 
   const suppliers = [
     { value: 'supplier1', label: 'ABC Electronics Ltd.' },
@@ -85,14 +110,9 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
     { value: 'supplier4', label: 'Tech Solutions Inc.' },
     { value: 'supplier5', label: 'Local Distributor' }
   ];
+  
 
-  const locations = [
-    { value: 'warehouse-a', label: 'Warehouse A - Main' },
-    { value: 'warehouse-b', label: 'Warehouse B - Secondary' },
-    { value: 'store-front', label: 'Store Front' },
-    { value: 'storage-room', label: 'Storage Room' },
-    { value: 'display-area', label: 'Display Area' }
-  ];
+
 
   useEffect(() => {
     if (product) {
@@ -101,13 +121,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
         sku: product?.sku || '',
         category: product?.category || '',
         description: product?.description || '',
-        unit: product?.currentStock?.toString() || '0',
+        stock: product?.stock?.toString() || '',
         minStock: product?.minStock?.toString() || '',
-        maxStock: product?.maxStock?.toString() || '',
-        price: product?.unitPrice?.toString() || '',
-        cost: product?.costPrice?.toString() || '',
+        price: product?.price?.toString() || '',
+        cost: product?.cost?.toString() || '',
         supplier: product?.supplier || '',
-        location: product?.location || ''
       });
     } else {
       setFormData({
@@ -115,18 +133,48 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
         sku: '',
         category: '',
         description: '',
-        unit: '',
+        stock: '',
         minStock: '',
-        maxStock: '',
         price: '',
         cost: '',
         supplier: '',
-        location: ''
       });
     }
     setErrors({});
   }, [product, isOpen]);
 
+  useEffect(() => {
+    if (!isSkuManual && formData.name && formData.category) {
+      const newSku = generateSKU(formData.name, formData.category);
+      setFormData(prev => ({ ...prev, sku: newSku }));
+    }
+  }, [formData.name, formData.category]);
+  
+  useEffect(() => {
+    if (!formData.sku) return;
+  
+    let timeout: NodeJS.Timeout;
+  
+    setSkuStatus("checking");
+  
+    timeout = setTimeout(async () => {
+      try {
+        const res = await checkSkuAvailability(
+          formData.sku,
+          product?._id
+        );
+  
+        setSkuStatus(res.available ? "available" : "taken");
+      } catch {
+        setSkuStatus("idle");
+      }
+    }, 500); // debounce
+  
+    return () => clearTimeout(timeout);
+  }, [formData.sku]);
+
+  
+  
   const handleInputChange = (field: keyof FormData, value: string): void => {
     setFormData(prev => ({
       ...prev,
@@ -156,8 +204,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
       newErrors.category = 'Category is required';
     }
 
-    if (!formData?.unit || isNaN(formData?.unit) || parseInt(formData?.unit) < 0) {
-      newErrors.unit = 'Valid current stock is required';
+    if (!formData?.stock || isNaN(formData?.stock) || parseInt(formData?.stock) < 0) {
+      newErrors.stock = 'Valid current stock is required';
     }
 
     if (!formData?.price || isNaN(formData?.price) || parseFloat(formData?.price) <= 0) {
@@ -166,14 +214,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
 
     if (formData?.minStock && (isNaN(formData?.minStock) || parseInt(formData?.minStock) < 0)) {
       newErrors.minStock = 'Minimum stock must be a valid number';
-    }
-
-    if (formData?.maxStock && (isNaN(formData?.maxStock) || parseInt(formData?.maxStock) < 0)) {
-      newErrors.maxStock = 'Maximum stock must be a valid number';
-    }
-
-    if (formData?.minStock && formData?.maxStock && parseInt(formData?.minStock) > parseInt(formData?.maxStock)) {
-      newErrors.maxStock = 'Maximum stock must be greater than minimum stock';
     }
 
     if (formData?.cost && (isNaN(formData?.cost) || parseFloat(formData?.cost) < 0)) {
@@ -190,6 +230,15 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
     if (!validateForm()) {
       return;
     }
+    
+    if (skuStatus === "taken") {
+      setErrors((prev) => ({
+        ...prev,
+        sku: "SKU already exists",
+      }));
+      return;
+    }
+
 
     setIsSubmitting(true);
     
@@ -200,16 +249,15 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
         sku: formData.sku,
         category: formData.category,
         description: formData?.description || '',
-        currentStock: parseInt(formData?.unit) || 0,
+        stock: parseInt(formData?.stock) || 0,
         minStock: formData?.minStock ? parseInt(formData?.minStock) : 0,
-        maxStock: formData?.maxStock ? parseInt(formData?.maxStock) : 0,
         unitPrice: parseFloat(formData?.price) || 0,
         costPrice: formData?.cost ? parseFloat(formData?.cost) : 0,
         lastUpdated: new Date()?.toISOString()
       };
 
       if (product) {
-        productData.id = product?.id;
+        productData._id = product?._id;
       }
 
       await onSave(productData);
@@ -260,25 +308,50 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
 
               <Input
                 label="SKU (Stock Keeping Unit)"
-                type="text"
-                placeholder="Enter unique SKU"
-                value={formData?.sku}
-                onChange={(e) => handleInputChange('sku', e?.target?.value)}
-                error={errors?.sku}
-                required
+                type="text" 
+                placeholder="Auto-generated or enter manually"
+                value={formData.sku}
+                onChange={(e) => {
+                  setIsSkuManual(true);
+                  handleInputChange("sku", e.target.value.toUpperCase());
+                }}
+                error={
+                  skuStatus === "taken"
+                    ? "SKU already exists"
+                    : errors.sku
+                }
                 disabled={isSubmitting}
               />
+              {skuStatus === "checking" && (
+                <p className="text-sm text-muted-foreground">
+                  Checking SKU availability...
+                </p>
+              )}
+              
+              {skuStatus === "available" && (
+                <p className="text-sm text-green-600">
+                  SKU is available
+                </p>
+              )}
 
+              
               <Select
                 label="Category"
-                placeholder="Select category"
+                placeholder={
+                  categoryLoading
+                    ? "Loading categories..."
+                    : categoryError
+                    ? "Failed to load categories"
+                    : "Select category"
+                }
                 options={categories}
                 value={formData?.category}
-                onChange={(value) => handleInputChange('category', value)}
-                error={errors?.category}
+                onChange={(value) => handleInputChange("category", value)}
+                error={errors.category}
                 required
-                disabled={isSubmitting}
+                disabled={isSubmitting || categoryLoading}
               />
+
 
               <Input
                 label="Description"
@@ -298,15 +371,14 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
                 label="Current Stock"
                 type="number"
                 placeholder="Enter current stock quantity"
-                value={formData?.unit}
-                onChange={(e) => handleInputChange('unit', e?.target?.value)}
-                error={errors?.unit}
+                value={formData?.stock}
+                onChange={(e) => handleInputChange('stock', e?.target?.value)}
+                error={errors?.stock}
                 required
                 min="0"
                 disabled={isSubmitting}
               />
 
-              <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Minimum Stock"
                   type="number"
@@ -318,17 +390,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
                   disabled={isSubmitting}
                 />
 
-                <Input
-                  label="Maximum Stock"
-                  type="number"
-                  placeholder="Max stock level"
-                  value={formData?.maxStock}
-                  onChange={(e) => handleInputChange('maxStock', e?.target?.value)}
-                  error={errors?.maxStock}
-                  min="0"
-                  disabled={isSubmitting}
-                />
-              </div>
 
               <Input
                 label="Unit Price (USD)"
@@ -370,14 +431,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
                   disabled={isSubmitting}
                 />
 
-                <Select
-                  label="Storage Location"
-                  placeholder="Select location (optional)"
-                  options={locations}
-                  value={formData?.location}
-                  onChange={(value) => handleInputChange('location', value)}
-                  disabled={isSubmitting}
-                />
               </div>
             </div>
           </div>

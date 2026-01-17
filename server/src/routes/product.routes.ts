@@ -4,7 +4,9 @@ import {
   getProducts,
   getProduct,
   updateProduct,
-  softDeleteProduct
+  softDeleteProduct,
+  checkSkuAvailability,
+  generateSku
 } from '../controllers/product.controllers.ts'
 import { verifyBusinessAuth } from '../middlewares/auth.middlewares.ts'
 
@@ -26,5 +28,9 @@ router.put('/:id', updateProduct)
 
 // SOFT DELETE PRODUCT
 router.delete('/:id', softDeleteProduct)
+
+router.get("/check-sku", checkSkuAvailability)
+
+router.post("/generate-sku", generateSku)
 
 export default router

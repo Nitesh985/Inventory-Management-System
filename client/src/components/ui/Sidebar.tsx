@@ -43,8 +43,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: "Package",
         },
         {
-          label: "Sales Recording",
-          path: "/sales-recording",
+          label: "Sales Management",
+          path: "/sales-management",
           icon: "ShoppingCart",
         },
         {

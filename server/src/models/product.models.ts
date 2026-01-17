@@ -2,14 +2,13 @@ import { Schema, Types, model, Document } from "mongoose";
 
 export interface IProduct extends Document {
   shopId: Types.ObjectId;
+  supplierId: Types.ObjectId;
+  categoryId: Types.ObjectId;
   sku: string;
   name: string;
-  category: string;
   description: string;
-  unit: number;
   price: number;
   cost: number;
-  reorderLevel: number;
   deleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -18,17 +17,21 @@ export interface IProduct extends Document {
 const productSchema = new Schema<IProduct>(
   {
     shopId: { type: Schema.Types.ObjectId, ref: "Shop", required: true },
-    sku: { type: String },
+    supplierId: { type: Schema.Types.ObjectId, ref:"Supplier" },
+    sku: { type: String, required: true },
     name: { type: String, index: true, required: true },
-    category: { type: String },
+    category: { type: String, required: true },
     description: {type: String},
-    unit: { type: Number, required: true },
     price: { type: Number, required: true },
     cost: { type: Number, required: true },
-    reorderLevel: { type: Number, default: 0 },   // minimum available stock to trigger reorder, calculated based on average sales and supplier delivery time
     deleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
+
+productSchema.index(
+  { shopId: 1, sku:1 },
+  { unique: true }
+)
 
 export default model<IProduct>("Product", productSchema);

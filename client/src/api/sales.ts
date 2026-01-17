@@ -64,5 +64,10 @@ async function deleteSale(saleId: string) {
   return res.data;
 }
 
+async function getAllSales(){
+  const res = await api.get("/sales");
+  return res.data.data;
+}
 
-export { createSale, getSales, getSaleById, updateSale, deleteSale };
+
+export { createSale, getSales, getSaleById, updateSale, deleteSale, getAllSales };

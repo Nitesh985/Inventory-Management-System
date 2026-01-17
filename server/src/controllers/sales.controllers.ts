@@ -18,7 +18,7 @@ type SaleItemInput = {
 
 const createSale = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
-  const { customerId, items, totalAmount, paidAmount = 0 } = req.body;
+  const { customerId, items, totalAmount, paidAmount = 0, paymentMethod = 'CASH', discount = 0, notes } = req.body;
 
   // --- VALIDATIONS ---
   const requiredFields = ["customerId", "items", "totalAmount"] as const;
@@ -78,12 +78,19 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
   // -------------------------------------------------------
   // 3️⃣ CREATE SALE
   // -------------------------------------------------------
+  // Auto-set status to PENDING if payment method is CREDIT
+  const status = paymentMethod === 'CREDIT' ? 'PENDING' : 'COMPLETED';
+
   const sale = await Sales.create({
     customerId: new mongoose.Types.ObjectId(customerId),
     shopId: new mongoose.Types.ObjectId(shopId),
     items,
     totalAmount,
     paidAmount,
+    paymentMethod,
+    discount,
+    notes,
+    status,
     invoiceNo,
   });
 
@@ -92,14 +99,58 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(201, sale, "Sale created successfully"));
 });
 
-// GET ALL SALES
+// GET ALL SALES WITH FILTERING
 const getSales = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
+  const { search, paymentMethod, startDate, endDate } = req.query
 
-  const sales = await Sales.find({ shopId: new mongoose.Types.ObjectId(shopId) })
+  // Build filter object
+  const filter: any = { shopId: new mongoose.Types.ObjectId(shopId) }
+
+  // Search by invoice number or customer name
+  if (search) {
+    filter.$or = [
+      { invoiceNo: { $regex: search, $options: 'i' } }
+    ]
+  }
+
+  // Filter by payment method
+  if (paymentMethod && paymentMethod !== '') {
+    filter.paymentMethod = paymentMethod
+  }
+
+  // Filter by date range
+  if (startDate || endDate) {
+    filter.createdAt = {}
+    if (startDate) {
+      filter.createdAt.$gte = new Date(startDate as string)
+    }
+    if (endDate) {
+      const end = new Date(endDate as string)
+      end.setHours(23, 59, 59, 999)
+      filter.createdAt.$lte = end
+    }
+  }
+
+  const sales = await Sales.find(filter)
     .populate('customerId', 'name phone email')
     .sort({ createdAt: -1 })
-  return res.status(200).json(new ApiResponse(200, sales, 'Sales fetched'))
+
+  // Transform response to include customerName
+  const transformedSales = sales.map((sale: any) => ({
+    _id: sale._id,
+    invoiceNo: sale.invoiceNo,
+    customerName: sale.customerId?.name || 'Walk-in',
+    items: sale.items,
+    paymentMethod: sale.paymentMethod,
+    totalAmount: sale.totalAmount,
+    paidAmount: sale.paidAmount,
+    status: sale.status,
+    createdAt: sale.createdAt,
+    updatedAt: sale.updatedAt
+  }))
+
+  return res.status(200).json(new ApiResponse(200, transformedSales, 'Sales fetched'))
 })
 
 // GET SINGLE SALE
@@ -109,9 +160,25 @@ const getSale = asyncHandler(async (req: Request, res: Response) => {
     _id: req.params.id,
     shopId: new mongoose.Types.ObjectId(shopId)
   })
+    .populate('customerId', 'name phone email')
+
   if (!sale) throw new ApiError(404, 'Sale not found')
 
-  return res.status(200).json(new ApiResponse(200, sale, 'Sale fetched'))
+  // Transform response to include customerName
+  const transformedSale = {
+    _id: sale._id,
+    invoiceNo: sale.invoiceNo,
+    customerName: (sale.customerId as any)?.name || 'Walk-in',
+    items: sale.items,
+    paymentMethod: sale.paymentMethod,
+    totalAmount: sale.totalAmount,
+    paidAmount: sale.paidAmount,
+    status: sale.status,
+    createdAt: sale.createdAt,
+    updatedAt: sale.updatedAt
+  }
+
+  return res.status(200).json(new ApiResponse(200, transformedSale, 'Sale fetched'))
 })
 
 // UPDATE SALE

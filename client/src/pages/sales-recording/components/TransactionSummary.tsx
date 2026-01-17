@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 
 interface LineItem {
@@ -11,14 +11,52 @@ interface TransactionSummaryProps {
   lineItems: LineItem[];
   taxRate?: number;
   discountAmount?: number;
+  onDiscountChange?: (discount: number) => void;
 }
 
-const TransactionSummary: React.FC<TransactionSummaryProps> = ({ lineItems, taxRate = 8.25, discountAmount = 0 }) => {
+const TransactionSummary: React.FC<TransactionSummaryProps> = ({ 
+  lineItems, 
+  taxRate = 8.25, 
+  discountAmount = 0,
+  onDiscountChange 
+}) => {
+  const [isEditingDiscount, setIsEditingDiscount] = useState(false);
+  const [tempDiscount, setTempDiscount] = useState(discountAmount.toString());
+
+  // Sync tempDiscount with discountAmount prop when not editing
+  useEffect(() => {
+    if (!isEditingDiscount) {
+      setTempDiscount(discountAmount.toString());
+    }
+  }, [discountAmount, isEditingDiscount]);
+
   const subtotal = lineItems?.reduce((sum, item) => sum + item?.total, 0);
   const discountTotal = discountAmount;
   const taxableAmount = subtotal - discountTotal;
   const taxAmount = (taxableAmount * taxRate) / 100;
   const grandTotal = taxableAmount + taxAmount;
+
+  const handleDiscountEdit = () => {
+    setTempDiscount(discountAmount.toString());
+    setIsEditingDiscount(true);
+  };
+
+  const handleDiscountSave = () => {
+    const newDiscount = parseFloat(tempDiscount) || 0;
+    if (newDiscount >= 0 && newDiscount <= subtotal) {
+      onDiscountChange?.(newDiscount);
+    }
+    setIsEditingDiscount(false);
+  };
+
+  const handleDiscountKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleDiscountSave();
+    } else if (e.key === 'Escape') {
+      setIsEditingDiscount(false);
+      setTempDiscount(discountAmount.toString());
+    }
+  };
 
   const summaryItems = [
     { label: 'Subtotal', value: subtotal, icon: 'Calculator' },
@@ -62,14 +100,46 @@ const TransactionSummary: React.FC<TransactionSummaryProps> = ({ lineItems, taxR
                 {item?.label}
               </span>
             </div>
-            <span className={`font-medium ${
-              item?.isTotal 
-                ? 'text-lg text-primary' 
-                : item?.isDiscount 
-                ? 'text-success' :'text-foreground'
-            }`}>
-              {item?.isDiscount && item?.value !== 0 ? '-' : ''}<span className="text-xs">Rs.</span> {Math.round(Math.abs(item?.value)).toLocaleString()}
-            </span>
+            {item?.isDiscount && onDiscountChange ? (
+              <div className="flex items-center gap-2">
+                {isEditingDiscount ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground">Rs.</span>
+                    <input
+                      type="number"
+                      value={tempDiscount}
+                      onChange={(e) => setTempDiscount(e.target.value)}
+                      onBlur={handleDiscountSave}
+                      onKeyDown={handleDiscountKeyDown}
+                      className="w-20 h-7 px-2 text-sm text-right font-medium text-success bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                      min="0"
+                      max={subtotal}
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleDiscountEdit}
+                    className="flex items-center gap-1 px-2 py-1 rounded hover:bg-muted transition-colors group border border-transparent hover:border-border"
+                    title="Click to edit discount"
+                  >
+                    <span className="font-medium text-success">
+                      {item?.value !== 0 ? '-' : ''}<span className="text-xs">Rs.</span> {Math.round(Math.abs(item?.value)).toLocaleString()}
+                    </span>
+                    <Icon name="Pencil" size={12} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <span className={`font-medium ${
+                item?.isTotal 
+                  ? 'text-lg text-primary' 
+                  : item?.isDiscount 
+                  ? 'text-success' :'text-foreground'
+              }`}>
+                {item?.isDiscount && item?.value !== 0 ? '-' : ''}<span className="text-xs">Rs.</span> {Math.round(Math.abs(item?.value)).toLocaleString()}
+              </span>
+            )}
           </div>
         ))}
       </div>

@@ -42,6 +42,7 @@ const SalesRecording: React.FC = () => {
   );
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [amountReceived, setAmountReceived] = useState<number>(0);
+  const [discount, setDiscount] = useState<number>(0);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -50,8 +51,9 @@ const SalesRecording: React.FC = () => {
 
   const taxRate = 8.25;
   const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
-  const taxAmount = (subtotal * taxRate) / 100;
-  const totalAmount = subtotal + taxAmount;
+  const discountedSubtotal = subtotal - discount;
+  const taxAmount = (discountedSubtotal * taxRate) / 100;
+  const totalAmount = discountedSubtotal + taxAmount;
 
   const handleAddCustomer = (customer: Customer) => {
     setCustomers(prev => [...prev, customer]);
@@ -95,7 +97,9 @@ const SalesRecording: React.FC = () => {
           totalPrice: item.total
         })),
         totalAmount: totalAmount,
-        paidAmount: paymentMethod === 'cash' ? amountReceived : totalAmount
+        paidAmount: paymentMethod === 'CREDIT' ? 0 : (paymentMethod === 'CASH' ? amountReceived : totalAmount),
+        paymentMethod: paymentMethod.toUpperCase(),
+        discount: discount
       };
 
       await createSaleMutation(saleData);
@@ -143,6 +147,7 @@ const SalesRecording: React.FC = () => {
     setSelectedCustomer('');
     setPaymentMethod('');
     setAmountReceived(0);
+    setDiscount(0);
     setLineItems([]);
   };
 
@@ -268,7 +273,12 @@ const SalesRecording: React.FC = () => {
 
               {/* Right Column */}
               <div className="space-y-6">
-                <TransactionSummary lineItems={lineItems} taxRate={taxRate} />
+                <TransactionSummary 
+                  lineItems={lineItems} 
+                  taxRate={taxRate} 
+                  discountAmount={discount}
+                  onDiscountChange={setDiscount}
+                />
 
                 <TransactionActions
                   onRecordSale={handleRecordSale}
