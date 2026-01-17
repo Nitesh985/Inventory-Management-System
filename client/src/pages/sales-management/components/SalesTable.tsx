@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react'
 import Icon from '@/components/AppIcon'
 import Button from '@/components/ui/Button'
 import * as LucideIcons from 'lucide-react'
@@ -27,7 +28,55 @@ interface Props {
   onRefresh?: () => void
 }
 
+interface SortConfig {
+  key: string
+  direction: 'asc' | 'desc'
+}
+
 const SalesTable = ({ sales, loading = false, onViewSale, onRefresh }: Props) => {
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'createdAt', direction: 'desc' })
+
+  const handleSort = (key: string): void => {
+    setSortConfig(prevConfig => ({
+      key,
+      direction: prevConfig?.key === key && prevConfig?.direction === 'asc' ? 'desc' : 'asc'
+    }))
+  }
+
+  const getSortIcon = (columnKey: string): keyof typeof LucideIcons => {
+    if (sortConfig?.key !== columnKey) {
+      return 'ArrowUpDown'
+    }
+    return sortConfig?.direction === 'asc' ? 'ArrowUp' : 'ArrowDown'
+  }
+
+  const sortedSales = useMemo(() => {
+    if (!sortConfig?.key) return sales
+
+    return [...sales].sort((a, b) => {
+      let aValue: any = a[sortConfig.key as keyof Sale]
+      let bValue: any = b[sortConfig.key as keyof Sale]
+
+      // Handle special cases
+      if (sortConfig.key === 'items') {
+        aValue = a.items?.length || 0
+        bValue = b.items?.length || 0
+      }
+
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase()
+        bValue = (bValue as string).toLowerCase()
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1
+      }
+      return 0
+    })
+  }, [sales, sortConfig])
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { bg: string; text: string; icon: keyof typeof LucideIcons }> = {
       COMPLETED: { bg: 'bg-green-100', text: 'text-green-700', icon: 'CheckCircle' },
@@ -48,10 +97,9 @@ const SalesTable = ({ sales, loading = false, onViewSale, onRefresh }: Props) =>
   const getPaymentMethodBadge = (method: string) => {
     const methodConfig: Record<string, { bg: string; text: string; icon: keyof typeof LucideIcons }> = {
       CASH: { bg: 'bg-emerald-50', text: 'text-emerald-700', icon: 'Banknote' },
-      CARD: { bg: 'bg-blue-50', text: 'text-blue-700', icon: 'CreditCard' },
-      UPI: { bg: 'bg-purple-50', text: 'text-purple-700', icon: 'Smartphone' },
-      BANK: { bg: 'bg-slate-50', text: 'text-slate-700', icon: 'Building' },
-      CREDIT: { bg: 'bg-orange-50', text: 'text-orange-700', icon: 'Clock' }
+      CREDIT: { bg: 'bg-orange-50', text: 'text-orange-700', icon: 'Book' },
+      ESEWA: { bg: 'bg-green-50', text: 'text-green-700', icon: 'Smartphone' },
+      KHALTI: { bg: 'bg-purple-50', text: 'text-purple-700', icon: 'Wallet' }
     }
     const config = methodConfig[method] || methodConfig.CASH
 
@@ -126,26 +174,68 @@ const SalesTable = ({ sales, loading = false, onViewSale, onRefresh }: Props) =>
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border">
-            <th className="py-3 px-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Date & Time
+            <th 
+              className="py-3 px-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => handleSort('createdAt')}
+            >
+              <div className="flex items-center space-x-2">
+                <span>Date</span>
+                <Icon name={getSortIcon('createdAt')} size={14} className="text-muted-foreground" />
+              </div>
             </th>
-            <th className="py-3 px-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Invoice
+            <th 
+              className="py-3 px-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => handleSort('invoiceNo')}
+            >
+              <div className="flex items-center space-x-2">
+                <span>Invoice</span>
+                <Icon name={getSortIcon('invoiceNo')} size={14} className="text-muted-foreground" />
+              </div>
             </th>
-            <th className="py-3 px-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Customer
+            <th 
+              className="py-3 px-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => handleSort('customerName')}
+            >
+              <div className="flex items-center space-x-2">
+                <span>Customer</span>
+                <Icon name={getSortIcon('customerName')} size={14} className="text-muted-foreground" />
+              </div>
             </th>
-            <th className="py-3 px-4 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Items
+            <th 
+              className="py-3 px-4 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => handleSort('items')}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <span>Items</span>
+                <Icon name={getSortIcon('items')} size={14} className="text-muted-foreground" />
+              </div>
             </th>
-            <th className="py-3 px-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Payment
+            <th 
+              className="py-3 px-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => handleSort('paymentMethod')}
+            >
+              <div className="flex items-center space-x-2">
+                <span>Payment</span>
+                <Icon name={getSortIcon('paymentMethod')} size={14} className="text-muted-foreground" />
+              </div>
             </th>
-            <th className="py-3 px-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Amount
+            <th 
+              className="py-3 px-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => handleSort('totalAmount')}
+            >
+              <div className="flex items-center justify-end space-x-2">
+                <span>Amount</span>
+                <Icon name={getSortIcon('totalAmount')} size={14} className="text-muted-foreground" />
+              </div>
             </th>
-            <th className="py-3 px-4 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Status
+            <th 
+              className="py-3 px-4 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => handleSort('status')}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <span>Status</span>
+                <Icon name={getSortIcon('status')} size={14} className="text-muted-foreground" />
+              </div>
             </th>
             <th className="py-3 px-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Actions
@@ -154,20 +244,15 @@ const SalesTable = ({ sales, loading = false, onViewSale, onRefresh }: Props) =>
         </thead>
 
         <tbody className="divide-y divide-border">
-          {sales.map(sale => (
+          {sortedSales.map(sale => (
             <tr
               key={sale._id}
               className="hover:bg-muted/40 transition-colors group"
             >
               <td className="py-4 px-4">
-                <div className="flex flex-col">
-                  <span className="font-medium text-foreground">
-                    {formatDate(sale.createdAt)}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatTime(sale.createdAt)}
-                  </span>
-                </div>
+                <span className="font-medium text-foreground">
+                  {formatDate(sale.createdAt)}
+                </span>
               </td>
               <td className="py-4 px-4">
                 <span className="font-mono font-medium text-foreground bg-muted/50 px-2 py-1 rounded">
@@ -175,14 +260,9 @@ const SalesTable = ({ sales, loading = false, onViewSale, onRefresh }: Props) =>
                 </span>
               </td>
               <td className="py-4 px-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Icon name="User" size={14} className="text-primary" />
-                  </div>
-                  <span className="font-medium text-foreground">
-                    {sale.customerName}
-                  </span>
-                </div>
+                <span className="font-medium text-foreground">
+                  {sale.customerName}
+                </span>
               </td>
               <td className="py-4 px-4 text-center">
                 <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm font-medium">
@@ -193,16 +273,9 @@ const SalesTable = ({ sales, loading = false, onViewSale, onRefresh }: Props) =>
                 {getPaymentMethodBadge(sale.paymentMethod)}
               </td>
               <td className="py-4 px-4 text-right">
-                <div className="flex flex-col items-end">
-                  <span className="font-semibold text-foreground">
-                    ₹ {sale.totalAmount?.toLocaleString()}
-                  </span>
-                  {sale.paidAmount < sale.totalAmount && (
-                    <span className="text-xs text-amber-600">
-                      Due: ₹ {(sale.totalAmount - sale.paidAmount).toLocaleString()}
-                    </span>
-                  )}
-                </div>
+                <span className="font-semibold text-foreground">
+                  ₹ {Math.round(sale.totalAmount || 0).toLocaleString()}
+                </span>
               </td>
               <td className="py-4 px-4 text-center">
                 {getStatusBadge(sale.status)}

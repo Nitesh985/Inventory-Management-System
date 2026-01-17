@@ -29,24 +29,42 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
   if (!Array.isArray(items) || items.length === 0)
     throw new ApiError(400, "Items must be a non-empty array");
 
-  const requiredItemFields = ["productId", "productName", "quantity", "unitPrice", "totalPrice"] as const;
+  const requiredItemFields = ["productId", "productName", "quantity"] as const;
   items.forEach((item: any, i: number) => {
     if (!item || typeof item !== "object") throw new ApiError(400, `Item at index ${i} must be an object`);
     requiredItemFields.forEach((field) => {
       if (!item[field] && item[field] !== 0)
         throw new ApiError(400, `Missing required field in items[${i}]: ${field}`);
     });
+    
+    // Ensure unitPrice and totalPrice are provided or calculated
+    if (!item.unitPrice && item.unitPrice !== 0) {
+      throw new ApiError(400, `Missing unitPrice in items[${i}]`);
+    }
+    if (!item.totalPrice && item.totalPrice !== 0) {
+      throw new ApiError(400, `Missing totalPrice in items[${i}]`);
+    }
   });
 
   // -------------------------------------------------------
   // 0️⃣ AUTO-GENERATE UNIQUE INVOICE NUMBER
   // -------------------------------------------------------
-  // Format: INV-{YYYYMMDD}-{timestamp(last6)}-{random4}
-  const now = new Date();
-  const datePart = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
-  const timestampPart = String(now.getTime()).slice(-6); // Last 6 digits of timestamp
-  const randomPart = String(Math.floor(1000 + Math.random() * 9000)); // 4-digit random
-  const invoiceNo = `INV-${datePart}-${timestampPart}-${randomPart}`;
+  // Find the latest invoice for this shop to get next counter
+  const latestSale = await Sales.findOne(
+    { shopId: new mongoose.Types.ObjectId(shopId) },
+    {},
+    { sort: { createdAt: -1 } }
+  );
+  
+  let invoiceCounter = 1;
+  if (latestSale?.invoiceNo) {
+    // Extract counter from last invoice (format: INV-XXXX-NNNNN)
+    const lastCounter = parseInt(latestSale.invoiceNo.split('-')[2]) || 0;
+    invoiceCounter = lastCounter + 1;
+  }
+  
+  const shopIdStr = shopId.toString().slice(-4);
+  const invoiceNo = `INV-${shopIdStr}-${String(invoiceCounter).padStart(5, "0")}`;
 
   // -------------------------------------------------------
   // 1️⃣ CUSTOMER MUST EXIST AND BELONG TO SHOP
@@ -81,10 +99,19 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
   // Auto-set status to PENDING if payment method is CREDIT
   const status = paymentMethod === 'CREDIT' ? 'PENDING' : 'COMPLETED';
 
+  // Ensure items have proper structure for database
+  const formattedItems = items.map((item: any) => ({
+    productId: new mongoose.Types.ObjectId(item.productId),
+    productName: item.productName,
+    quantity: Number(item.quantity),
+    unitPrice: Number(item.unitPrice),
+    totalPrice: Number(item.totalPrice)
+  }));
+
   const sale = await Sales.create({
     customerId: new mongoose.Types.ObjectId(customerId),
     shopId: new mongoose.Types.ObjectId(shopId),
-    items,
+    items: formattedItems,
     totalAmount,
     paidAmount,
     paymentMethod,
@@ -136,15 +163,28 @@ const getSales = asyncHandler(async (req: Request, res: Response) => {
     .populate('customerId', 'name phone email')
     .sort({ createdAt: -1 })
 
-  // Transform response to include customerName
+  // Transform response to include customerName and properly formatted items
   const transformedSales = sales.map((sale: any) => ({
     _id: sale._id,
     invoiceNo: sale.invoiceNo,
+    customerId: sale.customerId?._id,
     customerName: sale.customerId?.name || 'Walk-in',
-    items: sale.items,
+    customerPhone: sale.customerId?.phone || '',
+    customerEmail: sale.customerId?.email || '',
+    items: sale.items.map((item: any) => ({
+      productId: item.productId,
+      name: item.productName,
+      productName: item.productName,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      total: item.totalPrice,
+      totalPrice: item.totalPrice
+    })),
     paymentMethod: sale.paymentMethod,
     totalAmount: sale.totalAmount,
     paidAmount: sale.paidAmount,
+    discount: sale.discount || 0,
+    notes: sale.notes || '',
     status: sale.status,
     createdAt: sale.createdAt,
     updatedAt: sale.updatedAt
@@ -164,15 +204,28 @@ const getSale = asyncHandler(async (req: Request, res: Response) => {
 
   if (!sale) throw new ApiError(404, 'Sale not found')
 
-  // Transform response to include customerName
+  // Transform response to include customerName and properly formatted items
   const transformedSale = {
     _id: sale._id,
     invoiceNo: sale.invoiceNo,
+    customerId: (sale.customerId as any)?._id,
     customerName: (sale.customerId as any)?.name || 'Walk-in',
-    items: sale.items,
+    customerPhone: (sale.customerId as any)?.phone || '',
+    customerEmail: (sale.customerId as any)?.email || '',
+    items: sale.items.map((item: any) => ({
+      productId: item.productId,
+      name: item.productName,
+      productName: item.productName,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      total: item.totalPrice,
+      totalPrice: item.totalPrice
+    })),
     paymentMethod: sale.paymentMethod,
     totalAmount: sale.totalAmount,
     paidAmount: sale.paidAmount,
+    discount: sale.discount || 0,
+    notes: sale.notes || '',
     status: sale.status,
     createdAt: sale.createdAt,
     updatedAt: sale.updatedAt

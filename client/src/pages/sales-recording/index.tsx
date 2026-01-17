@@ -18,12 +18,13 @@ import { createSale } from '@/api/sales';
 
 
 interface LineItem {
-  id: string;
-  productId?: string;
-  name?: string;
+  id: number;
+  productId: string;
+  productName: string;
   price: number;
   quantity: number;
   total: number;
+  stock: number;
 }
 
 interface Customer {
@@ -63,7 +64,7 @@ const SalesRecording: React.FC = () => {
     setLineItems(prev => [...prev, lineItem]);
   };
 
-  const handleUpdateLineItem = (id: string, newQuantity: number) => {
+  const handleUpdateLineItem = (id: number, newQuantity: number) => {
     setLineItems(prev =>
       prev.map(item =>
         item.id === id
@@ -77,7 +78,7 @@ const SalesRecording: React.FC = () => {
     );
   };
 
-  const handleRemoveLineItem = (id: string) => {
+  const handleRemoveLineItem = (id: number) => {
     setLineItems(prev => prev.filter(item => item.id !== id));
   };
 
@@ -90,15 +91,15 @@ const SalesRecording: React.FC = () => {
       const saleData = {
         customerId: selectedCustomer,
         items: lineItems.map(item => ({
-          productId: item.productId || item.id,
-          productName: item.name || 'Unknown Product',
+          productId: item.productId,
+          productName: item.productName,
           quantity: item.quantity,
           unitPrice: item.price,
           totalPrice: item.total
         })),
         totalAmount: totalAmount,
         paidAmount: paymentMethod === 'CREDIT' ? 0 : (paymentMethod === 'CASH' ? amountReceived : totalAmount),
-        paymentMethod: paymentMethod.toUpperCase(),
+        paymentMethod: paymentMethod,
         discount: discount
       };
 

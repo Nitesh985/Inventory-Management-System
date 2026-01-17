@@ -2,6 +2,7 @@ import React from 'react';
 import Icon from '../../../components/AppIcon';
 import Select from '../../../components/ui/Select';
 import Input from '../../../components/ui/Input';
+import * as LucideIcons from 'lucide-react';
 
 interface PaymentMethodSelectorProps {
   paymentMethod: string;
@@ -18,14 +19,11 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   onAmountReceivedChange, 
   totalAmount 
 }) => {
-  const paymentMethods = [
-    { value: 'cash', label: 'Cash', icon: 'Banknote' },
-    { value: 'card', label: 'Credit/Debit Card', icon: 'CreditCard' },
-    { value: 'digital', label: 'Digital Payment', icon: 'Smartphone' },
-    { value: 'cheque', label: 'Cheque', icon: 'FileText' },
-    { value: 'bank_transfer', label: 'Bank Transfer', icon: 'Building2' },
-    { value: 'khata', label: 'Khata', icon: 'Book' }
-
+  const paymentMethods: { value: string; label: string; icon: keyof typeof LucideIcons }[] = [
+    { value: 'CASH', label: 'Cash', icon: 'Banknote' },
+    { value: 'CREDIT', label: 'Credit', icon: 'Book' },
+    { value: 'ESEWA', label: 'Esewa', icon: 'Smartphone' },
+    { value: 'KHALTI', label: 'Khalti', icon: 'Wallet' }
   ];
 
   const selectedMethod = paymentMethods?.find(method => method?.value === paymentMethod);
@@ -52,7 +50,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
             <span className="font-medium text-foreground">{selectedMethod?.label}</span>
           </div>
 
-          {paymentMethod === 'cash' && (
+          {paymentMethod === 'CASH' && (
             <div className="space-y-3">
               <Input
                 label="Amount Received"
@@ -86,45 +84,29 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
             </div>
           )}
 
-          {paymentMethod === 'card' && (
-            <div className="bg-muted p-3 rounded-lg">
-              <div className="flex items-center space-x-2 text-success">
-                <Icon name="CheckCircle" size={16} />
-                <span className="text-sm font-medium">Card payment will be processed at checkout</span>
+          {paymentMethod === 'CREDIT' && (
+            <div className="bg-warning/10 border border-warning/20 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-warning">
+                <Icon name="AlertTriangle" size={16} />
+                <span className="text-sm font-medium">This sale will be recorded as credit (Pending)</span>
               </div>
             </div>
           )}
 
-          {paymentMethod === 'digital' && (
-            <div className="bg-muted p-3 rounded-lg">
-              <div className="flex items-center space-x-2 text-primary">
+          {paymentMethod === 'ESEWA' && (
+            <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-green-600">
                 <Icon name="Smartphone" size={16} />
-                <span className="text-sm font-medium">Digital payment (PayPal, Venmo, etc.)</span>
+                <span className="text-sm font-medium">Esewa payment - Verify transaction before confirming</span>
               </div>
             </div>
           )}
 
-          {paymentMethod === 'check' && (
-            <div className="space-y-3">
-              <Input
-                label="Check Number"
-                type="text"
-                placeholder="Enter check number"
-              />
-              <div className="bg-warning/10 border border-warning/20 p-3 rounded-lg">
-                <div className="flex items-center space-x-2 text-warning">
-                  <Icon name="AlertTriangle" size={16} />
-                  <span className="text-sm font-medium">Check payments require verification</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {paymentMethod === 'bank_transfer' && (
-            <div className="bg-muted p-3 rounded-lg">
-              <div className="flex items-center space-x-2 text-primary">
-                <Icon name="Building2" size={16} />
-                <span className="text-sm font-medium">Bank transfer confirmation required</span>
+          {paymentMethod === 'KHALTI' && (
+            <div className="bg-purple-50 border border-purple-200 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-purple-600">
+                <Icon name="Wallet" size={16} />
+                <span className="text-sm font-medium">Khalti payment - Verify transaction before confirming</span>
               </div>
             </div>
           )}

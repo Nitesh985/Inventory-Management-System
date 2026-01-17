@@ -3,6 +3,7 @@ import cors from 'cors';
 import 'dotenv/config';
 import { connectToDB } from './db/index.ts';
 import app from './app.ts';
+import Sale from './models/sales.models.ts';
 
 
 connectToDB()

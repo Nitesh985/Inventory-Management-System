@@ -69,10 +69,9 @@ const SalesFilterToolbar = ({
             clearable
             options={[
               { label: 'Cash', value: 'CASH' },
-              { label: 'Card', value: 'CARD' },
-              { label: 'UPI', value: 'UPI' },
-              { label: 'Bank Transfer', value: 'BANK' },
-              { label: 'Credit', value: 'CREDIT' }
+              { label: 'Credit', value: 'CREDIT' },
+              { label: 'Esewa', value: 'ESEWA' },
+              { label: 'Khalti', value: 'KHALTI' }
             ]}
           />
         </div>
