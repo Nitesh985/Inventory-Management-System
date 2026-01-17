@@ -33,6 +33,7 @@ const Routes = () => {
         <ScrollToTop />
         <RouterRoutes>
           {/* Define your route here */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/welcome" element={<LandingPage />} />
           <Route path="/test" element={<TestPage />} />
           <Route path="*" element={<NotFound />} /> 
