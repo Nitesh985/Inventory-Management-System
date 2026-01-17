@@ -48,15 +48,15 @@ const SalesStats = ({ sales, loading = false }: Props) => {
     },
     { 
       label: 'Total Revenue', 
-      value: `₹ ${totalRevenue.toLocaleString()}`,
-      subtext: `₹ ${todayRevenue.toLocaleString()} today`,
+      value: `₹ ${Math.round(totalRevenue).toLocaleString()}`,
+      subtext: `₹ ${Math.round(todayRevenue).toLocaleString()} today`,
       icon: 'IndianRupee',
       iconBg: 'bg-green-100',
       iconColor: 'text-green-600'
     },
     { 
       label: 'Pending Amount', 
-      value: `₹ ${pendingAmount.toLocaleString()}`,
+      value: `₹ ${Math.round(pendingAmount).toLocaleString()}`,
       subtext: pendingAmount > 0 ? 'To be collected' : 'All clear!',
       icon: 'Clock',
       iconBg: pendingAmount > 0 ? 'bg-amber-100' : 'bg-green-100',
