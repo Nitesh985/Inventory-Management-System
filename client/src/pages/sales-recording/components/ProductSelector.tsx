@@ -105,7 +105,7 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
             min="1"
             max={selectedProductData?.stock || 999}
             value={quantity}
-            onChange={(e) => setQuantity(parseInt(e?.target?.value) || 1)}
+            onChange={(e) => setQuantity(parseInt(e?.target?.value))}
           />
         </div>
 

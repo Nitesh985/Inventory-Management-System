@@ -118,7 +118,7 @@ const AIReportsDashboard: React.FC = () => {
   };
   return (
     <div>
-      AI-Reports-Dashboard
+      AI-Reports-Dashboard is under construction.
     </div>
   )
 

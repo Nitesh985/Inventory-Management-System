@@ -392,7 +392,7 @@ console.log(formData)
 
 
               <Input
-                label="Unit Price (USD)"
+                label="Unit Price (Rs)"
                 type="number"
                 placeholder="Enter selling price"
                 value={formData?.price}
@@ -405,7 +405,7 @@ console.log(formData)
               />
 
               <Input
-                label="Cost Price (USD)"
+                label="Cost Price (Rs)"
                 type="number"
                 placeholder="Enter cost price (optional)"
                 value={formData?.cost}
