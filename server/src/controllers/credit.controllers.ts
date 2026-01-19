@@ -167,7 +167,7 @@ const getCustomersWithBalance = asyncHandler(async (req: Request, res: Response)
                 $and: [
                   { $eq: ["$customerId", "$$customerId"] },
                   { $eq: ["$shopId", shopObjectId] },
-                  { $eq: ["$paymentType", "CREDIT"] }
+                  { $eq: ["$paymentMethod", "CREDIT"] }
                 ]
               }
             }
@@ -279,7 +279,7 @@ const getCustomerCreditHistory = asyncHandler(async (req: Request, res: Response
   const creditSales = await Sales.find({
     shopId: shopObjectId,
     customerId: customerObjectId,
-    paymentType: "CREDIT"
+    paymentMethod: "CREDIT"
   }).sort({ createdAt: -1 }).lean();
 
   // Get all payments for this customer
@@ -386,7 +386,7 @@ const getCustomersCreditSummary = asyncHandler(async (
     {
       $match: {
         shopId: shopObjectId,
-        paymentType: "CREDIT",
+        paymentMethod: "CREDIT",
       },
     },
     {
@@ -431,7 +431,7 @@ const getCustomersCreditSummary = asyncHandler(async (
     // Customers with credit sales
     Sales.distinct("customerId", {
       shopId: shopObjectId,
-      paymentType: "CREDIT",
+      paymentMethod: "CREDIT",
     }),
 
     // Customers with payments
@@ -462,7 +462,7 @@ const getCustomersCreditSummary = asyncHandler(async (
         $match: {
           shopId: shopObjectId,
           customerId: customer._id,
-          paymentType: "CREDIT",
+          paymentMethod: "CREDIT",
         },
       },
       {
@@ -626,9 +626,51 @@ const getCustomerOutstanding = asyncHandler(
   }
 );
 
+// ========================
+// CREATE PAYMENT
+// ========================
+
+const createPayment = asyncHandler(async (req: Request, res: Response) => {
+  const shopId = req.user!.activeShopId!;
+  const { customerId, amount, method, note, date } = req.body;
+
+  if (!customerId) {
+    throw new ApiError(400, "customerId is required");
+  }
+  if (amount === undefined || amount === null || amount <= 0) {
+    throw new ApiError(400, "Valid amount is required");
+  }
+
+  const shopObjectId = new Types.ObjectId(shopId);
+  const customerObjectId = new Types.ObjectId(customerId);
+
+  // Verify customer exists and belongs to this shop
+  const customer = await Customer.findOne({
+    _id: customerObjectId,
+    shopId: shopObjectId,
+    deleted: false
+  });
+  if (!customer) {
+    throw new ApiError(404, "Customer not found");
+  }
+
+  const payment = await Payment.create({
+    shopId: shopObjectId,
+    partyType: "CUSTOMER",
+    partyId: customerObjectId,
+    amount: Number(amount),
+    method: method || "CASH",
+    note: note || "",
+    createdAt: date ? new Date(date) : new Date()
+  });
+
+  return res.status(201).json(new ApiResponse(201, payment, "Payment recorded successfully"));
+});
+
 
 export {
   createCredit,
+  createPayment,
   getCredits,
   getCreditById,
   updateCredit,

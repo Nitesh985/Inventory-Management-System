@@ -95,7 +95,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
   >("idle");
 
 
-
+console.log(formData)
   
   
   const [errors, setErrors] = useState<FormErrors>({});
@@ -251,8 +251,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
         description: formData?.description || '',
         stock: parseInt(formData?.stock) || 0,
         minStock: formData?.minStock ? parseInt(formData?.minStock) : 0,
-        unitPrice: parseFloat(formData?.price) || 0,
-        costPrice: formData?.cost ? parseFloat(formData?.cost) : 0,
+        price: parseFloat(formData?.price) || 0,
+        cost: formData?.cost ? parseFloat(formData?.cost) : 0,
         lastUpdated: new Date()?.toISOString()
       };
 

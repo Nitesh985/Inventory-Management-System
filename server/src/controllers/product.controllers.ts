@@ -114,22 +114,11 @@ const createProduct = asyncHandler(async (req: Request, res: Response) => {
   });
   if (existing) throw new ApiError(400, 'Product with same SKU already exists for this shop');
 
-  const supplierId = (await Supplier.findOne({ name: supplier })?._id) || null;
-
-  const categoryId = await Category.findOne({ name: category });
-
-  if (!categoryId) {
-    throw new ApiError(404, `The category by the name ${category} was not found`);
-  }
-
-  if (supplier && !supplierId) {
-    throw new ApiError(404, `The supplier by the name ${supplier} was not found`);
-  }
 
   const product = await Product.create({
     shopId,
-    supplierId,
-    categoryId,
+    supplier,
+    category,
     sku,
     name,
     description: description || '',
@@ -191,22 +180,12 @@ const getProducts = asyncHandler(async (req: Request, res: Response) => {
     {
       $addFields: {
         stock: { $ifNull: ['$inventory.stock', 0] },
-        reserved: { $ifNull: ['$inventory.reserved', 0] },
-        availableStock: {
-          $subtract: [
-            { $ifNull: ['$inventory.stock', 0] },
-            { $ifNull: ['$inventory.reserved', 0] },
-          ],
-        },
+        minStock: { $ifNull: ['$inventory.minStock', 0] },
+        availableStock: { $ifNull: ['$inventory.stock', 0] },
         isLowStock: {
           $lte: [
-            {
-              $subtract: [
-                { $ifNull: ['$inventory.stock', 0] },
-                { $ifNull: ['$inventory.reserved', 0] },
-              ],
-            },
-            '$reorderLevel',
+            { $ifNull: ['$inventory.stock', 0] },
+            { $ifNull: ['$inventory.minStock', 0] },
           ],
         },
       },
@@ -240,12 +219,54 @@ const updateProduct = asyncHandler(async (req: Request, res: Response) => {
   delete updates._id;
   delete updates.shopId; // Prevent changing shopId
 
+  const { minStock } = req.body
+  console.log("Min STock")
+  console.log(minStock)
+
+  // Map frontend field names to backend field names FIRST
+  if (updates.unitPrice !== undefined) {
+    updates.price = updates.unitPrice;
+    delete updates.unitPrice;
+  }
+  if (updates.costPrice !== undefined) {
+    updates.cost = updates.costPrice;
+    delete updates.costPrice;
+  }
+
+  // Separate inventory fields from product fields
+  const inventoryFields = ['stock', 'minStock'];
+  const inventoryUpdates: any = {}; 
+  const productUpdates: any = {};
+
+  Object.keys(updates).forEach(key => {
+    if (inventoryFields.includes(key)) {
+      inventoryUpdates[key] = updates[key];
+    } else {
+      productUpdates[key] = updates[key];
+    }
+  });
+
+  // Update product
   const product = await Product.findOneAndUpdate(
     { _id: req.params.id, shopId: new mongoose.Types.ObjectId(shopId), deleted: false },
-    { $set: updates },
+    { $set: productUpdates },
     { new: true }
   );
   if (!product) throw new ApiError(404, 'Product not found');
+
+  if (minStock){
+    inventoryUpdates['minStock'] = minStock
+  }
+
+  // Update inventory if inventory fields are provided
+  if (Object.keys(inventoryUpdates).length > 0) {
+    await Inventory.findOneAndUpdate(
+      { productId: product._id, shopId: new mongoose.Types.ObjectId(shopId) },
+      { $set: inventoryUpdates },
+      { new: true }
+    );
+  }
+
   return res.status(200).json(new ApiResponse(200, product, 'Product updated'));
 });
 

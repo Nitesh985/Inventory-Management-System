@@ -9,14 +9,12 @@ interface LineItem {
 
 interface TransactionSummaryProps {
   lineItems: LineItem[];
-  taxRate?: number;
   discountAmount?: number;
   onDiscountChange?: (discount: number) => void;
 }
 
 const TransactionSummary: React.FC<TransactionSummaryProps> = ({ 
   lineItems, 
-  taxRate = 8.25, 
   discountAmount = 0,
   onDiscountChange 
 }) => {
@@ -32,9 +30,7 @@ const TransactionSummary: React.FC<TransactionSummaryProps> = ({
 
   const subtotal = lineItems?.reduce((sum, item) => sum + item?.total, 0);
   const discountTotal = discountAmount;
-  const taxableAmount = subtotal - discountTotal;
-  const taxAmount = (taxableAmount * taxRate) / 100;
-  const grandTotal = taxableAmount + taxAmount;
+  const grandTotal = subtotal - discountTotal;
 
   const handleDiscountEdit = () => {
     setTempDiscount(discountAmount.toString());
@@ -61,7 +57,6 @@ const TransactionSummary: React.FC<TransactionSummaryProps> = ({
   const summaryItems = [
     { label: 'Subtotal', value: subtotal, icon: 'Calculator' },
     { label: 'Discount', value: -discountTotal, icon: 'Percent', isDiscount: true },
-    { label: `Tax (${taxRate}%)`, value: taxAmount, icon: 'Receipt' },
     { label: 'Total', value: grandTotal, icon: 'Wallet', isTotal: true }
   ];
 

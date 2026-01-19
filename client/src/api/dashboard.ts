@@ -6,6 +6,7 @@ const api = axios.create({
 });
 
 export type ChangeType = 'positive' | 'negative' | 'neutral';
+export type DashboardPeriod = 'week' | 'month' | 'year' | 'all';
 
 export interface MetricData {
   total: number;
@@ -14,6 +15,7 @@ export interface MetricData {
 }
 
 export interface DashboardMetricsData {
+  period: string;
   revenue: MetricData;
   expenses: MetricData;
   profit: MetricData;
@@ -40,8 +42,8 @@ export interface ChartData {
   };
 }
 
-export async function getDashboardMetrics(): Promise<{ data: DashboardMetricsData }> {
-  const res = await api.get("/dashboard/metrics");
+export async function getDashboardMetrics(period: DashboardPeriod = 'month'): Promise<{ data: DashboardMetricsData }> {
+  const res = await api.get(`/dashboard/metrics?period=${period}`);
   return res.data; // Return { data: ... } so useFetch can access .data
 }
 

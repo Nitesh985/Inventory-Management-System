@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { 
   createCredit,
+  createPayment,
   getCredits,
   getCreditById,
   updateCredit,
@@ -16,6 +17,7 @@ router.use(verifyBusinessAuth);
 
 // Credit CRUD
 router.post("/", createCredit);
+router.post("/payment", createPayment);
 router.get("/", getCredits);
 router.get("/summary", getCustomersCreditSummary);
 router.get("/customers-with-balance", getCustomersWithBalance);

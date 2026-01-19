@@ -60,3 +60,15 @@ export const deleteCredit = async (id: string) => {
   const response = await axios.delete(`/api/credits/${id}`);
   return response.data;
 };
+
+// Create a payment for a customer
+export const createPayment = async (data: {
+  customerId: string;
+  amount: number;
+  method?: string;
+  note?: string;
+  date?: string;
+}) => {
+  const response = await axios.post('/api/credits/payment', data);
+  return response.data;
+};

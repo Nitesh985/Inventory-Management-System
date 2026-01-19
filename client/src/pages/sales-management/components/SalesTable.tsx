@@ -274,7 +274,7 @@ const SalesTable = ({ sales, loading = false, onViewSale, onRefresh }: Props) =>
               </td>
               <td className="py-4 px-4 text-right">
                 <span className="font-semibold text-foreground">
-                  ₹ {Math.round(sale.totalAmount || 0).toLocaleString()}
+                  Rs. {Math.round(sale.totalAmount || 0).toLocaleString()}
                 </span>
               </td>
               <td className="py-4 px-4 text-center">

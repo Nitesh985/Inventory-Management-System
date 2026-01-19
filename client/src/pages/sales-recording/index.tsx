@@ -50,11 +50,9 @@ const SalesRecording: React.FC = () => {
 
   const { mutate: createSaleMutation, loading: creatingSale } = useMutation(createSale);
 
-  const taxRate = 8.25;
   const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
   const discountedSubtotal = subtotal - discount;
-  const taxAmount = (discountedSubtotal * taxRate) / 100;
-  const totalAmount = discountedSubtotal + taxAmount;
+  const totalAmount = discountedSubtotal;
 
   const handleAddCustomer = (customer: Customer) => {
     setCustomers(prev => [...prev, customer]);
@@ -135,7 +133,6 @@ const SalesRecording: React.FC = () => {
       date: transactionDate,
       items: lineItems,
       subtotal,
-      tax: taxAmount,
       total: totalAmount,
       paymentMethod,
     };
@@ -276,7 +273,6 @@ const SalesRecording: React.FC = () => {
               <div className="space-y-6">
                 <TransactionSummary 
                   lineItems={lineItems} 
-                  taxRate={taxRate} 
                   discountAmount={discount}
                   onDiscountChange={setDiscount}
                 />

@@ -142,7 +142,7 @@ const RecentTransactions = () => {
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(transaction?.status)}`}>
                     {transaction?.status}
                   </span>
-                </div>
+                  </div>
                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <span>{transaction?.customer || transaction?.vendor}</span>
                   <span>{transaction?.date} at {transaction?.time}</span>

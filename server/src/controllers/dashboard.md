@@ -46,30 +46,14 @@ const getDashboardMetrics = asyncHandler(async (req: Request, res: Response) => 
 
   switch (period) {
     case 'week':
-      const dayOfWeek = today.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
-    
-      // Start of week = Sunday
-      periodStart = new Date(today);
-      periodStart.setDate(today.getDate() - dayOfWeek);
-      periodStart.setHours(0, 0, 0, 0);
-    
-      // Previous week (Sunday → Saturday)
+      // This week (starting from Monday)
+      const dayOfWeek = now.getDay();
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      periodStart = new Date(today.getTime() - daysToMonday * 24 * 60 * 60 * 1000);
       previousPeriodEnd = new Date(periodStart.getTime() - 1);
-      previousPeriodStart = new Date(previousPeriodEnd);
-      previousPeriodStart.setDate(previousPeriodEnd.getDate() - 6);
-      previousPeriodStart.setHours(0, 0, 0, 0);
-    
+      previousPeriodStart = new Date(previousPeriodEnd.getTime() - 6 * 24 * 60 * 60 * 1000);
       periodLabel = 'This Week';
       break;
-    
-      // // This week (starting from Monday)
-      // const dayOfWeek = now.getDay();
-      // const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      // periodStart = new Date(today.getTime() - daysToMonday * 24 * 60 * 60 * 1000);
-      // previousPeriodEnd = new Date(periodStart.getTime() - 1);
-      // previousPeriodStart = new Date(previousPeriodEnd.getTime() - 6 * 24 * 60 * 60 * 1000);
-      // periodLabel = 'This Week';
-      // break;
     case 'year':
       // This year
       periodStart = new Date(now.getFullYear(), 0, 1);
@@ -121,7 +105,7 @@ const getDashboardMetrics = asyncHandler(async (req: Request, res: Response) => 
     : allSales.filter(s => isInRange(s.createdAt, previousPeriodStart, previousPeriodEnd));
   const todaySalesList = allSales.filter(s => isToday(s.createdAt));
   const yesterdaySalesList = allSales.filter(s => isYesterday(s.createdAt));
-  
+
   // Filter expenses by period
   const periodExpenses = period === 'all'
     ? allExpenses
@@ -340,3 +324,4 @@ export {
   getDashboardMetrics,
   getChartData
 }
+  

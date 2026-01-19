@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
@@ -8,8 +8,7 @@ import RecentTransactions from './components/RecentTransactions';
 import InventoryAlerts from './components/InventoryAlerts';
 import BusinessChart from './components/BusinessChart';
 // import SyncStatus from './components/SyncStatus';
-import { useFetch } from '@/hooks/useFetch';
-import { getDashboardMetrics } from '@/api/dashboard';
+import { getDashboardMetrics, DashboardPeriod, DashboardMetricsData } from '@/api/dashboard';
 
 // type SyncStatusType = 'online' | 'syncing' | 'offline';
 type ChangeType = 'positive' | 'negative' | 'neutral';
@@ -24,111 +23,91 @@ interface BusinessMetric {
   trend?: boolean;
 }
 
+const periodOptions: { value: DashboardPeriod; label: string }[] = [
+  { value: 'week', label: 'This Week' },
+  { value: 'month', label: 'This Month' },
+  { value: 'year', label: 'This Year' },
+  { value: 'all', label: 'All Time' },
+];
+
 const BusinessDashboard: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>('month');
+  const [metricsData, setMetricsData] = useState<DashboardMetricsData | null>(null);
+  const [loading, setLoading] = useState(true);
   // const [syncStatus, setSyncStatus] = useState<SyncStatusType>('online');
 
-  // Fetch calculated metrics from API
-  const { data: metricsData, loading } = useFetch(getDashboardMetrics);
+  // Fetch metrics when period changes
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      setLoading(true);
+      try {
+        const response = await getDashboardMetrics(selectedPeriod);
+        setMetricsData(response.data);
+      } catch (error) {
+        console.error('Failed to fetch dashboard metrics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMetrics();
+  }, [selectedPeriod]);
 
   const safeMetrics = {
-    revenue: metricsData?.revenue ?? { total: 0, change: "", changeType: "neutral" },
-    expenses: metricsData?.expenses ?? { total: 0, change: "", changeType: "neutral" },
-    profit: metricsData?.profit ?? { total: 0, change: "", changeType: "neutral" },
+    period: metricsData?.period ?? 'This Month',
+    revenue: metricsData?.revenue ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
+    expenses: metricsData?.expenses ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
+    profit: metricsData?.profit ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
     products: metricsData?.products ?? { total: 0, lowStock: 0 },
-    todaysSales: metricsData?.todaysSales ?? { total: 0, change: "", changeType: "neutral" },
+    todaysSales: metricsData?.todaysSales ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
   };
 
-  
-  // Build business metrics array from API data
-  // const businessMetrics: BusinessMetric[] = metricsData ? [
-  //   {
-  //     title: "Total Revenue",
-  //     value: `Rs. ${Math.round(metricsData?.revenue?.total).toLocaleString()}`,
-  //     change: metricsData?.revenue?.change,
-  //     changeType: metricsData?.revenue?.changeType,
-  //     icon: "DollarSign",
-  //     iconColor: "text-success",
-  //     trend: true
-  //   },
-  //   {
-  //     title: "Total Expenses",
-  //     value: `Rs. ${Math.round(metricsData.expenses.total).toLocaleString()}`,
-  //     change: metricsData.expenses.change,
-  //     changeType: metricsData.expenses.changeType,
-  //     icon: "CreditCard",
-  //     iconColor: "text-error",
-  //     trend: true
-  //   },
-  //   {
-  //     title: "Net Profit",
-  //     value: `Rs. ${Math.round(metricsData.profit.total).toLocaleString()}`,
-  //     change: metricsData.profit.change,
-  //     changeType: metricsData.profit.changeType,
-  //     icon: "TrendingUp",
-  //     iconColor: "text-primary",
-  //     trend: true
-  //   },
-  //   {
-  //     title: "Active Products",
-  //     value: metricsData.products.total.toLocaleString(),
-  //     change: `${metricsData.products.total} total items`,
-  //     changeType: "neutral",
-  //     icon: "Package",
-  //     iconColor: "text-accent"
-  //   },
-  //   {
-  //     title: "Low Stock Items",
-  //     value: metricsData.products.lowStock.toString(),
-  //     change: metricsData.products.lowStock > 0 ? `${metricsData.products.lowStock} need restock` : "Stock is healthy",
-  //     changeType: metricsData.products.lowStock > 0 ? "negative" : "positive",
-  //     icon: "AlertTriangle",
-  //     iconColor: metricsData.products.lowStock > 0 ? "text-warning" : "text-success"
-  //   },
-  //   {
-  //     title: "Today's Sales",
-  //     value: `Rs. ${Math.round(metricsData.todaysSales.total).toLocaleString()}`,
-  //     change: `${metricsData.todaysSales.change} vs yesterday`,
-  //     changeType: metricsData.todaysSales.changeType,
-  //     icon: "ShoppingCart",
-  //     iconColor: "text-success",
-  //     trend: true
-  //   }
-  // ] : [];
+  // Get comparison text based on period
+  const getComparisonText = () => {
+    switch (selectedPeriod) {
+      case 'week': return 'vs last week';
+      case 'month': return 'vs last month';
+      case 'year': return 'vs last year';
+      case 'all': return '';
+      default: return 'vs last month';
+    }
+  };
+
+  const comparisonText = getComparisonText();
   
   const businessMetrics: BusinessMetric[] = [
     {
-      title: "Total Revenue",
+      title: `Revenue (${safeMetrics.period})`,
       value: `Rs. ${Math.round(safeMetrics.revenue.total).toLocaleString()}`,
-      change: safeMetrics.revenue.change,
+      change: selectedPeriod === 'all' ? 'All time total' : `${safeMetrics.revenue.change} ${comparisonText}`,
       changeType: safeMetrics.revenue.changeType,
       icon: "DollarSign",
       iconColor: "text-success",
-      trend: true
+      trend: selectedPeriod !== 'all'
     },
     {
-      title: "Total Expenses",
+      title: `Expenses (${safeMetrics.period})`,
       value: `Rs. ${Math.round(safeMetrics.expenses.total).toLocaleString()}`,
-      change: safeMetrics.expenses.change,
+      change: selectedPeriod === 'all' ? 'All time total' : `${safeMetrics.expenses.change} ${comparisonText}`,
       changeType: safeMetrics.expenses.changeType,
       icon: "CreditCard",
       iconColor: "text-error",
-      trend: true
+      trend: selectedPeriod !== 'all'
     },
     {
-      title: "Net Profit",
+      title: `Net Profit (${safeMetrics.period})`,
       value: `Rs. ${Math.round(safeMetrics.profit.total).toLocaleString()}`,
-      change: safeMetrics.profit.change,
+      change: selectedPeriod === 'all' ? 'All time total' : `${safeMetrics.profit.change} ${comparisonText}`,
       changeType: safeMetrics.profit.changeType,
       icon: "TrendingUp",
       iconColor: "text-primary",
-      trend: true
+      trend: selectedPeriod !== 'all'
     },
     {
       title: "Active Products",
       value: safeMetrics.products.total.toLocaleString(),
       change: `${safeMetrics.products.total} total items`,
-      changeType: "neutral",
+      changeType: "neutral" as ChangeType,
       icon: "Package",
       iconColor: "text-accent"
     },
@@ -140,7 +119,7 @@ const BusinessDashboard: React.FC = () => {
           ? `${safeMetrics.products.lowStock} need restock`
           : "Stock is healthy",
       changeType:
-        safeMetrics.products.lowStock > 0 ? "negative" : "positive",
+        safeMetrics.products.lowStock > 0 ? "negative" as ChangeType : "positive" as ChangeType,
       icon: "AlertTriangle",
       iconColor:
         safeMetrics.products.lowStock > 0 ? "text-warning" : "text-success"
@@ -180,24 +159,28 @@ const BusinessDashboard: React.FC = () => {
         <div className="p-4 lg:p-8 max-w-7xl mx-auto">
           {/* Page Header */}
           <div className="mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
                   Business Dashboard
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  Welcome back! Here's what's happening with your business today.
+                  Welcome back! Here's what's happening with your business.
                 </p>
               </div>
-              <div className="mt-4 sm:mt-0">
-                {/* <div className="text-sm text-muted-foreground">
-                  Last updated: {new Date()?.toLocaleString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </div> */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Period:</span>
+                <select
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value as DashboardPeriod)}
+                  className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {periodOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

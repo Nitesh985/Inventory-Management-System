@@ -133,22 +133,6 @@ const SalesFilterToolbar = ({
           </Button>
         )}
       </div>
-
-      {/* Results Count */}
-      <div className="flex items-center justify-between text-sm">
-        <div className="text-muted-foreground">
-          {hasActiveFilters ? (
-            <span>
-              Showing <span className="font-medium text-foreground">{filteredCount}</span> of{' '}
-              <span className="font-medium text-foreground">{totalSales}</span> sales
-            </span>
-          ) : (
-            <span>
-              <span className="font-medium text-foreground">{totalSales}</span> total sales
-            </span>
-          )}
-        </div>
-      </div>
     </div>
   )
 }

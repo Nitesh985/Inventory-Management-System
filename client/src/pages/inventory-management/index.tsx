@@ -29,12 +29,10 @@ interface BackendProduct {
   name: string;
   category?: string;
   description?: string;
-  unit: number;
   price: number;
   cost: number;
-  reorderLevel: number;
   stock: number;
-  reserved: number;
+  minStock: number;
   availableStock: number;
   isLowStock: boolean;
   createdAt: string;
@@ -67,8 +65,8 @@ interface Filters {
 
 const InventoryManagement: React.FC = () => {
   const { data: session, isPending } = useSession();
-  const [onboardingCompleted, setOnboardingCompleted] = useState(true)
-  // const onboardingCompleted = session?.user?.onBoardingCompleted;
+  // const [onboardingCompleted, setOnboardingCompleted] = useState(true)
+  const onboardingCompleted = session?.user?.onBoardingCompleted;
 
 
 
@@ -96,13 +94,13 @@ const InventoryManagement: React.FC = () => {
       sku: p.sku || "",
       category: p.category || "",
       currentStock: p.stock ?? 0,
-      minStock: p.reorderLevel ?? 0,
-      maxStock: 0, // Not tracked in backend
-      unitPrice: p.price ?? 0,
-      costPrice: p.cost ?? 0,
+      minStock: p.minStock ?? 0, // Now comes from backend
+      maxStock: 0, // Not tracked
+      unitPrice: parseInt(p.price) ?? 0,
+      costPrice: parseInt(p.cost) ?? 0,
       description: p.description || "",
       lastUpdated: p.updatedAt || p.createdAt || new Date().toISOString(),
-      reserved: p.reserved ?? 0,
+      reserved: 0, // No longer tracking reserved
       availableStock: p.availableStock ?? p.stock ?? 0,
       isLowStock: p.isLowStock ?? false,
     }));
@@ -135,11 +133,7 @@ const InventoryManagement: React.FC = () => {
   const getProductStockStatus = (product: Product): string => {
     if (!product) return "unknown";
     if (product.currentStock === 0) return "out-of-stock";
-    if (
-      product.isLowStock ||
-      (product.minStock != null && product.currentStock <= product.minStock)
-    )
-      return "low-stock";
+    if (product.isLowStock) return "low-stock";
     return "in-stock";
   };
 
@@ -188,12 +182,8 @@ const InventoryManagement: React.FC = () => {
 
     return products.filter((product) => {
       if (!product) return false;
-      // Use backend's isLowStock flag or calculate manually
-      return (
-        product.isLowStock ||
-        product.currentStock === 0 ||
-        (product.minStock != null && product.currentStock <= product.minStock)
-      );
+      // Use backend's isLowStock flag only
+      return product.isLowStock || product.currentStock === 0;
     });
   }, [products]);
 
@@ -204,7 +194,27 @@ const InventoryManagement: React.FC = () => {
 
   const handleEditProduct = (product: Product): void => {
     if (!product) return;
-    setEditingProduct(product);
+    
+    console.log("Editing product:", product);
+    console.log("Product values - Stock:", product.currentStock, "Price:", product.unitPrice, "Cost:", product.costPrice, "MinStock:", product.minStock);
+    
+    // Transform product data to match ProductFormModal interface expectations
+    const productForModal = {
+      _id: product.id,
+      name: product.name,
+      sku: product.sku,
+      category: product.category,
+      description: product.description,
+      stock: product.currentStock, // Map currentStock to stock
+      minStock: product.minStock,
+      price: product.unitPrice, // Map unitPrice to price
+      cost: product.costPrice, // Map costPrice to cost
+      supplier: product?.supplier || "", // Default supplier
+    };
+    
+    console.log("Product for modal:", productForModal);
+    
+    setEditingProduct(productForModal as any);
     setShowProductModal(true);
   };
 
@@ -225,36 +235,93 @@ const InventoryManagement: React.FC = () => {
   };
 
   const handleSaveProduct = async (
-    productData: Partial<Product>,
+    productData: any, // Changed from Partial<Product> to any since modal returns different format
   ): Promise<void> => {
     if (!productData) return;
 
+    console.log("Saving product data from modal:", productData);
+
+    // Transform modal data back to our expected format
+    const transformedData = {
+      name: productData.name,
+      sku: productData.sku,
+      category: productData.category,
+      description: productData.description,
+      currentStock: typeof productData.stock === 'string' ? parseInt(productData.stock) || 0 : productData.stock,
+      minStock: typeof productData.minStock === 'string' ? parseInt(productData.minStock) || 0 : productData.minStock,
+      unitPrice: typeof productData.price === 'string' ? parseFloat(productData.price) || 0 : productData.price,
+      costPrice: typeof productData.cost === 'string' ? parseFloat(productData.cost) || 0 : productData.cost,
+    };
+
+    console.log("Transformed product data:", transformedData);
+
     try {
+      let productId: string;
+
       if (editingProduct) {
         // Update existing product - map frontend fields to backend fields
-        await updateProductMutation({
-          id: String(editingProduct.id),
+        console.log("Updating product:", editingProduct._id, transformedData);
+        const updateResult = await updateProductMutation({
+          id: String(editingProduct._id),
           payload: {
-            name: productData.name,
-            sku: productData.sku,
-            category: productData.category,
-            description: productData.description,
-            price: productData.unitPrice,
-            cost: productData.costPrice,
-            reorderLevel: productData.minStock,
+            name: transformedData.name,
+            sku: transformedData.sku,
+            category: transformedData.category,
+            description: transformedData.description,
+            price: parseInt(transformedData.unitPrice) || 0,
+            cost: parseInt(transformedData.costPrice) || 0,
           } as any,
         });
+        productId = String(editingProduct._id);
+        
+        // Update inventory if stock or minStock is specified
+        if (transformedData.currentStock !== undefined || transformedData.minStock !== undefined) {
+          console.log("Updating inventory for product:", productId, "stock:", transformedData.currentStock, "minStock:", transformedData.minStock);
+          await updateInventoryMutation({
+            productId: productId,
+            stock: transformedData.currentStock,
+            minStock: transformedData.minStock || 0,
+          });
+        }
       } else {
         // Create new product - map frontend fields to backend fields
-        await createProductMutation({
-          name: productData.name || "",
-          sku: productData.sku || `SKU-${Date.now()}`,
-          unit: 1,
-          price: productData.unitPrice || 0,
-          cost: productData.costPrice || 0,
-          category: productData.category,
-          description: productData.description,
-          reorderLevel: productData.minStock || 0,
+        console.log("Creating new product:", transformedData);
+        const createResult = await createProductMutation({
+          name: transformedData.name || "",
+          sku: transformedData.sku || `SKU-${Date.now()}`,
+          price: parseInt(transformedData.unitPrice) || 0,
+          cost: parseInt(transformedData.costPrice) || 0,
+          category: transformedData.category,
+          description: transformedData.description,
+          stock: transformedData.currentStock || 0,
+          minStock: transformedData.minStock || 0,
+        });
+        
+        console.log("Product creation result:", createResult);
+        
+        // Extract product ID from the creation result - try multiple possible response structures
+        productId = createResult?._id || 
+                   createResult?.data?._id || 
+                   createResult?.id || 
+                   createResult?.data?.id ||
+                   createResult?.product?._id ||
+                   createResult?.product?.id;
+
+        if (!productId) {
+          console.error("No product ID found in creation result:", createResult);
+          throw new Error("Failed to get product ID from creation result");
+        }
+
+        console.log("Extracted product ID:", productId);
+
+        // Create inventory record for new product
+        const initialStock = transformedData.currentStock !== undefined ? transformedData.currentStock : 0;
+        console.log("Creating inventory for new product:", productId, "with stock:", initialStock);
+        
+        await updateInventoryMutation({
+          productId: productId,
+          stock: initialStock,
+          minStock: transformedData.minStock || 0,
         });
       }
 
@@ -263,7 +330,8 @@ const InventoryManagement: React.FC = () => {
       setEditingProduct(null);
     } catch (err) {
       console.error("Failed to save product:", err);
-      alert("Failed to save product. Please try again.");
+      console.error("Error details:", err.response?.data || err.message || err);
+      alert(`Failed to save product: ${err.response?.data?.message || err.message || 'Unknown error'}`);
     }
   };
 

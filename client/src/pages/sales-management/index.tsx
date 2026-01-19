@@ -180,11 +180,6 @@ const SalesManagementPage = () => {
     navigate('/sales-recording')
   }
 
-  const handleExport = () => {
-    // Export functionality placeholder
-    console.log('Exporting sales data...')
-  }
-
   return (
     <>
       <Helmet>
@@ -230,14 +225,6 @@ const SalesManagementPage = () => {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  <Button
-                    variant="outline"
-                    iconName="Download"
-                    iconPosition="left"
-                    onClick={handleExport}
-                  >
-                    Export
-                  </Button>
                   <Button
                     variant="default"
                     iconName="Plus"

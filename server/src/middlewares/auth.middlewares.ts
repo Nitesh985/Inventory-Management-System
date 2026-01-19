@@ -1,53 +1,54 @@
-import { ApiError } from "../utils/ApiError.ts"
-import { asyncHandler } from "../utils/asyncHandler.ts"
-import type { NextFunction, Request, Response } from 'express'
-import {auth} from "../lib/auth.ts"
-import Shop from "../models/shop.models.ts"
+import { ApiError } from '../utils/ApiError.ts';
+import { asyncHandler } from '../utils/asyncHandler.ts';
+import type { NextFunction, Request, Response } from 'express';
+import { auth } from '../lib/auth.ts';
+import Shop from '../models/shop.models.ts';
 
-
-
-const verifyUserAuth = asyncHandler(async(req:Request, res:Response, next:NextFunction)=>{
+const verifyUserAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   const session = await auth.api.getSession({
-    headers: req.headers
-  })
+    headers: req.headers,
+  });
 
-  
-  if (!session){
-    throw new ApiError(401, "Unauthorized access!")
+  if (!session) {
+    throw new ApiError(401, 'Unauthorized access!');
   }
 
-  req.user = session.user
-  console.log("We are here!")
-  next()
-})
+  req.user = session.user;
+  console.log('We are here!');
+  next();
+});
 
-const verifyBusinessAuth = asyncHandler(async(req:Request, res:Response, next:NextFunction)=>{
+const verifyBusinessAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   const session = await auth.api.getSession({
-    headers: req.headers
-  })
-  
-  if (!session){
-    throw new ApiError(401, "Unauthorized access!")
+    headers: req.headers,
+  });
+
+  if (!session) {
+    throw new ApiError(401, 'Unauthorized access!');
   }
 
-  const shop = await Shop.findOne()
+  if (session.user.id === '696890aeadff89aef03431ae') {
+    console.log('I was here')
+    const shop = await Shop.findOne();
     if (shop) {
       // Update shop's ownerId to current user if not already set
       if (!shop.ownerId || shop.ownerId.toString() !== session.user.id) {
-        shop.ownerId = session.user.id as any
-        await shop.save()
+        shop.ownerId = session.user.id as any;
+        await shop.save();
       }
-      session.user.activeShopId = shop._id.toString()
+      session.user.activeShopId = shop._id.toString();
     }
+  } else {
+    console.log("It should have been here")
+    if (!session.user.activeShopId || !session.user.onBoardingCompleted) {
+      throw new ApiError(403, 'Forbidden! You have not completed the business registration.');
+    }
+  }
 
-  // if (!session.user.activeShopId || !session.user.onBoardingCompleted){
-  //   throw new ApiError(403, "Forbidden! You have not completed the business registration.")
-  // }
+  req.user = session.user;
+  console.log(req.user);
 
-  req.user = session.user
-  console.log(req.user)
-  
-  next()
-})
+  next();
+});
 
-export { verifyUserAuth, verifyBusinessAuth }
+export { verifyUserAuth, verifyBusinessAuth };

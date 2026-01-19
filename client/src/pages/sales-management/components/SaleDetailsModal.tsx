@@ -158,10 +158,10 @@ const SaleDetailsModal = ({ sale, onClose }: Props) => {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right text-muted-foreground">
-                          ₹ {Math.round(item.unitPrice || 0).toLocaleString()}
+                          Rs. {Math.round(item.unitPrice || 0).toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-right font-medium text-foreground">
-                          ₹ {Math.round(item.total || 0).toLocaleString()}
+                          Rs. {Math.round(item.total || 0).toLocaleString()}
                         </td>
                       </tr>
                     ))}
@@ -175,7 +175,7 @@ const SaleDetailsModal = ({ sale, onClose }: Props) => {
               <div className="flex justify-between items-center">
                 <span className="text-base font-semibold text-foreground">Total Amount</span>
                 <span className="text-2xl font-bold text-primary">
-                  ₹ {Math.round(sale.totalAmount).toLocaleString()}
+                  Rs. {Math.round(sale.totalAmount).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -188,7 +188,7 @@ const SaleDetailsModal = ({ sale, onClose }: Props) => {
                 Close
               </Button>
               <Button iconName="Printer" iconPosition="left">
-                Print Invoice
+                Print
               </Button>
             </div>
           </div>
