@@ -8,7 +8,8 @@ import RecentTransactions from './components/RecentTransactions';
 import InventoryAlerts from './components/InventoryAlerts';
 import BusinessChart from './components/BusinessChart';
 // import SyncStatus from './components/SyncStatus';
-import { getDashboardMetrics, DashboardPeriod, DashboardMetricsData } from '@/api/dashboard';
+import { getDashboardMetrics } from '@/api/dashboard';
+import type { DashboardPeriod, DashboardMetricsData } from '@/api/dashboard';
 
 // type SyncStatusType = 'online' | 'syncing' | 'offline';
 type ChangeType = 'positive' | 'negative' | 'neutral';
