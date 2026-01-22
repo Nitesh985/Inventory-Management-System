@@ -14,7 +14,6 @@ const verifyUserAuth = asyncHandler(async (req: Request, res: Response, next: Ne
   }
 
   req.user = session.user;
-  console.log('We are here!');
   next();
 });
 
@@ -28,7 +27,6 @@ const verifyBusinessAuth = asyncHandler(async (req: Request, res: Response, next
   }
 
   if (session.user.id === '696890aeadff89aef03431ae') {
-    console.log('I was here')
     const shop = await Shop.findOne();
     if (shop) {
       // Update shop's ownerId to current user if not already set
@@ -39,7 +37,6 @@ const verifyBusinessAuth = asyncHandler(async (req: Request, res: Response, next
       session.user.activeShopId = shop._id.toString();
     }
   } else {
-    console.log("It should have been here")
     if (!session.user.activeShopId || !session.user.onBoardingCompleted) {
       throw new ApiError(403, 'Forbidden! You have not completed the business registration.');
     }

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Icon, Mic } from 'lucide-react';
-
+import { Icon, Mic, ArrowUp } from 'lucide-react';
+import Button from '@/components/ui/Button';
 interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -52,9 +52,9 @@ export function ChatInput({ value, onChange }: ChatInputProps) {
             
 
           </div>
-          <button className="flex-shrink-0 bg-green-600 hover:bg-green-700 transition-all duration-200 px-6 py-3 rounded-lg text-white font-medium shadow-lg">
-            
-          </button>
+          <Button className="flex-shrink-0 bg-white text-blue-600 border border-gray-300 hover:bg-slate-100 text-black transition-all duration-200  rounded-full p-3 shadow-lg ">
+            <ArrowUp className="w-7 h-10" />
+          </Button>
         </div>
 
         
