@@ -48,16 +48,11 @@ export function ChatInput({ value, onChange }: ChatInputProps) {
             <button className="px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-full hover:bg-blue-100 transition-colors">
               by: Category
             </button>
-
-            
-
           </div>
-          <Button className="flex-shrink-0 bg-white text-blue-600 border border-gray-300 hover:bg-slate-100 text-black transition-all duration-200  rounded-full p-3 shadow-lg ">
+          <Button className="flex-shrink-0 bg-white border border-gray-300 hover:bg-slate-100 text-black transition-all duration-200  rounded-full p-3 shadow-lg ">
             <ArrowUp className="w-7 h-10" />
           </Button>
         </div>
-
-        
       </div>
     </div>
   );

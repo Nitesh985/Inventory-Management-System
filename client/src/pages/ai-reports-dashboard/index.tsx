@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
 import Icon from '../../components/AppIcon';
@@ -7,28 +7,10 @@ import Select from '../../components/ui/Select';
 import SyncStatusIndicator from '../../components/ui/SyncStatusIndicator';
 import QuickActionMenu from '../../components/ui/QuickActionMenu';
 
-import { useFetch } from '@/hooks/useFetch';
-import { getSales } from '@/api/sales';
-import { getExpenses } from '@/api/expenses';
-import { ChatInput } from './components/chatinput';
+import { ChatInput } from './components/ChatInput';
 
 type SyncStatus = 'online' | 'syncing' | 'offline';
-type ViewId = 'overview' | 'analytics' | 'predictions' | 'reports';
 
-interface ViewOption {
-  id: ViewId;
-  label: string;
-  icon: string;
-}
-
-interface QuickStat {
-  title: string;
-  value: string;
-  change: string;
-  trend: 'up' | 'down';
-  icon: string;
-  color: string;
-}
 
 const AIReportsDashboard: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
