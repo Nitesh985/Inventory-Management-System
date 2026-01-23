@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
 import Icon from '../../components/AppIcon';
-import Button from '../../components/ui/Button';
 import Select from '../../components/ui/Select';
-import SyncStatusIndicator from '../../components/ui/SyncStatusIndicator';
-import QuickActionMenu from '../../components/ui/QuickActionMenu';
 
 import { ChatInput } from './components/ChatInput';
 
@@ -26,7 +23,6 @@ const AIReportsDashboard: React.FC = () => {
 
   return (
     <div>
-      
       <Sidebar 
         isCollapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
