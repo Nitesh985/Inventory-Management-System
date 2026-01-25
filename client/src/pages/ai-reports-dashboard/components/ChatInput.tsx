@@ -1,58 +1,67 @@
 import React from 'react';
-import { Icon, Mic, ArrowUp } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Mic, Send } from 'lucide-react';
+
 interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
+  onSend: () => void;
 }
 
-export function ChatInput({ value, onChange }: ChatInputProps) {
+export function ChatInput({ value, onChange, onSend }: ChatInputProps) {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onSend();
+    }
+  };
+
+  const quickPrompts = [
+    'Items to restock',
+    'Sales trends',
+    'Top customers',
+    'Low stock alerts'
+  ];
+
   return (
-    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full h-[200px] bg-[#F8F9FC] shadow-[0px_-22px_36px_0px_rgba(229,231,235,0.6)]">
-      <div className="max-w-[1100px] mx-auto px-8 pt-6">
-        {/* Quick filter chips */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <button className="px-4 py-1.5 bg-[#E5E7EB] text-gray-700 text-sm rounded-full hover:bg-gray-300 transition-colors">
-            Electronics
+    <div className="p-4 bg-white">
+      {/* Quick Prompts */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {quickPrompts.map((prompt) => (
+          <button
+            key={prompt}
+            onClick={() => onChange(prompt)}
+            className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs md:text-sm rounded-full transition-colors"
+          >
+            {prompt}
           </button>
-          <button className="px-4 py-1.5 bg-[#E5E7EB] text-gray-700 text-sm rounded-full hover:bg-gray-300 transition-colors">
-            Low Stock Items
-          </button>
-          <button className="px-4 py-1.5 bg-[#E5E7EB] text-gray-700 text-sm rounded-full hover:bg-gray-300 transition-colors">
-            Last 30 Days
-          </button>
-          <button className="px-4 py-1.5 bg-[#E5E7EB] text-gray-700 text-sm rounded-full hover:bg-gray-300 transition-colors">
-            AI Forecast
-          </button>
-          <button className="px-4 py-1.5 bg-[#E5E7EB] text-gray-700 text-sm rounded-full hover:bg-gray-300 transition-colors">
-            Reorder Alerts
-          </button>
+        ))}
+      </div>
+
+      {/* Input Area */}
+      <div className="flex items-end gap-2">
+        <button className="flex-shrink-0 p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
+          <Mic className="w-5 h-5 text-gray-600" />
+        </button>
+        
+        <div className="flex-1 relative">
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Ask about your inventory, sales, customers..."
+            rows={1}
+            className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl resize-none focus:outline-none focus:border-blue-500 transition-colors text-sm md:text-base"
+            style={{ minHeight: '48px', maxHeight: '120px' }}
+          />
         </div>
 
-        {/* Main chat input */}
-        <div className="flex items-center gap-4">
-          {/* Microphone button */}
-          <button className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 transition-all duration-200 p-3 rounded-full shadow-lg">
-            <Mic className="w-6 h-6 text-white" />
-          </button>
-
-          {/* Input field */}
-          <div className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-3 flex items-center gap-3 shadow-sm">
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              placeholder="What would you like to know about your inventory?"
-              className="flex-1 text-gray-900 text-base outline-none bg-transparent"
-            />
-            <button className="px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-full hover:bg-blue-100 transition-colors">
-              by: Category
-            </button>
-          </div>
-          <Button className="flex-shrink-0 bg-white border border-gray-300 hover:bg-slate-100 text-black transition-all duration-200  rounded-full p-3 shadow-lg ">
-            <ArrowUp className="w-7 h-10" />
-          </Button>
-        </div>
+        <button
+          onClick={onSend}
+          disabled={!value.trim()}
+          className="flex-shrink-0 p-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-full transition-colors"
+        >
+          <Send className="w-5 h-5 text-white" />
+        </button>
       </div>
     </div>
   );
