@@ -10,6 +10,7 @@ import CreditForm from "./components/CreditForm";
 import CreditHistory from "./components/CreditHistory";
 import CustomerList from "./components/CustomerList";
 import AddCustomerModal from "./components/AddCustomerModal";
+import CustomerDetailsModal from "./components/CustomerDetailsModal";
 
 const CustomerCredit = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const CustomerCredit = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCustomerListExpanded, setIsCustomerListExpanded] = useState(false);
+  const [customerDetailsModalId, setCustomerDetailsModalId] = useState<string | null>(null);
 
   // Function to trigger a re-fetch across all components
   const handleRefresh = () => setRefreshKey((prev) => prev + 1);
@@ -106,6 +108,7 @@ const CustomerCredit = () => {
                     onToggleExpand={() =>
                       setIsCustomerListExpanded(!isCustomerListExpanded)
                     }
+                    onCustomerNameClick={(id) => setCustomerDetailsModalId(id)}
                   />
                 </div>
 
@@ -150,6 +153,15 @@ const CustomerCredit = () => {
               {isAddModalOpen && (
                 <AddCustomerModal
                   onClose={() => setIsAddModalOpen(false)}
+                  onSuccess={handleRefresh}
+                />
+              )}
+
+              {/* Customer Details Modal */}
+              {customerDetailsModalId && (
+                <CustomerDetailsModal
+                  customerId={customerDetailsModalId}
+                  onClose={() => setCustomerDetailsModalId(null)}
                   onSuccess={handleRefresh}
                 />
               )}

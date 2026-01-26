@@ -8,20 +8,23 @@ import Sales from "../models/sales.models.ts";
 
 const createCustomer = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
-  const { name, phone, address, email } = req.body;
+  const { name, contact, address, email, notes } = req.body;
 
   if (!name) {
     throw new ApiError(400, "name is required");
   }
   
-  if (!phone.length && !email && !address ){
-    throw new ApiError(400, "Either of these fields phone, email and address should be given!")
+  // Support both old 'phone' and new 'contact' fields for backwards compatibility
+  const phoneNumbers = contact || (req.body.phone ? [req.body.phone] : []);
+  
+  if (!phoneNumbers.length && !email && !address ){
+    throw new ApiError(400, "Either of these fields contact, email and address should be given!")
   }
 
-  if (phone) {
+  if (phoneNumbers.length > 0 && phoneNumbers[0]) {
     const existingByPhone = await Customer.findOne({ 
       shopId: new mongoose.Types.ObjectId(shopId), 
-      phone,
+      contact: phoneNumbers[0],
       deleted: false 
     });
     
@@ -45,10 +48,10 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
   const customer = await Customer.create({
     shopId: new mongoose.Types.ObjectId(shopId),
     name,
-    phone: phone || "",
+    contact: phoneNumbers.filter((p: string) => p && p.trim()),
     address: address || "",
     email: email ? email.toLowerCase() : "",
-    notes: ""
+    notes: notes || ""
   });
 
   return res

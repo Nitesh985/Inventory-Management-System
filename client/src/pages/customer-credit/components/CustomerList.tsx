@@ -8,7 +8,8 @@ import { getCustomersWithBalance } from '@/api/credits';
 interface CustomerWithBalance {
   _id: string;
   name: string;
-  phone?: string;
+  phone?: string;  // For backwards compatibility
+  contact?: string[];  // New field
   email?: string;
   address?: string;
   balance: number;        // What they still owe (totalCredit - totalPaid)
@@ -26,6 +27,7 @@ interface CustomerListProps {
   refreshKey?: number;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  onCustomerNameClick?: (id: string) => void;
 }
 
 type SortField = 'name' | 'balance' | 'lastTransaction';
@@ -37,7 +39,8 @@ const CustomerList = ({
   onAddClick, 
   refreshKey,
   isExpanded = false,
-  onToggleExpand
+  onToggleExpand,
+  onCustomerNameClick
 }: CustomerListProps) => {
   const { data: customersWithData, loading } = useFetch<CustomerWithBalance[]>(getCustomersWithBalance, [refreshKey]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,10 +51,11 @@ const CustomerList = ({
   const filteredCustomers = useMemo(() => {
     if (!customersWithData) return [];
     
-    let result = customersWithData.filter((c) =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (c.phone && c.phone.includes(searchTerm))
-    );
+    let result = customersWithData.filter((c) => {
+      const primaryPhone = c.contact?.[0] || c.phone;
+      return c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (primaryPhone && primaryPhone.includes(searchTerm));
+    });
 
     // Sort
     result = [...result].sort((a, b) => {
@@ -188,12 +192,18 @@ const CustomerList = ({
                           {customer.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className={`font-semibold text-sm ${selectedCustomerId === customer._id ? 'text-primary' : 'text-foreground'}`}>
+                          <p 
+                            className={`font-semibold text-sm cursor-pointer hover:underline ${selectedCustomerId === customer._id ? 'text-primary' : 'text-foreground'}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCustomerNameClick?.(customer._id);
+                            }}
+                          >
                             {customer.name}
                           </p>
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <Icon name="Phone" size={10} />
-                            {customer.phone || 'No phone'}
+                            {customer.contact?.[0] || customer.phone || 'No phone'}
                           </p>
                         </div>
                       </div>
@@ -217,11 +227,17 @@ const CustomerList = ({
                           {customer.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className={`font-semibold text-sm truncate ${selectedCustomerId === customer._id ? 'text-primary' : 'text-foreground'}`}>
+                          <p 
+                            className={`font-semibold text-sm truncate cursor-pointer hover:underline ${selectedCustomerId === customer._id ? 'text-primary' : 'text-foreground'}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCustomerNameClick?.(customer._id);
+                            }}
+                          >
                             {customer.name}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {customer.phone || 'No phone'}
+                            {customer.contact?.[0] || customer.phone || 'No phone'}
                           </p>
                         </div>
                       </div>
