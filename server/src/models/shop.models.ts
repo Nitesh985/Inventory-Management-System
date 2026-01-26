@@ -8,7 +8,6 @@ export interface IShop extends Document {
   useBS: boolean;
   ownerId: Types.ObjectId;
   businessType: BusinessType;
-  supplierIds: [Types.ObjectId];
   // Business Profile Fields
   panNumber?: string;        
   vatNumber?: string; 

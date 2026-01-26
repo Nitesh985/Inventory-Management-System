@@ -1,6 +1,5 @@
 import { model, SYSTEM_PROMPT } from '../config/gemini.config.ts';
 
-
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -11,7 +10,7 @@ export class GeminiService {
     try {
       // Build context from conversation history
       const context = conversationHistory
-        .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+        .map((msg) => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
         .join('\n');
 
       // Create the full prompt
@@ -23,7 +22,7 @@ Assistant:`;
 
       // Generate response
       const result = await model.generateContent(fullPrompt);
-       const response = await result.response;
+      const response = await result.response;
       const text = response.text();
 
       return text;

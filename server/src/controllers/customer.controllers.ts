@@ -8,21 +8,26 @@ import Sales from "../models/sales.models.ts";
 
 const createCustomer = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
-  console.log(shopId)
   const { name, phone, address, email } = req.body;
 
   if (!name) {
     throw new ApiError(400, "name is required");
   }
-  console.log(shopId)
-  // prevent duplicates by phone or email within same shop
+  
+  if (!phone.length && !email && !address ){
+    throw new ApiError(400, "Either of these fields phone, email and address should be given!")
+  }
+
   if (phone) {
     const existingByPhone = await Customer.findOne({ 
       shopId: new mongoose.Types.ObjectId(shopId), 
       phone,
       deleted: false 
     });
-
+    
+    if (existingByPhone){
+      throw new ApiError(400, "The user by that phone no already exists!!")
+    }
   }
   
   if (email) {
@@ -31,7 +36,10 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
       email: email.toLowerCase(), 
       deleted: false 
     });
-
+    
+    if (existingByEmail){
+      throw new ApiError(400, "The user by that email already exists!!")
+    }
   }
 
   const customer = await Customer.create({
@@ -40,8 +48,7 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
     phone: phone || "",
     address: address || "",
     email: email ? email.toLowerCase() : "",
-    notes: "",
-    deleted: false,
+    notes: ""
   });
 
   return res

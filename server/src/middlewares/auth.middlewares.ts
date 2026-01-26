@@ -43,7 +43,6 @@ const verifyBusinessAuth = asyncHandler(async (req: Request, res: Response, next
   }
 
   req.user = session.user;
-  console.log(req.user);
 
   next();
 });

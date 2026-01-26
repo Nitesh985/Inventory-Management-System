@@ -1,39 +1,31 @@
-import { Schema, model, Types, Document } from "mongoose";
+import { Schema, model, Types, Document } from 'mongoose';
 
-export type PaymentMethod = "CASH" | "ESEWA" | "KHALTI" | "FONEPAY" | "BANK_TRANSFER" | "CARD";
+export type PaymentMethod = 'CASH' | 'ESEWA' | 'KHALTI' | 'FONEPAY' | 'BANK_TRANSFER' | 'CARD';
 
-
-export type PaymentFor = "CUSTOMER" | "SUPPLIER";
+export type PaymentFor = 'CUSTOMER' | 'SUPPLIER';
 
 export interface IPayment extends Document {
   shopId: Types.ObjectId;
-
-  // Who this payment is for
-  partyType: PaymentFor;
-  partyId: Types.ObjectId;
-
+  salesId: Types.ObjectId;
   amount: number;
-
   method: PaymentMethod;
-
   note?: string;
-
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date
 }
 
 const PaymentSchema = new Schema<IPayment>(
   {
     shopId: {
       type: Schema.Types.ObjectId,
-      ref: "Shop",
+      ref: 'Shop',
       required: true,
       index: true,
     },
 
     partyType: {
       type: String,
-      enum: ["CUSTOMER", "SUPPLIER"],
+      enum: ['CUSTOMER', 'SUPPLIER'],
       required: true,
       index: true,
     },
@@ -44,6 +36,10 @@ const PaymentSchema = new Schema<IPayment>(
       index: true,
     },
 
+    salesId: {
+      type: Schema.Types.ObjectId,
+    },
+
     amount: {
       type: Number,
       required: true,
@@ -52,7 +48,7 @@ const PaymentSchema = new Schema<IPayment>(
 
     method: {
       type: String,
-      enum: ["CASH", "ESEWA", "KHALTI", "FONEPAY", "BANK_TRANSFER", "CARD"],
+      enum: ['CASH', 'ESEWA', 'KHALTI', 'FONEPAY', 'BANK_TRANSFER', 'CARD'],
       required: true,
     },
 
@@ -64,4 +60,4 @@ const PaymentSchema = new Schema<IPayment>(
   { timestamps: true }
 );
 
-export default model<IPayment>("Payment", PaymentSchema);
+export default model<IPayment>('Payment', PaymentSchema);
