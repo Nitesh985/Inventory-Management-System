@@ -8,14 +8,18 @@ export interface CreateCustomerDTO {
   shopId: string;
   clientId: string;
   name: string;
-  phone?: string;
+  contact?: string[];
+  email?: string;
   address?: string;
+  notes?: string;
 }
 
 export interface UpdateCustomerDTO {
   name?: string;
-  phone?: string;
+  contact?: string[];
+  email?: string;
   address?: string;
+  notes?: string;
 }
 
 export interface Customer {
@@ -23,8 +27,10 @@ export interface Customer {
   shopId: string;
   clientId: string;
   name: string;
-  phone?: string;
+  contact?: string[];
+  email?: string;
   address?: string;
+  notes?: string;
 }
 
 async function createCustomer(

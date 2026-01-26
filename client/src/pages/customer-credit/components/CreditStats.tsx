@@ -2,7 +2,6 @@ import Icon from '@/components/AppIcon';
 import { useFetch } from '@/hooks/useFetch';
 import { getCredits } from '@/api/credits';
 import { getCustomers } from '@/api/customers';
-import Loader from '@/components/Loader';
 import { useMemo } from 'react';
 
 const CreditStats: React.FC = () => {
@@ -42,31 +41,29 @@ const CreditStats: React.FC = () => {
   const loading = creditsLoading || customersLoading;
 
   return (
-    <Loader loading={loading}>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="bg-white border border-border p-5 rounded-xl flex items-center gap-4 shadow-sm">
         <div className="p-3 bg-red-50 text-red-600 rounded-lg"><Icon name="ArrowUpRight" /></div>
         <div>
           <p className="text-xs text-muted-foreground font-medium uppercase">Total Receivable</p>
-          <h3 className="text-2xl font-bold">Rs. {stats.totalReceivable.toLocaleString()}</h3>
+          <h3 className="text-2xl font-bold">Rs. {loading ? '...' : stats.totalReceivable.toLocaleString()}</h3>
         </div>
       </div>
       <div className="bg-white border border-border p-5 rounded-xl flex items-center gap-4 shadow-sm">
         <div className="p-3 bg-green-50 text-green-600 rounded-lg"><Icon name="ArrowDownLeft" /></div>
         <div>
           <p className="text-xs text-muted-foreground font-medium uppercase">Total Collected</p>
-          <h3 className="text-2xl font-bold">Rs. {stats.totalReceived.toLocaleString()}</h3>
+          <h3 className="text-2xl font-bold">Rs. {loading ? '...' : stats.totalReceived.toLocaleString()}</h3>
         </div>
       </div>
       <div className="bg-white border border-border p-5 rounded-xl flex items-center gap-4 shadow-sm">
         <div className="p-3 bg-blue-50 text-blue-600 rounded-lg"><Icon name="Users" /></div>
         <div>
           <p className="text-xs text-muted-foreground font-medium uppercase">Active Customers</p>
-          <h3 className="text-2xl font-bold">{stats.activeCustomers}</h3>
+          <h3 className="text-2xl font-bold">{loading ? '...' : stats.activeCustomers}</h3>
         </div>
       </div>
     </div>
-    </Loader>
   );
 };
 

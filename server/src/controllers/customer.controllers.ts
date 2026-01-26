@@ -8,12 +8,17 @@ import Sales from "../models/sales.models.ts";
 
 const createCustomer = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
+<<<<<<< HEAD
   const { name, contact, address, email } = req.body;
+=======
+  const { name, contact, address, email, notes } = req.body;
+>>>>>>> refs/remotes/origin/main
 
   if (!name) {
     throw new ApiError(400, "name is required");
   }
   
+<<<<<<< HEAD
   if (!contact.length && !email && !address ){
     throw new ApiError(400, "Either of these fields phone, email and address should be given!")
   }
@@ -29,6 +34,24 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
       if (existingByContact) {
         throw new ApiError(400, `Contact "${indContact}" already exists for another customer!`);
       }
+=======
+  // Support both old 'phone' and new 'contact' fields for backwards compatibility
+  const phoneNumbers = contact || (req.body.phone ? [req.body.phone] : []);
+  
+  if (!phoneNumbers.length && !email && !address ){
+    throw new ApiError(400, "Either of these fields contact, email and address should be given!")
+  }
+
+  if (phoneNumbers.length > 0 && phoneNumbers[0]) {
+    const existingByPhone = await Customer.findOne({ 
+      shopId: new mongoose.Types.ObjectId(shopId), 
+      contact: phoneNumbers[0],
+      deleted: false 
+    });
+    
+    if (existingByPhone){
+      throw new ApiError(400, "The user by that phone no already exists!!")
+>>>>>>> refs/remotes/origin/main
     }
   }
   
@@ -47,10 +70,14 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
   const customer = await Customer.create({
     shopId: new mongoose.Types.ObjectId(shopId),
     name,
+<<<<<<< HEAD
     contact: contact || "",
+=======
+    contact: phoneNumbers.filter((p: string) => p && p.trim()),
+>>>>>>> refs/remotes/origin/main
     address: address || "",
     email: email ? email.toLowerCase() : "",
-    notes: ""
+    notes: notes || ""
   });
 
   return res
