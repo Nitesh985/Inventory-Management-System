@@ -87,10 +87,17 @@ async function updateUserProfile(data: { contactNo?: string }): Promise<ApiRespo
 }
 
 
+async function updateTourStatus(hasCompletedTour: boolean): Promise<ApiResponse<{ hasCompletedTour: boolean }>> {
+  const res = await api.patch<ApiResponse<{ hasCompletedTour: boolean }>>("/tour-status", { hasCompletedTour });
+  return res.data;
+}
+
+
 export {
   registerUser,
   getUserProfile,
   updateUserProfile,
   sendVerificationCode,
-  verifyOtpCode
+  verifyOtpCode,
+  updateTourStatus
 };

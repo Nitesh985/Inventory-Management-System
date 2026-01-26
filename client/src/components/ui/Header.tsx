@@ -4,6 +4,7 @@ import Icon from "../AppIcon";
 import Button from "./Button";
 import Logo from "../../assets/logo.png";
 import { signOut } from "@/lib/auth-client";
+import { useTour } from "@/hooks/useTour";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -13,7 +14,8 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const { startTour } = useTour('business-dashboard');
 
   const primaryNavItems = [
     {
@@ -103,7 +105,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) 
         </nav>
 
         {/* Right Section - Sync Status and More Menu */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3" data-tour="help-button">
           {/* Sync Status Indicator */}
           <div className="flex items-center space-x-2 px-2 py-1 rounded-md bg-muted">
             {/* <Icon
@@ -146,9 +148,15 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) 
 
                   <div className="border-t border-border my-2"></div>
 
-                  <button className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
+                  <button 
+                    className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      startTour(true);
+                    }}
+                  >
                     <Icon name="HelpCircle" size={16} />
-                    <span>Help & Support</span>
+                    <span>Start Tour</span>
                   </button>
 
                   <button 

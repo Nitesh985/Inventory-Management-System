@@ -242,6 +242,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         className={`hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:z-100 lg:flex-col lg:bg-card lg:border-r lg:border-border transition-all duration-300 ${
           isCollapsed ? "lg:w-20" : "lg:w-72"
         }`}
+        data-tour="sidebar"
       >
         {sidebarContent}
       </aside>

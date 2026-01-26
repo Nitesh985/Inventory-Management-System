@@ -20,6 +20,8 @@ import {
 } from "@/api/products";
 import { updateInventory, createOrUpdateInventory } from "@/api/inventory";
 import BusinessOnboardingModal from "@/components/onboarding/BusinessOnboardingModal";
+import { useAutoTour } from "@/hooks/useTour";
+import "@/styles/tour.css";
 
 // Backend product structure (from API)
 interface BackendProduct {
@@ -76,6 +78,19 @@ const InventoryManagement: React.FC = () => {
     useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [shouldStartTour, setShouldStartTour] = useState(false);
+
+  // Initialize tour
+  useAutoTour('inventory-management', shouldStartTour);
+
+  // Check if user should see the tour
+  useEffect(() => {
+    const hasSeenInventoryTour = localStorage.getItem('hasSeenInventoryTour');
+    if (!hasSeenInventoryTour) {
+      setShouldStartTour(true);
+      localStorage.setItem('hasSeenInventoryTour', 'true');
+    }
+  }, []);
 
   const {
     data: productsData,
@@ -452,7 +467,7 @@ const InventoryManagement: React.FC = () => {
         >
           <div className="p-4 lg:p-8 max-w-7xl mx-auto">
             {/* Page Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8" data-tour="inventory-header">
               <div>
                 <h1 className="text-3xl font-bold text-foreground">
                   Inventory Management
@@ -463,7 +478,7 @@ const InventoryManagement: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3" data-tour="add-product">
                 <Button
                   variant="outline"
                   onClick={handleBulkImport}
@@ -488,27 +503,31 @@ const InventoryManagement: React.FC = () => {
             <InventoryStats products={products} />
 
             {/* Low Stock Alert */}
-            <LowStockAlert
-              lowStockProducts={lowStockProducts}
-              onViewProduct={handleEditProduct}
-              onDismiss={() => {
-                /* Handle dismiss */
-              }}
-            />
+            <div data-tour="low-stock-alerts">
+              <LowStockAlert
+                lowStockProducts={lowStockProducts}
+                onViewProduct={handleEditProduct}
+                onDismiss={() => {
+                  /* Handle dismiss */
+                }}
+              />
+            </div>
 
             {/* Filter Toolbar */}
-            <FilterToolbar
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              onClearFilters={handleClearFilters}
-              onBulkImport={handleBulkImport}
-              onBulkExport={handleBulkExport}
-              totalProducts={products?.length}
-              filteredCount={filteredProducts?.length}
-            />
+            <div data-tour="filter-toolbar">
+              <FilterToolbar
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                onClearFilters={handleClearFilters}
+                onBulkImport={handleBulkImport}
+                onBulkExport={handleBulkExport}
+                totalProducts={products?.length}
+                filteredCount={filteredProducts?.length}
+              />
+            </div>
 
             {/* Products Table */}
-            <div className="mt-6">
+            <div className="mt-6" data-tour="product-table">
               <ProductTable
                 products={filteredProducts}
                 onEdit={handleEditProduct}

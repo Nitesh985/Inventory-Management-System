@@ -10,6 +10,8 @@ import BusinessChart from './components/BusinessChart';
 // import SyncStatus from './components/SyncStatus';
 import { getDashboardMetrics } from '@/api/dashboard';
 import type { DashboardPeriod, DashboardMetricsData } from '@/api/dashboard';
+import { useAutoTour } from '@/hooks/useTour';
+import '../../styles/tour.css';
 
 // type SyncStatusType = 'online' | 'syncing' | 'offline';
 type ChangeType = 'positive' | 'negative' | 'neutral';
@@ -36,7 +38,20 @@ const BusinessDashboard: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>('month');
   const [metricsData, setMetricsData] = useState<DashboardMetricsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [shouldStartTour, setShouldStartTour] = useState(false);
   // const [syncStatus, setSyncStatus] = useState<SyncStatusType>('online');
+
+  // Initialize tour for new users
+  useAutoTour('business-dashboard', shouldStartTour);
+
+  // Check if user should see the tour (first time visit)
+  useEffect(() => {
+    const hasCompletedTour = localStorage.getItem('hasCompletedTour');
+    if (!hasCompletedTour) {
+      setShouldStartTour(true);
+      localStorage.setItem('hasCompletedTour', 'true');
+    }
+  }, []);
 
   // Fetch metrics when period changes
   useEffect(() => {
@@ -161,7 +176,7 @@ const BusinessDashboard: React.FC = () => {
           {/* Page Header */}
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
+              <div data-tour="welcome">
                 <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
                   Business Dashboard
                 </h1>
@@ -169,7 +184,7 @@ const BusinessDashboard: React.FC = () => {
                   Welcome back! Here's what's happening with your business.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" data-tour="period-selector">
                 <span className="text-sm text-muted-foreground">Period:</span>
                 <select
                   value={selectedPeriod}
@@ -187,7 +202,7 @@ const BusinessDashboard: React.FC = () => {
           </div>
 
           {/* Metrics Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" data-tour="metrics-cards">
             {loading ? (
               // Loading skeleton
               Array.from({ length: 6 }).map((_, index) => (
@@ -217,14 +232,14 @@ const BusinessDashboard: React.FC = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="lg:flex hidden lg:mb-8 ">
+          <div className="lg:flex hidden lg:mb-8 " data-tour="quick-actions">
             <QuickActions />
           </div>
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 ">
             {/* Left Column - Chart */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2" data-tour="business-chart">
               <BusinessChart />
             </div>
             
@@ -237,12 +252,12 @@ const BusinessDashboard: React.FC = () => {
           {/* Bottom Section */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             {/* Recent Transactions - Takes 2 columns on xl screens */}
-            <div className="xl:col-span-2">
+            <div className="xl:col-span-2" data-tour="recent-transactions">
               <RecentTransactions />
             </div>
             
             {/* Inventory Alerts */}
-            <div>
+            <div data-tour="inventory-alerts">
               <InventoryAlerts />
             </div>
           </div>

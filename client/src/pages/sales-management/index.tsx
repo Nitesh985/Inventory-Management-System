@@ -11,6 +11,8 @@ import SalesPagination from './components/SalesPagination'
 import SaleDetailsModal from './components/SaleDetailsModal'
 import { getAllSales } from '@/api/sales'
 import { useNavigate } from 'react-router-dom'
+import { useAutoTour } from '@/hooks/useTour'
+import '@/styles/tour.css'
 
 const PAGE_SIZE = 10
 
@@ -76,6 +78,19 @@ const SalesManagementPage = () => {
     endDate: '',
     status: ''
   })
+  const [shouldStartTour, setShouldStartTour] = useState(false)
+
+  // Initialize tour
+  useAutoTour('sales-recording', shouldStartTour)
+
+  // Check if user should see the tour
+  useEffect(() => {
+    const hasSeenSalesTour = localStorage.getItem('hasSeenSalesTour')
+    if (!hasSeenSalesTour) {
+      setShouldStartTour(true)
+      localStorage.setItem('hasSeenSalesTour', 'true')
+    }
+  }, [])
 
   useEffect(() => {
     fetchSales()
@@ -209,7 +224,7 @@ const SalesManagementPage = () => {
           <div className="p-4 lg:p-8 max-w-7xl mx-auto">
             {/* Page Header */}
             <div className="mb-8">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-tour="sales-header">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                     <Icon name="Receipt" size={24} className="text-primary" />
@@ -224,7 +239,7 @@ const SalesManagementPage = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-3" data-tour="record-sale-btn">
                   <Button
                     variant="default"
                     iconName="Plus"
@@ -238,12 +253,14 @@ const SalesManagementPage = () => {
             </div>
 
             {/* Sales Statistics */}
-            <SalesStats sales={filteredSales} loading={loading} />
+            <div data-tour="sales-stats">
+              <SalesStats sales={filteredSales} loading={loading} />
+            </div>
 
             {/* Main Content Card */}
             <div className="bg-card rounded-xl border border-border shadow-card mt-6">
               {/* Filter Toolbar */}
-              <div className="p-4 border-b border-border">
+              <div className="p-4 border-b border-border" data-tour="sales-filter">
                 <SalesFilterToolbar 
                   filters={filters}
                   onFilterChange={handleFilterChange}
@@ -254,7 +271,7 @@ const SalesManagementPage = () => {
               </div>
 
               {/* Sales Table */}
-              <div className="p-4">
+              <div className="p-4" data-tour="sales-table">
                 <SalesTable
                   sales={paginatedSales}
                   loading={loading}

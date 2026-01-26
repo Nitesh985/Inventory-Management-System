@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   contactNo?: string;
   lastLoginAt: Date;
+  hasCompletedTour?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,6 +17,7 @@ const userSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true },
     contactNo: { type: String },
     lastLoginAt: { type: Date, default: null },
+    hasCompletedTour: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { verifyUserAuth } from "../middlewares/auth.middlewares.ts";
-import { checkVerificationCode, sendVerificationCode } from "../controllers/user.controllers.ts";
+import { checkVerificationCode, sendVerificationCode, updateTourStatus } from "../controllers/user.controllers.ts";
 
 const router = Router();
 
@@ -18,8 +18,11 @@ router.use(verifyUserAuth)
 router
   .post("/send-verification-code", sendVerificationCode)
 
-router.
-  post("/verify-code", checkVerificationCode)
+router
+  .post("/verify-code", checkVerificationCode)
+
+router
+  .patch("/tour-status", updateTourStatus)
 
 
 export default router;

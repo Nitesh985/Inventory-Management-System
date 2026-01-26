@@ -220,7 +220,29 @@ const updateUserProfile = asyncHandler(async (req: Request, res: Response) => {
 })
 
 
+// Update tour completion status
+const updateTourStatus = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.id
+  
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized')
+  }
+
+  const { hasCompletedTour } = req.body
+
+  // Update our local User model
+  const user = await User.findOneAndUpdate(
+    { email: req.user?.email },
+    { $set: { hasCompletedTour } },
+    { new: true, upsert: true }
+  )
+
+  return res.status(200).json(new ApiResponse(200, { hasCompletedTour: user?.hasCompletedTour }, 'Tour status updated'))
+})
+
+
 export {
   sendVerificationCode,
-  checkVerificationCode
+  checkVerificationCode,
+  updateTourStatus
 }

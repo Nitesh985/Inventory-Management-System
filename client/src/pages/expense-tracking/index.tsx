@@ -12,6 +12,8 @@ import { useFetch } from '@/hooks/useFetch';
 import { useMutation } from '@/hooks/useMutation';
 import { getExpenses, createExpense, updateExpense, deleteExpense } from '@/api/expenses';
 import { getBudgets, upsertBudget, deleteBudget as deleteBudgetApi } from '@/api/budgets';
+import { useAutoTour } from '@/hooks/useTour';
+import '@/styles/tour.css';
 
 
 const ExpenseTracking = () => {
@@ -21,6 +23,19 @@ const ExpenseTracking = () => {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [budgetRefreshKey, setBudgetRefreshKey] = useState<number>(0);
+  const [shouldStartTour, setShouldStartTour] = useState(false);
+
+  // Initialize tour
+  useAutoTour('expense-tracking', shouldStartTour);
+
+  // Check if user should see the tour
+  useEffect(() => {
+    const hasSeenExpenseTour = localStorage.getItem('hasSeenExpenseTour');
+    if (!hasSeenExpenseTour) {
+      setShouldStartTour(true);
+      localStorage.setItem('hasSeenExpenseTour', 'true');
+    }
+  }, []);
 
   interface Receipt {
     id: number;
@@ -241,7 +256,7 @@ const ExpenseTracking = () => {
           <div className="p-4 lg:p-8 max-w-7xl mx-auto">
             {/* Page Header */}
             <div className="mb-8">
-              <div className="flex items-center space-x-3 mb-4">
+              <div className="flex items-center space-x-3 mb-4" data-tour="expense-header">
                 <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
                   <Icon name="Receipt" size={24} className="text-warning" />
                 </div>
@@ -311,7 +326,7 @@ const ExpenseTracking = () => {
               </div>
 
               {/* Tab Navigation */}
-              <div className="border-b border-border">
+              <div className="border-b border-border" data-tour="expense-tabs">
                 <nav className="flex space-x-8 overflow-x-auto">
                   {tabs?.map((tab) => (
                     <button
@@ -333,8 +348,8 @@ const ExpenseTracking = () => {
             {/* Tab Content */}
             <div className="space-y-8">
               {activeTab === 'record' && (
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                  <div className="xl:col-span-2">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8" data-tour="expense-form">
+                  <div className="xl:col-span-2" data-tour="expense-categories">
                     <ExpenseForm
                       onSubmit={handleExpenseSubmit}
                       onSaveDraft={handleSaveDraft}
@@ -359,13 +374,15 @@ const ExpenseTracking = () => {
               )}
 
               {activeTab === 'budget' && (
-                <BudgetOverview
-                  budgets={budgets}
-                  expenses={expenses}
-                  onSaveBudget={handleSaveBudget}
-                  onDeleteBudget={handleDeleteBudget}
-                  isLoading={savingBudget || deletingBudget}
-                />
+                <div data-tour="budget-overview">
+                  <BudgetOverview
+                    budgets={budgets}
+                    expenses={expenses}
+                    onSaveBudget={handleSaveBudget}
+                    onDeleteBudget={handleDeleteBudget}
+                    isLoading={savingBudget || deletingBudget}
+                  />
+                </div>
               )}
 
               {activeTab === 'import' && (
