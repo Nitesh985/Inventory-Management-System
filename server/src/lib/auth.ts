@@ -23,7 +23,8 @@ export const auth = betterAuth({
     additionalFields:{
       activeShopId: { type: ["string", "null"], optional:true },
       emailVerified: {type: "boolean"},
-      onBoardingCompleted: {type: "boolean", defaultValue:false}
+      onBoardingCompleted: {type: "boolean", defaultValue:false},
+      hasCompletedTour: {type: "boolean", defaultValue:false}
     }
   },
   database: mongodbAdapter(db, {

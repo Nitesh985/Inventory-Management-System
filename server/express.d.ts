@@ -8,7 +8,8 @@ declare global {
         name: string;
         email: string;
         activeShopId?: string;
-        onBoardingStep: number;
+        hasCompletedTour: boolean;
+        onBoardingCompleted: boolean;
         emailVerified: boolean;
       };
     }

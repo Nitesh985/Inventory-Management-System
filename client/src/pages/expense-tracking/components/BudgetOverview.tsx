@@ -115,7 +115,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
     setShowAddForm(false);
     setEditingBudget(null);
   };
-
+  
+  
   const handleEdit = (budget: Budget) => {
     setEditingBudget(budget);
     setFormData({
@@ -133,7 +134,6 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       await onDeleteBudget(budgetId);
     }
   };
-
   const handleCancel = () => {
     setShowAddForm(false);
     setEditingBudget(null);

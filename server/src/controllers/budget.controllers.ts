@@ -5,7 +5,6 @@ import { ApiResponse } from '../utils/ApiResponse.ts'
 import Budget from '../models/budget.models.ts'
 import mongoose from 'mongoose'
 
-// Create a new budget
 const createBudget = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
   const { category, categoryName, limit, period } = req.body
@@ -14,7 +13,7 @@ const createBudget = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, 'category, categoryName, and numeric limit are required')
   }
 
-  // Check if budget for this category already exists
+
   const existing = await Budget.findOne({
     shopId: new mongoose.Types.ObjectId(shopId),
     category,
@@ -49,7 +48,7 @@ const getBudgets = asyncHandler(async (req: Request, res: Response) => {
   return res.status(200).json(new ApiResponse(200, budgets, 'Budgets fetched'))
 })
 
-// Get single budget by ID
+
 const getBudget = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
 
@@ -64,12 +63,12 @@ const getBudget = asyncHandler(async (req: Request, res: Response) => {
   return res.status(200).json(new ApiResponse(200, budget, 'Budget fetched'))
 })
 
-// Update budget
+
 const updateBudget = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
   const updates = { ...req.body }
   
-  // Prevent changing these fields
+
   delete updates._id
   delete updates.shopId
   delete updates.category // Category shouldn't change, create new instead
@@ -89,7 +88,7 @@ const updateBudget = asyncHandler(async (req: Request, res: Response) => {
   return res.status(200).json(new ApiResponse(200, updated, 'Budget updated'))
 })
 
-// Delete budget (soft delete)
+
 const deleteBudget = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
 
@@ -108,7 +107,7 @@ const deleteBudget = asyncHandler(async (req: Request, res: Response) => {
   return res.status(200).json(new ApiResponse(200, deleted, 'Budget deleted'))
 })
 
-// Upsert budget (create or update)
+
 const upsertBudget = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
   const { category, categoryName, limit, period } = req.body
