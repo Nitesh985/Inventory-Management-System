@@ -8,48 +8,17 @@ import Sales from "../models/sales.models.ts";
 
 const createCustomer = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
-
   const { name, contact, address, email, notes } = req.body;
 
   if (!name) {
     throw new ApiError(400, "name is required");
   }
   
-  if (!contact.length && !email && !address ){
-    throw new ApiError(400, "Either of these fields phone, email and address should be given!")
-  }
-
-  if (Array.isArray(contact) && contact?.length) {
-    for (const indContact of contact) {
-      const existingByContact = await Customer.findOne({ 
-        shopId: new mongoose.Types.ObjectId(shopId), 
-        contact: { $in: [indContact] },
-        deleted: false 
-      });
-      
-      if (existingByContact) {
-        throw new ApiError(400, `Contact "${indContact}" already exists for another customer!`);
-      }
-
-
-  const phoneNumbers = contact || (req.body.phone ? [req.body.phone] : []);
-  
-  if (!phoneNumbers.length && !email && !address ){
+  if (!contact && !email && !address ){
     throw new ApiError(400, "Either of these fields contact, email and address should be given!")
   }
-
-  if (phoneNumbers.length > 0 && phoneNumbers[0]) {
-    const existingByPhone = await Customer.findOne({ 
-      shopId: new mongoose.Types.ObjectId(shopId), 
-      contact: phoneNumbers[0],
-      deleted: false 
-    });
-    
-    if (existingByPhone){
-      throw new ApiError(400, "The user by that phone no already exists!!")
-    }
-  }
   
+
   if (email) {
     const existingByEmail = await Customer.findOne({ 
       shopId: new mongoose.Types.ObjectId(shopId), 
@@ -62,10 +31,22 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
     }
   }
 
+  if (contact){
+    const existingByContact = await Customer.findOne({
+      shopId: new mongoose.Types.ObjectId(shopId),
+      contact: contact,
+      deleted: false
+    });
+    
+    if (existingByContact){
+      throw new ApiError(400, "The user by that contact number already exists!!")
+    }
+  }
+
   const customer = await Customer.create({
     shopId: new mongoose.Types.ObjectId(shopId),
     name,
-    contact: phoneNumbers.filter((p: string) => p && p.trim()),
+    contact: contact,
     address: address || "",
     email: email ? email.toLowerCase() : "",
     notes: notes || ""

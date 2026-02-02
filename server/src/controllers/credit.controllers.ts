@@ -6,137 +6,6 @@ import { ApiResponse } from "../utils/ApiResponse.ts";
 import Sales from "../models/sales.models.ts";
 import Payment from "../models/payment.models.ts";
 import Customer from "../models/customer.models.ts";
-import Credit from "../models/credit.models.ts";
-
-// ========================
-// CREDIT CRUD OPERATIONS
-// ========================
-
-// Create a new credit entry
-const createCredit = asyncHandler(async (req: Request, res: Response) => {
-  const shopId = req.user!.activeShopId!;
-  const { customerId, amount, description, date } = req.body;
-
-  if (!customerId) {
-    throw new ApiError(400, "customerId is required");
-  }
-  if (amount === undefined || amount === null) {
-    throw new ApiError(400, "amount is required");
-  }
-
-  // Verify customer exists and belongs to this shop
-  const customer = await Customer.findOne({
-    _id: new Types.ObjectId(customerId),
-    shopId: new Types.ObjectId(shopId),
-    deleted: false
-  });
-  if (!customer) {
-    throw new ApiError(404, "Customer not found");
-  }
-
-  const credit = await Credit.create({
-    shopId: new Types.ObjectId(shopId),
-    customerId: new Types.ObjectId(customerId),
-    amount: Number(amount),
-    description: description || "",
-    date: date ? new Date(date) : new Date(),
-    deleted: false
-  });
-
-  // Populate customer info for response
-  const populatedCredit = await Credit.findById(credit._id).populate('customerId', 'name phone');
-
-  return res.status(201).json(new ApiResponse(201, populatedCredit, "Credit entry created"));
-});
-
-// Get all credits for the shop
-const getCredits = asyncHandler(async (req: Request, res: Response) => {
-  const shopId = req.user!.activeShopId!;
-  const { customerId } = req.query;
-
-  const filter: any = {
-    shopId: new Types.ObjectId(shopId),
-    deleted: false
-  };
-
-  if (customerId) {
-    filter.customerId = new Types.ObjectId(customerId as string);
-  }
-
-  const credits = await Credit.find(filter)
-    .populate('customerId', 'name phone')
-    .sort({ date: -1, createdAt: -1 });
-
-  return res.status(200).json(new ApiResponse(200, credits, "Credits fetched"));
-});
-
-// Get credit by ID
-const getCreditById = asyncHandler(async (req: Request, res: Response) => {
-  const shopId = req.user!.activeShopId!;
-  const { id } = req.params;
-
-  const credit = await Credit.findOne({
-    _id: new Types.ObjectId(id),
-    shopId: new Types.ObjectId(shopId),
-    deleted: false
-  }).populate('customerId', 'name phone');
-
-  if (!credit) {
-    throw new ApiError(404, "Credit entry not found");
-  }
-
-  return res.status(200).json(new ApiResponse(200, credit, "Credit fetched"));
-});
-
-// Update credit
-const updateCredit = asyncHandler(async (req: Request, res: Response) => {
-  const shopId = req.user!.activeShopId!;
-  const { id } = req.params;
-  const updates = { ...req.body };
-  
-  // Prevent changing these fields
-  delete updates._id;
-  delete updates.shopId;
-  delete updates.customerId;
-
-  const credit = await Credit.findOneAndUpdate(
-    {
-      _id: new Types.ObjectId(id),
-      shopId: new Types.ObjectId(shopId),
-      deleted: false
-    },
-    { $set: updates },
-    { new: true }
-  ).populate('customerId', 'name phone');
-
-  if (!credit) {
-    throw new ApiError(404, "Credit entry not found");
-  }
-
-  return res.status(200).json(new ApiResponse(200, credit, "Credit updated"));
-});
-
-// Delete credit (soft delete)
-const deleteCredit = asyncHandler(async (req: Request, res: Response) => {
-  const shopId = req.user!.activeShopId!;
-  const { id } = req.params;
-
-  const credit = await Credit.findOneAndUpdate(
-    {
-      _id: new Types.ObjectId(id),
-      shopId: new Types.ObjectId(shopId),
-      deleted: false
-    },
-    { $set: { deleted: true } },
-    { new: true }
-  );
-
-  if (!credit) {
-    throw new ApiError(404, "Credit entry not found");
-  }
-
-  return res.status(200).json(new ApiResponse(200, credit, "Credit deleted"));
-});
 
 // ========================
 // CUSTOMERS WITH BALANCE (from Sales & Payments)
@@ -667,14 +536,8 @@ const createPayment = asyncHandler(async (req: Request, res: Response) => {
   return res.status(201).json(new ApiResponse(201, payment, "Payment recorded successfully"));
 });
 
-
 export {
-  createCredit,
   createPayment,
-  getCredits,
-  getCreditById,
-  updateCredit,
-  deleteCredit,
   getCustomersWithBalance,
   getCustomerCreditHistory,
   getCustomerOutstanding,

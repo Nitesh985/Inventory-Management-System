@@ -95,7 +95,7 @@ const CustomerCredit = () => {
                 <div
                   className={`bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-300 w-full ${
                     isCustomerListExpanded
-                      ? "lg:w-[58%] lg:min-w-[500px]"
+                      ? "lg:w-full"
                       : "lg:w-[33%] lg:min-w-[320px]"
                   }`}
                 >
@@ -112,41 +112,43 @@ const CustomerCredit = () => {
                   />
                 </div>
 
-                {/* 4. Section 3: Transaction & History (Main Content Area) */}
-                <div className="flex-1 space-y-6 min-w-0">
-                  {selectedCustomerId ? (
-                    <>
-                      {/* Record Entry Form (Functional Section) */}
-                      <CreditForm
-                        selectedCustomerId={selectedCustomerId}
-                        onSuccess={handleRefresh}
-                      />
-
-                      {/* Detailed History Table */}
-                      <CreditHistory
-                        customerId={selectedCustomerId}
-                        key={`history-${refreshKey}-${selectedCustomerId}`}
-                      />
-                    </>
-                  ) : (
-                    <div className="h-[400px] flex flex-col items-center justify-center bg-white border-2 border-dashed border-slate-200 rounded-3xl text-center p-10">
-                      <div className="p-4 bg-slate-50 rounded-full mb-4">
-                        <Icon
-                          name="User"
-                          size={48}
-                          className="text-slate-300"
+                {/* 4. Section 3: Transaction & History (Main Content Area) - Hidden when expanded */}
+                {!isCustomerListExpanded && (
+                  <div className="flex-1 space-y-6 min-w-0">
+                    {selectedCustomerId ? (
+                      <>
+                        {/* Record Entry Form (Functional Section) */}
+                        <CreditForm
+                          selectedCustomerId={selectedCustomerId}
+                          onSuccess={handleRefresh}
                         />
+
+                        {/* Detailed History Table */}
+                        <CreditHistory
+                          customerId={selectedCustomerId}
+                          key={`history-${refreshKey}-${selectedCustomerId}`}
+                        />
+                      </>
+                    ) : (
+                      <div className="h-[400px] flex flex-col items-center justify-center bg-white border-2 border-dashed border-slate-200 rounded-3xl text-center p-10">
+                        <div className="p-4 bg-slate-50 rounded-full mb-4">
+                          <Icon
+                            name="User"
+                            size={48}
+                            className="text-slate-300"
+                          />
+                        </div>
+                        <h3 className="text-lg font-semibold text-slate-800">
+                          No Customer Selected
+                        </h3>
+                        <p className="text-slate-500 max-w-xs mx-auto text-sm mt-2">
+                          Select a customer from the list on the left to view
+                          their credit history and record new transactions.
+                        </p>
                       </div>
-                      <h3 className="text-lg font-semibold text-slate-800">
-                        No Customer Selected
-                      </h3>
-                      <p className="text-slate-500 max-w-xs mx-auto text-sm mt-2">
-                        Select a customer from the list on the left to view
-                        their credit history and record new transactions.
-                      </p>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Manual Add Customer Modal */}

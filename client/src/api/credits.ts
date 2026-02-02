@@ -1,12 +1,5 @@
 import axios from 'axios';
 
-// Get all credits (optionally filtered by customerId)
-export const getCredits = async (customerId?: string) => {
-  const params = customerId ? { customerId } : {};
-  const response = await axios.get('/api/credits', { params });
-  return response.data;
-};
-
 // Get credit summary (total receivable, collected, etc.)
 export const getCreditSummary = async () => {
   const response = await axios.get('/api/credits/summary');
@@ -22,42 +15,6 @@ export const getCustomersWithBalance = async () => {
 // Get credit history for a specific customer (all credit sales + payments)
 export const getCustomerCreditHistory = async (customerId: string) => {
   const response = await axios.get(`/api/credits/history/${customerId}`);
-  return response.data;
-};
-
-// Create a new credit entry
-export const createCredit = async (data: {
-  customerId: string;
-  amount: number;
-  description?: string;
-  date?: string;
-}) => {
-  const response = await axios.post('/api/credits', data);
-  return response.data;
-};
-
-// Alias for createCredit
-export const postCredit = createCredit;
-
-// Get credit by ID
-export const getCreditById = async (id: string) => {
-  const response = await axios.get(`/api/credits/${id}`);
-  return response.data;
-};
-
-// Update credit
-export const updateCredit = async (id: string, data: {
-  amount?: number;
-  description?: string;
-  date?: string;
-}) => {
-  const response = await axios.put(`/api/credits/${id}`, data);
-  return response.data;
-};
-
-// Delete credit
-export const deleteCredit = async (id: string) => {
-  const response = await axios.delete(`/api/credits/${id}`);
   return response.data;
 };
 

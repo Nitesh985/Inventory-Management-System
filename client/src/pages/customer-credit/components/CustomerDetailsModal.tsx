@@ -3,7 +3,6 @@ import Icon from '@/components/AppIcon';
 import Button from '@/components/ui/Button';
 import { getCustomersWithBalance } from '@/api/credits';
 import { updateCustomer, deleteCustomer } from '@/api/customers';
-import { useMutation } from '@/hooks/useMutation';
 
 interface CustomerDetails {
   _id: string;
@@ -39,8 +38,8 @@ const CustomerDetailsModal = ({ customerId, onClose, onSuccess }: CustomerDetail
     notes: '',
   });
 
-  const updateMutation = useMutation(updateCustomer);
-  const deleteMutation = useMutation(deleteCustomer);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch customer details
   useEffect(() => {
@@ -62,11 +61,14 @@ const CustomerDetailsModal = ({ customerId, onClose, onSuccess }: CustomerDetail
         if (data) {
           setCustomer(data);
           
-          // Initialize form with customer data
+          // Initialize form with customer data - handle both new contact array and old phone field
+          const primaryContact = data.contact?.[0] || (data as any).phone || '';
+          const alternateContact = data.contact?.[1] || '';
+          
           setFormData({
             name: data.name || '',
-            primaryContact: data.contact?.[0] || '',
-            alternateContact: data.contact?.[1] || '',
+            primaryContact,
+            alternateContact,
             email: data.email || '',
             address: data.address || '',
             notes: data.notes || '',
@@ -94,6 +96,7 @@ const CustomerDetailsModal = ({ customerId, onClose, onSuccess }: CustomerDetail
 
   const handleSave = async () => {
     try {
+      setIsSaving(true);
       const updateData = {
         name: formData.name,
         contact: [formData.primaryContact, formData.alternateContact].filter(Boolean),
@@ -102,7 +105,8 @@ const CustomerDetailsModal = ({ customerId, onClose, onSuccess }: CustomerDetail
         notes: formData.notes || undefined,
       };
 
-      await updateMutation.mutate(customerId, updateData);
+      // Call the API directly since updateCustomer expects 2 parameters
+      await updateCustomer(customerId, updateData);
       setIsEditMode(false);
       onSuccess();
       
@@ -115,25 +119,34 @@ const CustomerDetailsModal = ({ customerId, onClose, onSuccess }: CustomerDetail
       }
     } catch (error) {
       console.error('Failed to update customer:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDelete = async () => {
     try {
-      await deleteMutation.mutate(customerId);
+      setIsDeleting(true);
+      await deleteCustomer(customerId);
       onSuccess();
       onClose();
     } catch (error) {
       console.error('Failed to delete customer:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const handleCancel = () => {
     if (customer) {
+      // Handle both new contact array and old phone field
+      const primaryContact = customer.contact?.[0] || (customer as any).phone || '';
+      const alternateContact = customer.contact?.[1] || '';
+      
       setFormData({
         name: customer.name || '',
-        primaryContact: customer.contact?.[0] || '',
-        alternateContact: customer.contact?.[1] || '',
+        primaryContact,
+        alternateContact,
         email: customer.email || '',
         address: customer.address || '',
         notes: customer.notes || '',
@@ -201,7 +214,7 @@ const CustomerDetailsModal = ({ customerId, onClose, onSuccess }: CustomerDetail
                 )}
 
                 {/* Primary Contact - Show if exists or in edit mode */}
-                {(isEditMode || customer.contact?.[0]) && (
+                {(isEditMode || customer.contact?.[0] || (customer as any).phone) && (
                   <div>
                     {isEditMode ? (
                       <>
@@ -221,7 +234,7 @@ const CustomerDetailsModal = ({ customerId, onClose, onSuccess }: CustomerDetail
                     ) : (
                       <div className="flex items-center gap-2 text-slate-700">
                         <Icon name="Phone" size={16} className="text-slate-400" />
-                        <span>{customer.contact?.[0]}</span>
+                        <span>{customer.contact?.[0] || (customer as any).phone}</span>
                       </div>
                     )}
                   </div>
@@ -382,7 +395,7 @@ const CustomerDetailsModal = ({ customerId, onClose, onSuccess }: CustomerDetail
                 variant="outline"
                 onClick={() => setShowDeleteConfirm(true)}
                 className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 text-sm px-3 py-1.5 h-auto"
-                disabled={deleteMutation.loading}
+                disabled={isDeleting}
               >
                 <Icon name="Trash2" size={16} className="mr-1.5" />
                 Delete
@@ -410,7 +423,7 @@ const CustomerDetailsModal = ({ customerId, onClose, onSuccess }: CustomerDetail
               <Button
                 variant="outline"
                 onClick={handleCancel}
-                disabled={updateMutation.loading}
+                disabled={isSaving}
                 className="text-sm px-4 py-1.5 h-auto"
               >
                 Cancel
@@ -418,10 +431,10 @@ const CustomerDetailsModal = ({ customerId, onClose, onSuccess }: CustomerDetail
               <Button
                 variant="default"
                 onClick={handleSave}
-                disabled={updateMutation.loading || !formData.name.trim()}
+                disabled={isSaving || !formData.name.trim()}
                 className="bg-blue-600 hover:bg-blue-700 text-sm px-4 py-1.5 h-auto"
               >
-                {updateMutation.loading ? (
+                {isSaving ? (
                   <>
                     <Icon name="Loader2" size={16} className="mr-1.5 animate-spin" />
                     Saving...
@@ -458,17 +471,17 @@ const CustomerDetailsModal = ({ customerId, onClose, onSuccess }: CustomerDetail
                 <Button
                   variant="outline"
                   onClick={() => setShowDeleteConfirm(false)}
-                  disabled={deleteMutation.loading}
+                  disabled={isDeleting}
                 >
                   Cancel
                 </Button>
                 <Button
                   variant="default"
                   onClick={handleDelete}
-                  disabled={deleteMutation.loading}
+                  disabled={isDeleting}
                   className="bg-red-600 hover:bg-red-700"
                 >
-                  {deleteMutation.loading ? (
+                  {isDeleting ? (
                     <>
                       <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
                       Deleting...
