@@ -124,6 +124,7 @@ const SalesRecording: React.FC = () => {
     };
 
     console.log('Draft saved:', draftData);
+    // TODO: Implement actual draft saving logic (e.g., localStorage or backend)
     alert('Transaction saved as draft!');
   };
 
@@ -138,6 +139,7 @@ const SalesRecording: React.FC = () => {
     };
 
     console.log('Printing receipt:', receiptData);
+    // TODO: Implement actual printing logic
     alert('Receipt sent to printer!');
   };
 

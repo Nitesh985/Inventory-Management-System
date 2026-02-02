@@ -1,42 +1,51 @@
-import type { Request, Response } from 'express'
-import { asyncHandler } from '../utils/asyncHandler.ts'
-import { ApiError } from '../utils/ApiError.ts'
-import { ApiResponse } from '../utils/ApiResponse.ts'
-import mongoose from 'mongoose'
-import Sales from '../models/sales.models.ts'
-import Product from '../models/product.models.ts'
-import Inventory from '../models/inventory.models.ts'
-import Customer from '../models/customer.models.ts'
+import type { Request, Response } from 'express';
+import { asyncHandler } from '../utils/asyncHandler.ts';
+import { ApiError } from '../utils/ApiError.ts';
+import { ApiResponse } from '../utils/ApiResponse.ts';
+import mongoose from 'mongoose';
+import Sales from '../models/sales.models.ts';
+import Product from '../models/product.models.ts';
+import Inventory from '../models/inventory.models.ts';
+import Customer from '../models/customer.models.ts';
 
 type SaleItemInput = {
-  productId: string
-  productName?: string
-  quantity: number
-  unitPrice?: number
-  totalPrice?: number
-}
+  productId: string;
+  productName?: string;
+  quantity: number;
+  unitPrice?: number;
+  totalPrice?: number;
+};
 
 const createSale = asyncHandler(async (req: Request, res: Response) => {
-  const shopId = req.user!.activeShopId!
-  const { customerId, items, totalAmount, paidAmount = 0, paymentMethod = 'CASH', discount = 0, notes } = req.body;
+  const shopId = req.user!.activeShopId!;
+  const {
+    customerId,
+    items,
+    totalAmount,
+    paidAmount = 0,
+    paymentMethod = 'CASH',
+    discount = 0,
+    notes,
+  } = req.body;
 
   // --- VALIDATIONS ---
-  const requiredFields = ["customerId", "items", "totalAmount"] as const;
+  const requiredFields = ['customerId', 'items', 'totalAmount'] as const;
   for (const field of requiredFields) {
     if (!req.body[field]) throw new ApiError(400, `Missing required field: ${field}`);
   }
 
   if (!Array.isArray(items) || items.length === 0)
-    throw new ApiError(400, "Items must be a non-empty array");
+    throw new ApiError(400, 'Items must be a non-empty array');
 
-  const requiredItemFields = ["productId", "productName", "quantity"] as const;
+  const requiredItemFields = ['productId', 'productName', 'quantity'] as const;
   items.forEach((item: any, i: number) => {
-    if (!item || typeof item !== "object") throw new ApiError(400, `Item at index ${i} must be an object`);
+    if (!item || typeof item !== 'object')
+      throw new ApiError(400, `Item at index ${i} must be an object`);
     requiredItemFields.forEach((field) => {
       if (!item[field] && item[field] !== 0)
         throw new ApiError(400, `Missing required field in items[${i}]: ${field}`);
     });
-    
+
     // Ensure unitPrice and totalPrice are provided or calculated
     if (!item.unitPrice && item.unitPrice !== 0) {
       throw new ApiError(400, `Missing unitPrice in items[${i}]`);
@@ -55,16 +64,16 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
     {},
     { sort: { createdAt: -1 } }
   );
-  
+
   let invoiceCounter = 1;
   if (latestSale?.invoiceNo) {
     // Extract counter from last invoice (format: INV-XXXX-NNNNN)
     const lastCounter = parseInt(latestSale.invoiceNo.split('-')[2]) || 0;
     invoiceCounter = lastCounter + 1;
   }
-  
+
   const shopIdStr = shopId.toString().slice(-4);
-  const invoiceNo = `INV-${shopIdStr}-${String(invoiceCounter).padStart(5, "0")}`;
+  const invoiceNo = `INV-${shopIdStr}-${String(invoiceCounter).padStart(5, '0')}`;
 
   // -------------------------------------------------------
   // 1️⃣ CUSTOMER MUST EXIST AND BELONG TO SHOP
@@ -72,25 +81,25 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
   const customer = await Customer.findOne({
     _id: customerId,
     shopId: new mongoose.Types.ObjectId(shopId),
-    deleted: false
+    deleted: false,
   });
-  if (!customer) throw new ApiError(404, "Customer not found");
+  if (!customer) throw new ApiError(404, 'Customer not found');
 
   // -------------------------------------------------------
   // 2️⃣ UPDATE INVENTORY (DECREASE STOCK)
   // -------------------------------------------------------
   for (const item of items) {
     const productInv = await Inventory.findOne({
-      productId: new mongoose.Types.ObjectId(item.productId), 
-      shopId: new mongoose.Types.ObjectId(shopId)
+      productId: new mongoose.Types.ObjectId(item.productId),
+      shopId: new mongoose.Types.ObjectId(shopId),
     });
     if (!productInv) throw new ApiError(404, `Product not found: ${item.productName}`);
 
     if (productInv.stock < item.quantity)
       throw new ApiError(400, `Not enough stock for ${item.productName}`);
 
-      productInv.stock -= item.quantity;
-      await productInv.save();
+    productInv.stock -= item.quantity;
+    await productInv.save();
   }
 
   // -------------------------------------------------------
@@ -105,7 +114,7 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
     productName: item.productName,
     quantity: Number(item.quantity),
     unitPrice: Number(item.unitPrice),
-    totalPrice: Number(item.totalPrice)
+    totalPrice: Number(item.totalPrice),
   }));
 
   const sale = await Sales.create({
@@ -121,47 +130,43 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
     invoiceNo,
   });
 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, sale, "Sale created successfully"));
+  return res.status(201).json(new ApiResponse(201, sale, 'Sale created successfully'));
 });
 
 // GET ALL SALES WITH FILTERING
 const getSales = asyncHandler(async (req: Request, res: Response) => {
-  const shopId = req.user!.activeShopId!
-  const { search, paymentMethod, startDate, endDate } = req.query
+  const shopId = req.user!.activeShopId!;
+  const { search, paymentMethod, startDate, endDate } = req.query;
 
   // Build filter object
-  const filter: any = { shopId: new mongoose.Types.ObjectId(shopId) }
+  const filter: any = { shopId: new mongoose.Types.ObjectId(shopId) };
 
   // Search by invoice number or customer name
   if (search) {
-    filter.$or = [
-      { invoiceNo: { $regex: search, $options: 'i' } }
-    ]
+    filter.$or = [{ invoiceNo: { $regex: search, $options: 'i' } }];
   }
 
   // Filter by payment method
   if (paymentMethod && paymentMethod !== '') {
-    filter.paymentMethod = paymentMethod
+    filter.paymentMethod = paymentMethod;
   }
 
   // Filter by date range
   if (startDate || endDate) {
-    filter.createdAt = {}
+    filter.createdAt = {};
     if (startDate) {
-      filter.createdAt.$gte = new Date(startDate as string)
+      filter.createdAt.$gte = new Date(startDate as string);
     }
     if (endDate) {
-      const end = new Date(endDate as string)
-      end.setHours(23, 59, 59, 999)
-      filter.createdAt.$lte = end
+      const end = new Date(endDate as string);
+      end.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = end;
     }
   }
 
   const sales = await Sales.find(filter)
     .populate('customerId', 'name phone email')
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: -1 });
 
   // Transform response to include customerName and properly formatted items
   const transformedSales = sales.map((sale: any) => ({
@@ -178,7 +183,7 @@ const getSales = asyncHandler(async (req: Request, res: Response) => {
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       total: item.totalPrice,
-      totalPrice: item.totalPrice
+      totalPrice: item.totalPrice,
     })),
     paymentMethod: sale.paymentMethod,
     totalAmount: sale.totalAmount,
@@ -187,22 +192,21 @@ const getSales = asyncHandler(async (req: Request, res: Response) => {
     notes: sale.notes || '',
     status: sale.status,
     createdAt: sale.createdAt,
-    updatedAt: sale.updatedAt
-  }))
+    updatedAt: sale.updatedAt,
+  }));
 
-  return res.status(200).json(new ApiResponse(200, transformedSales, 'Sales fetched'))
-})
+  return res.status(200).json(new ApiResponse(200, transformedSales, 'Sales fetched'));
+});
 
 // GET SINGLE SALE
 const getSale = asyncHandler(async (req: Request, res: Response) => {
-  const shopId = req.user!.activeShopId!
+  const shopId = req.user!.activeShopId!;
   const sale = await Sales.findOne({
     _id: req.params.id,
-    shopId: new mongoose.Types.ObjectId(shopId)
-  })
-    .populate('customerId', 'name phone email')
+    shopId: new mongoose.Types.ObjectId(shopId),
+  }).populate('customerId', 'name phone email');
 
-  if (!sale) throw new ApiError(404, 'Sale not found')
+  if (!sale) throw new ApiError(404, 'Sale not found');
 
   // Transform response to include customerName and properly formatted items
   const transformedSale = {
@@ -219,7 +223,7 @@ const getSale = asyncHandler(async (req: Request, res: Response) => {
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       total: item.totalPrice,
-      totalPrice: item.totalPrice
+      totalPrice: item.totalPrice,
     })),
     paymentMethod: sale.paymentMethod,
     totalAmount: sale.totalAmount,
@@ -228,15 +232,15 @@ const getSale = asyncHandler(async (req: Request, res: Response) => {
     notes: sale.notes || '',
     status: sale.status,
     createdAt: sale.createdAt,
-    updatedAt: sale.updatedAt
-  }
+    updatedAt: sale.updatedAt,
+  };
 
-  return res.status(200).json(new ApiResponse(200, transformedSale, 'Sale fetched'))
-})
+  return res.status(200).json(new ApiResponse(200, transformedSale, 'Sale fetched'));
+});
 
 // UPDATE SALE
 const updateSale = asyncHandler(async (req: Request, res: Response) => {
-  const shopId = req.user!.activeShopId!
+  const shopId = req.user!.activeShopId!;
   const saleId = req.params.id;
   const updates = req.body;
 
@@ -247,9 +251,9 @@ const updateSale = asyncHandler(async (req: Request, res: Response) => {
     // 1. Fetch old sale - verify it belongs to this shop
     const oldSale = await Sales.findOne({
       _id: saleId,
-      shopId: new mongoose.Types.ObjectId(shopId)
+      shopId: new mongoose.Types.ObjectId(shopId),
     }).session(session);
-    if (!oldSale) throw new ApiError(404, "Sale not found");
+    if (!oldSale) throw new ApiError(404, 'Sale not found');
 
     const oldItemsMap = new Map();
     oldSale.items.forEach((it: any) => {
@@ -276,26 +280,26 @@ const updateSale = asyncHandler(async (req: Request, res: Response) => {
           {
             productId: new mongoose.Types.ObjectId(productId),
             shopId: new mongoose.Types.ObjectId(shopId),
-            stock: { $gte: difference }
+            stock: { $gte: difference },
           },
           {
-            $inc: { stock: -difference }
+            $inc: { stock: -difference },
           },
           { new: true, session }
         );
 
         if (!updatedInv) {
-          throw new ApiError(
-            400,
-            `Not enough stock for product ${productId}. Need ${difference}.`
-          );
+          throw new ApiError(400, `Not enough stock for product ${productId}. Need ${difference}.`);
         }
       }
 
       // If new quantity is smaller → restore stock
       if (difference < 0) {
         await Inventory.findOneAndUpdate(
-          { productId: new mongoose.Types.ObjectId(productId), shopId: new mongoose.Types.ObjectId(shopId) },
+          {
+            productId: new mongoose.Types.ObjectId(productId),
+            shopId: new mongoose.Types.ObjectId(shopId),
+          },
           { $inc: { stock: Math.abs(difference) } },
           { new: true, session }
         );
@@ -305,18 +309,21 @@ const updateSale = asyncHandler(async (req: Request, res: Response) => {
     // 3. If an item was removed entirely → restore its full quantity
     for (const [productId, oldQty] of oldItemsMap.entries()) {
       if (!newItemsMap.has(productId)) {
-
         await Inventory.findOneAndUpdate(
-          { productId: new mongoose.Types.ObjectId(productId), shopId: new mongoose.Types.ObjectId(shopId) },
+          {
+            productId: new mongoose.Types.ObjectId(productId),
+            shopId: new mongoose.Types.ObjectId(shopId),
+          },
           { $inc: { stock: oldQty } },
           { new: true, session }
         );
       }
     }
 
-    
     // 4. Update sale document
-    updates.totalAmount = updates.items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) ?? updates.totalAmount;
+    updates.totalAmount =
+      updates.items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) ??
+      updates.totalAmount;
     delete updates.shopId; // Prevent changing shopId
 
     const updatedSale = await Sales.findByIdAndUpdate(
@@ -328,9 +335,7 @@ const updateSale = asyncHandler(async (req: Request, res: Response) => {
     await session.commitTransaction();
     session.endSession();
 
-    return res
-      .status(200)
-      .json(new ApiResponse(200, updatedSale, "Sale updated successfully"));
+    return res.status(200).json(new ApiResponse(200, updatedSale, 'Sale updated successfully'));
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
@@ -338,10 +343,9 @@ const updateSale = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-
 // DELETE SALE
 const deleteSale = asyncHandler(async (req: Request, res: Response) => {
-  const shopId = req.user!.activeShopId!
+  const shopId = req.user!.activeShopId!;
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -351,9 +355,9 @@ const deleteSale = asyncHandler(async (req: Request, res: Response) => {
     // 1. Find the sale - verify it belongs to this shop
     const sale = await Sales.findOne({
       _id: saleId,
-      shopId: new mongoose.Types.ObjectId(shopId)
+      shopId: new mongoose.Types.ObjectId(shopId),
     }).session(session);
-    if (!sale) throw new ApiError(404, "Sale not found");
+    if (!sale) throw new ApiError(404, 'Sale not found');
 
     const { items, customerId, totalAmount, paidAmount } = sale;
     const unpaidAmount = totalAmount - paidAmount;
@@ -363,7 +367,10 @@ const deleteSale = asyncHandler(async (req: Request, res: Response) => {
       const { productId, quantity } = item;
 
       await Inventory.findOneAndUpdate(
-        { shopId: new mongoose.Types.ObjectId(shopId), productId: new mongoose.Types.ObjectId(productId) },
+        {
+          shopId: new mongoose.Types.ObjectId(shopId),
+          productId: new mongoose.Types.ObjectId(productId),
+        },
         { $inc: { stock: quantity } }, // restore
         { session }
       );
@@ -385,25 +392,14 @@ const deleteSale = asyncHandler(async (req: Request, res: Response) => {
     await session.commitTransaction();
     session.endSession();
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        {},
-        "Sale deleted and inventory/customer balance restored"
-      )
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, 'Sale deleted and inventory/customer balance restored'));
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    throw new ApiError(500, "Failed to delete sale with restoration");
+    throw new ApiError(500, 'Failed to delete sale with restoration');
   }
 });
 
-
-export {
-  createSale,
-  getSales,
-  getSale,
-  updateSale,
-  deleteSale
-}
+export { createSale, getSales, getSale, updateSale, deleteSale };
