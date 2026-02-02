@@ -1,44 +1,37 @@
 import Icon from '@/components/AppIcon';
 import { useFetch } from '@/hooks/useFetch';
-import { getCredits } from '@/api/credits';
-import { getCustomers } from '@/api/customers';
+import { getCustomersWithBalance } from '@/api/credits';
 import { useMemo } from 'react';
 
 const CreditStats: React.FC = () => {
-  const { data: credits, loading: creditsLoading } = useFetch(getCredits, []);
-  const { data: customers, loading: customersLoading } = useFetch(getCustomers, []);
+  const { data: customersData, loading } = useFetch(getCustomersWithBalance, []);
 
   const stats = useMemo(() => {
-    const creditsList = credits || [];
-    const customersList = customers || [];
+    // Handle API response format { success, data, message }
+    const customersList = customersData?.data || customersData || [];
     
-    // Calculate total receivable (positive amounts - what customers owe)
-    const totalReceivable = creditsList
-      .filter((c: any) => c.amount > 0)
-      .reduce((sum: number, c: any) => sum + c.amount, 0);
+    // Calculate total receivable (customers with positive balance - they owe money)
+    const totalReceivable = customersList
+      .filter((c: any) => (c.balance || 0) > 0)
+      .reduce((sum: number, c: any) => sum + (c.balance || 0), 0);
     
-    // Calculate total received/collected (negative amounts - payments received)
-    const totalReceived = Math.abs(
-      creditsList
-        .filter((c: any) => c.amount < 0)
-        .reduce((sum: number, c: any) => sum + c.amount, 0)
+    // Calculate total advance (customers with negative balance - they have advance payments)
+    const totalAdvance = Math.abs(
+      customersList
+        .filter((c: any) => (c.balance || 0) < 0)
+        .reduce((sum: number, c: any) => sum + (c.balance || 0), 0)
     );
     
-    // Count active customers with outstanding credits
-    const activeCustomerIds = new Set(
-      creditsList
-        .filter((c: any) => c.amount > 0)
-        .map((c: any) => c.customerId?._id || c.customerId)
-    );
+    // Count customers with non-zero balances (either credit or advance)
+    const activeCustomers = customersList.filter((c: any) => (c.balance || 0) !== 0).length;
     
     return {
-      totalReceivable,
-      totalReceived,
-      activeCustomers: activeCustomerIds.size || customersList.length
+      totalReceivable: Math.round(totalReceivable),
+      totalAdvance: Math.round(totalAdvance),
+      activeCustomers,
+      totalCustomers: customersList.length
     };
-  }, [credits, customers]);
-
-  const loading = creditsLoading || customersLoading;
+  }, [customersData]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -46,14 +39,16 @@ const CreditStats: React.FC = () => {
         <div className="p-3 bg-red-50 text-red-600 rounded-lg"><Icon name="ArrowUpRight" /></div>
         <div>
           <p className="text-xs text-muted-foreground font-medium uppercase">Total Receivable</p>
-          <h3 className="text-2xl font-bold">Rs. {loading ? '...' : stats.totalReceivable.toLocaleString()}</h3>
+          <h3 className="text-2xl font-bold">Rs. {loading ? '...' : stats.totalReceivable.toLocaleString('en-NP')}</h3>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Amount customers have to pay</p>
         </div>
       </div>
       <div className="bg-white border border-border p-5 rounded-xl flex items-center gap-4 shadow-sm">
         <div className="p-3 bg-green-50 text-green-600 rounded-lg"><Icon name="ArrowDownLeft" /></div>
         <div>
-          <p className="text-xs text-muted-foreground font-medium uppercase">Total Collected</p>
-          <h3 className="text-2xl font-bold">Rs. {loading ? '...' : stats.totalReceived.toLocaleString()}</h3>
+          <p className="text-xs text-muted-foreground font-medium uppercase">Total Advance</p>
+          <h3 className="text-2xl font-bold">Rs. {loading ? '...' : stats.totalAdvance.toLocaleString('en-NP')}</h3>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Advance payments received</p>
         </div>
       </div>
       <div className="bg-white border border-border p-5 rounded-xl flex items-center gap-4 shadow-sm">
@@ -61,6 +56,7 @@ const CreditStats: React.FC = () => {
         <div>
           <p className="text-xs text-muted-foreground font-medium uppercase">Active Customers</p>
           <h3 className="text-2xl font-bold">{loading ? '...' : stats.activeCustomers}</h3>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Total: {loading ? '...' : stats.totalCustomers} customers</p>
         </div>
       </div>
     </div>

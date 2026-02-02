@@ -98,6 +98,14 @@ const CustomerList = ({
     });
   };
 
+  const handleCustomerClick = (customerId: string) => {
+    onCustomerSelect(customerId);
+    // If expanded, collapse when a customer is selected
+    if (isExpanded && onToggleExpand) {
+      onToggleExpand();
+    }
+  };
+
   const SortIcon = ({ field }: { field: SortField }) => (
     <Icon 
       name={sortField === field ? (sortOrder === 'asc' ? 'ChevronUp' : 'ChevronDown') : 'ChevronsUpDown'} 
@@ -177,7 +185,7 @@ const CustomerList = ({
               {filteredCustomers.map((customer) => (
                 <button
                   key={customer._id}
-                  onClick={() => onCustomerSelect(customer._id)}
+                  onClick={() => handleCustomerClick(customer._id)}
                   className={`w-full text-left p-4 transition-colors hover:bg-muted/50 flex items-center justify-between group ${
                     selectedCustomerId === customer._id ? 'bg-primary/5 border-r-4 border-primary' : ''
                   }`}
