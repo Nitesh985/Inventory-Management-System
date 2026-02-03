@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { bulkImportProducts } from '@/api/products';
 
 interface ImportError {
   row: number;
@@ -30,11 +31,118 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onClose, onIm
   const [step, setStep] = useState<Step>('upload'); // 'upload', 'processing', 'results'
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const sampleData = `Product Name,SKU,Category,Current Stock,Min Stock,Max Stock,Unit Price,Cost Price,Description
-iPhone 15 Pro,IPH15PRO001,electronics,25,5,100,999.00,750.00,Latest iPhone model with Pro features
-Samsung Galaxy S24,SGS24001,electronics,15,3,50,899.00,650.00,Premium Android smartphone
-MacBook Air M3,MBA-M3-001,electronics,8,2,20,1299.00,950.00,Latest MacBook Air with M3 chip
-Wireless Earbuds,WEB001,electronics,50,10,200,79.99,45.00,Bluetooth wireless earbuds with noise cancellation`;
+  const sampleData = `Product Name,SKU,Category,Stock,Min Stock,Unit Price,Cost Price,Description
+iPhone 15 Pro,IPH15PRO001,Electronics,25,5,999.00,750.00,Latest iPhone model with Pro features
+Samsung Galaxy S24,SGS24001,Electronics,15,3,899.00,650.00,Premium Android smartphone
+MacBook Air M3,MBA-M3-001,Electronics,8,2,1299.00,950.00,Latest MacBook Air with M3 chip
+Wireless Earbuds,WEB001,Electronics,50,10,79.99,45.00,Bluetooth wireless earbuds with noise cancellation`;
+
+  const parseCSV = (csvText: string): any[] => {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const products = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      const product: any = {};
+
+      headers.forEach((header, index) => {
+        const value = values[index] || '';
+        
+        // Map CSV headers to product fields
+        switch (header) {
+          case 'product name':
+          case 'name':
+            product.name = value;
+            break;
+          case 'sku':
+            product.sku = value;
+            break;
+          case 'category':
+            product.category = value;
+            break;
+          case 'current stock':
+          case 'stock':
+            product.stock = value;
+            break;
+          case 'min stock':
+          case 'minimum stock':
+          case 'reorder level':
+            product.minStock = value;
+            break;
+          case 'unit price':
+          case 'price':
+            product.price = value;
+            break;
+          case 'cost price':
+          case 'cost':
+            product.cost = value;
+            break;
+          case 'description':
+            product.description = value;
+            break;
+        }
+      });
+
+      if (product.name && product.sku) {
+        products.push(product);
+      }
+    }
+
+    return products;
+  };
+
+  const processImport = async (): Promise<void> => {
+    if (!selectedFile) return;
+
+    setIsProcessing(true);
+    setStep('processing');
+
+    try {
+      // Read the file content
+      const fileText = await selectedFile.text();
+      
+      // Parse the CSV
+      const parsedProducts = parseCSV(fileText);
+      
+      if (parsedProducts.length === 0) {
+        setImportResults({
+          total: 0,
+          successful: 0,
+          failed: 0,
+          errors: [{ row: 0, error: 'No valid products found in CSV file. Please check the format.' }]
+        });
+        setStep('results');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Call API to import products
+      const response = await bulkImportProducts(parsedProducts);
+      const results = response.data;
+
+      setImportResults(results);
+      setStep('results');
+
+      // Call the parent import handler if there were successful imports
+      if (results.successful > 0) {
+        onImport(results);
+      }
+    } catch (error: any) {
+      console.error('Import failed:', error);
+      setImportResults({
+        total: 0,
+        successful: 0,
+        failed: 0,
+        errors: [{ row: 0, error: error?.response?.data?.message || error?.message || 'Failed to process file. Please try again.' }]
+      });
+      setStep('results');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleDrag = (e: React.DragEvent<HTMLDivElement>): void => {
     e?.preventDefault();
@@ -67,51 +175,6 @@ Wireless Earbuds,WEB001,electronics,50,10,200,79.99,45.00,Bluetooth wireless ear
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     if (e?.target?.files && e?.target?.files?.[0]) {
       handleFileSelect(e?.target?.files?.[0]);
-    }
-  };
-
-  const processImport = async (): Promise<void> => {
-    if (!selectedFile) return;
-
-    setIsProcessing(true);
-    setStep('processing');
-
-    try {
-      // Simulate file processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Mock import results
-      const mockResults = {
-        total: 156,
-        successful: 142,
-        failed: 14,
-        errors: [
-          { row: 5, error: 'Invalid SKU format: must be alphanumeric' },
-          { row: 12, error: 'Missing required field: Product Name' },
-          { row: 23, error: 'Invalid price: must be a positive number' },
-          { row: 34, error: 'Category not found: electronics2' },
-          { row: 45, error: 'Duplicate SKU: IPH15PRO001' }
-        ]
-      };
-
-      setImportResults(mockResults);
-      setStep('results');
-
-      // Call the parent import handler
-      if (mockResults?.successful > 0) {
-        onImport(mockResults);
-      }
-    } catch (error) {
-      console.error('Import failed:', error);
-      setImportResults({
-        total: 0,
-        successful: 0,
-        failed: 0,
-        errors: [{ row: 0, error: 'Failed to process file. Please try again.' }]
-      });
-      setStep('results');
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -169,9 +232,9 @@ Wireless Earbuds,WEB001,electronics,50,10,200,79.99,45.00,Bluetooth wireless ear
                 <h3 className="font-medium text-foreground mb-2">Import Instructions</h3>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• Upload a CSV file with product information</li>
-                  <li>• Required columns: Product Name, SKU, Category, Current Stock, Unit Price</li>
-                  <li>• Optional columns: Min Stock, Max Stock, Cost Price, Description</li>
-                  <li>• Maximum file size: 10MB</li>
+                  <li>• Required columns: Product Name (or Name), SKU</li>
+                  <li>• Optional columns: Category, Stock, Min Stock, Unit Price (or Price), Cost Price (or Cost), Description</li>
+                  <li>• First row must be headers</li>
                 </ul>
               </div>
 

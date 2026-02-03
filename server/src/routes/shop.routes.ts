@@ -2,6 +2,7 @@ import { Router } from 'express'
 import {
   createShop,
   getShops,
+  getShopStats,
   getMyShops,
   setActiveShop,
   getShop,
@@ -15,7 +16,10 @@ import { verifyUserAuth, verifyBusinessAuth } from '../middlewares/auth.middlewa
 
 const router = Router()
 
-// All shop routes require authentication
+// Public route - no authentication required
+router.route("/stats").get(getShopStats)
+
+// All other shop routes require authentication
 router.use(verifyUserAuth)
 
 // GET MY SHOPS (shops owned by current user)

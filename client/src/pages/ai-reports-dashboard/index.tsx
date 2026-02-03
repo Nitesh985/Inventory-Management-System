@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
@@ -28,10 +28,13 @@ interface Message {
 }
 
 interface RecentChat {
-  id: string;
+  _id: string;
   title: string;
-  timestamp: string;
+  createdAt: string;
+  updatedAt: string;
   preview: string;
+  messages: Message[];
+  isArchived?: boolean;
 }
 
 const AIReportsDashboard: React.FC = () => {
@@ -42,9 +45,14 @@ const AIReportsDashboard: React.FC = () => {
   const [showRecentChats, setShowRecentChats] = useState<boolean>(false);
   const [showAIPanel, setShowAIPanel] = useState<boolean>(false);
   const [activeChatId, setActiveChatId] = useState<string>('');
+  const [currentChatDbId, setCurrentChatDbId] = useState<string>(''); // Database ID of current chat
   const [panelWidth, setPanelWidth] = useState<number>(384); // 96 * 4 = 384px (w-96)
   const [isResizing, setIsResizing] = useState<boolean>(false);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
+  const [metricsData, setMetricsData] = useState<DashboardMetricsData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [recentChats, setRecentChats] = useState<RecentChat[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Mock messages
   const [messages, setMessages] = useState<Message[]>([
@@ -56,35 +64,96 @@ const AIReportsDashboard: React.FC = () => {
     }
   ]);
 
-  // Mock recent chats
-  const recentChats: RecentChat[] = [
-    {
-      id: '1',
-      title: 'Stock Analysis - Last Week',
-      timestamp: 'Today, 10:30 AM',
-      preview: 'Items to restock this week based on sales velocity...'
-    },
-    {
-      id: '2',
-      title: 'Sales Forecast Q1 2026',
-      timestamp: 'Yesterday, 3:45 PM',
-      preview: 'Predicted sales trends for next quarter...'
-    },
-    {
-      id: '3',
-      title: 'Customer Credit Report',
-      timestamp: 'Jan 23, 2026',
-      preview: 'Top credit customers and payment analysis...'
-    },
-    {
-      id: '4',
-      title: 'Low Stock Alerts',
-      timestamp: 'Jan 22, 2026',
-      preview: 'Products running low on inventory...'
-    }
-  ];
+  // Load recent chats from database on mount
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        const response = await getAllChats();
+        const chats: RecentChat[] = response.data.map((chat: Chat) => ({
+          _id: chat._id,
+          title: chat.title,
+          createdAt: chat.createdAt,
+          updatedAt: chat.updatedAt,
+          preview: chat.messages.length > 0 
+            ? chat.messages[chat.messages.length - 1].content.substring(0, 80) 
+            : 'No messages',
+          messages: chat.messages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          })),
+          isArchived: chat.isArchived
+        }));
+        setRecentChats(chats);
+      } catch (error) {
+        console.error('Failed to load chats from database:', error);
+        setRecentChats([]);
+      }
+    };
+    fetchChats();
+  }, []);
 
-  const handleSendMessage = () => {
+  // Save or update chat in database
+  const saveChatToDatabase = async (userQuery: string, aiResponse: string, existingMessages: Message[]) => {
+    try {
+      setSyncStatus('syncing');
+      
+      const allMessages: ChatAPIMessage[] = [
+        ...existingMessages.map(msg => ({
+          id: msg.id,
+          type: msg.type,
+          content: msg.content,
+          timestamp: msg.timestamp
+        }))
+      ];
+
+      if (currentChatDbId) {
+        // Update existing chat
+        const response = await updateChat(currentChatDbId, { messages: allMessages });
+        
+        // Update in local state
+        setRecentChats(prev => prev.map(chat => 
+          chat._id === currentChatDbId 
+            ? {
+                ...chat,
+                messages: allMessages.map(msg => ({
+                  ...msg,
+                  timestamp: new Date(msg.timestamp)
+                })),
+                preview: aiResponse.substring(0, 80),
+                updatedAt: new Date().toISOString()
+              }
+            : chat
+        ));
+      } else {
+        // Create new chat
+        const title = userQuery.length > 50 ? userQuery.substring(0, 50) + '...' : userQuery;
+        const response = await createChat(title, allMessages);
+        
+        const newChat: RecentChat = {
+          _id: response.data._id,
+          title: title,
+          createdAt: response.data.createdAt,
+          updatedAt: response.data.updatedAt,
+          preview: aiResponse.substring(0, 80),
+          messages: allMessages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }))
+        };
+        
+        setRecentChats(prev => [newChat, ...prev]);
+        setCurrentChatDbId(response.data._id);
+        setActiveChatId(response.data._id);
+      }
+      
+      setSyncStatus('online');
+    } catch (error) {
+      console.error('Failed to save chat to database:', error);
+      setSyncStatus('offline');
+    }
+  };
+
+  const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
 
     const userMessage: Message = {
@@ -97,25 +166,89 @@ const AIReportsDashboard: React.FC = () => {
     setMessages([...messages, userMessage]);
     setChatInput('');
 
-        setTimeout(() => {
+    // Add a loading message
+    const loadingMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      type: 'ai',
+      content: 'Analyzing your shop data...',
+      timestamp: new Date()
+    };
+    setMessages((prev) => [...prev, loadingMessage]);
+
+    try {
+      // Prepare conversation history for API
+      const conversationHistory: APIChatMessage[] = messages
+        .filter(m => m.type !== 'system')
+        .map(m => ({
+          role: m.type === 'user' ? 'user' : 'assistant',
+          content: m.content
+        }));
+
+      // Call the analytics API
+      const response = await sendAnalyticsChat({
+        message: chatInput,
+        conversationHistory
+      });
+
+      // Remove loading message and add AI response
       const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: (Date.now() + 2).toString(),
         type: 'ai',
-        content: `Based on your shop data, I'm analyzing "${chatInput}". Here are the insights:\n\nThis is a simulated response. In production, this will be powered by Ollama running on your backend server, processing your actual shop data including inventory records, sales history, and customer information.`,
+        content: response.data.message,
         timestamp: new Date()
       };
-      setMessages((prev) => [...prev, aiMessage]);
-    }, 1000);
+
+      setMessages((prev) => {
+        const filtered = prev.filter(m => m.id !== loadingMessage.id);
+        return [...filtered, aiMessage];
+      });
+
+      // Save to database after state update
+      const updatedMessages = messages.filter(m => m.id !== loadingMessage.id);
+      await saveChatToDatabase(chatInput, response.data.message, [...updatedMessages, aiMessage]);
+
+    } catch (error: any) {
+      console.error('Failed to get AI response:', error);
+      
+      // Determine error message based on error type
+      let errorText = 'Sorry, I encountered an error analyzing your data. Please try again.';
+      
+      if (error?.response?.status === 401) {
+        errorText = 'Authentication error. Please log out and log back in.';
+      } else if (error?.response?.status === 400) {
+        errorText = 'Invalid request. Please check your message and try again.';
+      } else if (error?.response?.data?.error) {
+        errorText = `Error: ${error.response.data.error}`;
+      } else if (error?.message) {
+        errorText = `Error: ${error.message}`;
+      }
+      
+      // Remove loading message and show error
+      setMessages((prev) => {
+        const filtered = prev.filter(m => m.id !== loadingMessage.id);
+        const errorMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          type: 'ai',
+          content: errorText,
+          timestamp: new Date()
+        };
+        return [...filtered, errorMessage];
+      });
+    }
   };
 
   const handleChatSelect = (chatId: string) => {
     setActiveChatId(chatId);
-    // In production, load chat history from backend
-    console.log('Loading chat:', chatId);
+    setCurrentChatDbId(chatId);
+    const selectedChat = recentChats.find(chat => chat._id === chatId);
+    if (selectedChat && selectedChat.messages) {
+      setMessages(selectedChat.messages);
+    }
   };
 
   const handleNewChat = () => {
     setActiveChatId('');
+    setCurrentChatDbId('');
     setMessages([
       {
         id: '1',
@@ -126,6 +259,58 @@ const AIReportsDashboard: React.FC = () => {
     ]);
     setChatInput('');
   };
+
+  const handleDeleteChat = async (chatId: string) => {
+    if (confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+      try {
+        await deleteChatAPI(chatId);
+        setRecentChats(prev => prev.filter(chat => chat._id !== chatId));
+        if (activeChatId === chatId) {
+          handleNewChat();
+        }
+      } catch (error) {
+        console.error('Failed to delete chat:', error);
+        alert('Failed to delete chat. Please try again.');
+      }
+    }
+  };
+
+  const handleArchiveChat = async (chatId: string) => {
+    try {
+      await archiveChatAPI(chatId);
+      setRecentChats(prev => prev.filter(chat => chat._id !== chatId));
+      if (activeChatId === chatId) {
+        handleNewChat();
+      }
+    } catch (error) {
+      console.error('Failed to archive chat:', error);
+      alert('Failed to archive chat. Please try again.');
+    }
+  };
+
+  // Filter chats based on search query
+  const filteredChats = searchQuery
+    ? recentChats.filter(chat => 
+        chat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        chat.preview.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : recentChats;
+
+  // Fetch dashboard metrics
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      setLoading(true);
+      try {
+        const response = await getDashboardMetrics('month');
+        setMetricsData(response.data);
+      } catch (error) {
+        console.error('Failed to fetch dashboard metrics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMetrics();
+  }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -207,12 +392,16 @@ const AIReportsDashboard: React.FC = () => {
                           <Icon name="TrendingUp" size={24} className="text-white" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900">Most Sold Items</h3>
-                          <p className="text-xs text-gray-600">Top performing products</p>
+                          <h3 className="font-bold text-gray-900">Total Products</h3>
+                          <p className="text-xs text-gray-600">In your inventory</p>
                         </div>
                       </div>
-                      <div className="text-3xl font-bold text-blue-600 mb-2">1,234</div>
-                      <p className="text-sm text-gray-600">Total sales this month</p>
+                      <div className="text-3xl font-bold text-blue-600 mb-2">
+                        {loading ? '...' : metricsData?.products?.total || 0}
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {loading ? 'Loading...' : `${metricsData?.products?.lowStock || 0} low stock items`}
+                      </p>
                     </div>
 
                     {/* Revenue Chart Card */}
@@ -226,23 +415,31 @@ const AIReportsDashboard: React.FC = () => {
                           <p className="text-xs text-gray-600">Monthly earnings</p>
                         </div>
                       </div>
-                      <div className="text-3xl font-bold text-green-600 mb-2">Rs. 45,678</div>
-                      <p className="text-sm text-gray-600">+12% from last month</p>
+                      <div className="text-3xl font-bold text-green-600 mb-2">
+                        {loading ? 'Rs. ...' : `Rs. ${Math.round(metricsData?.revenue?.total || 0).toLocaleString()}`}
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {loading ? 'Loading...' : (metricsData?.revenue?.change || 'vs last month')}
+                      </p>
                     </div>
 
-                    {/* Inventory Status Card */}
+                    {/* Today's Sales Card */}
                     <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-6">
                       <div className="flex items-center gap-3 mb-4">
                         <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center">
-                          <Icon name="Package" size={24} className="text-white" />
+                          <Icon name="ShoppingCart" size={24} className="text-white" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900">Inventory</h3>
-                          <p className="text-xs text-gray-600">Stock status</p>
+                          <h3 className="font-bold text-gray-900">Today's Sales</h3>
+                          <p className="text-xs text-gray-600">Sales made today</p>
                         </div>
                       </div>
-                      <div className="text-3xl font-bold text-orange-600 mb-2">89%</div>
-                      <p className="text-sm text-gray-600">Stock availability</p>
+                      <div className="text-3xl font-bold text-orange-600 mb-2">
+                        {loading ? 'Rs. ...' : `Rs. ${Math.round(metricsData?.todaysSales?.total || 0).toLocaleString()}`}
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {loading ? 'Loading...' : (metricsData?.todaysSales?.change || 'vs yesterday')}
+                      </p>
                     </div>
                   </div>
 
@@ -314,10 +511,12 @@ const AIReportsDashboard: React.FC = () => {
                       <AIReasoningPanel
                         selectedTimeRange={selectedTimeRange}
                         onTimeRangeChange={setSelectedTimeRange}
-                        recentChats={recentChats}
+                        recentChats={filteredChats}
                         onChatSelect={handleChatSelect}
                         activeChat={activeChatId}
                         onNewChat={handleNewChat}
+                        onDeleteChat={handleDeleteChat}
+                        onArchiveChat={handleArchiveChat}
                         isCollapsed={false}
                       />
                     </div>

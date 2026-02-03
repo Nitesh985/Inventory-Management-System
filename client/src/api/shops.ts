@@ -81,6 +81,12 @@ async function getShops() {
   return res.data;
 }
 
+// Get shop statistics (public endpoint - no auth required)
+async function getShopStats() {
+  const res = await api.get("/shops/stats");
+  return res.data;
+}
+
 async function getShopById(shopId: string) {
   const res = await api.get(`/shops/${shopId}`);
   return res.data;
@@ -122,7 +128,8 @@ async function deleteShop(shopId: string) {
 
 export { 
   createShop, 
-  getShops, 
+  getShops,
+  getShopStats,
   getShopById, 
   getMyShops, 
   setActiveShop, 

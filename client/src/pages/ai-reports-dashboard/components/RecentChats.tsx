@@ -11,10 +11,11 @@ interface RecentChat {
 interface RecentChatsProps {
   chats: RecentChat[];
   onChatSelect: (chatId: string) => void;
+  onNewChat: () => void;
   activeChat?: string;
 }
 
-export function RecentChats({ chats, onChatSelect, activeChat }: RecentChatsProps) {
+export function RecentChats({ chats, onChatSelect, onNewChat, activeChat }: RecentChatsProps) {
   return (
     <div className="mt-20 h-90% flex flex-col bg-gradient-to-b from-white to-gray-50 border-r border-gray-200 shadow-lg">
       {/* Header */}
@@ -25,7 +26,10 @@ export function RecentChats({ chats, onChatSelect, activeChat }: RecentChatsProp
             Recent Chats
           </h2>
         </div>
-        <button className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+        <button 
+          onClick={onNewChat}
+          className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           New Chat
         </button>

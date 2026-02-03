@@ -47,6 +47,11 @@ async function createProduct(data: CreateProductDTO) {
   return res.data;
 }
 
+async function bulkImportProducts(products: any[]) {
+  const res = await api.post("/bulk-import", { products });
+  return res.data;
+}
+
 
 async function getAllProducts(params?: { shopId?: string }) {
   const res = await api.get("/", { params });
@@ -86,6 +91,7 @@ const generateSku = async (payload) => {
 
 export {
   createProduct,
+  bulkImportProducts,
   getAllProducts,
   getProductById,
   updateProduct,

@@ -145,6 +145,103 @@ const createProduct = asyncHandler(async (req: Request, res: Response) => {
   return res.status(201).json(new ApiResponse(201, product, 'Product was created!'));
 });
 
+// Bulk import products
+const bulkImportProducts = asyncHandler(async (req: Request, res: Response) => {
+  const shopId = req.user!.activeShopId!;
+  const { products } = req.body;
+
+  if (!Array.isArray(products) || products.length === 0) {
+    throw new ApiError(400, 'Products array is required and must not be empty');
+  }
+
+  const results = {
+    total: products.length,
+    successful: 0,
+    failed: 0,
+    errors: [] as Array<{ row: number; error: string }>
+  };
+
+  // Process each product
+  for (let i = 0; i < products.length; i++) {
+    const productData = products[i];
+    const rowNumber = i + 2; // +2 because: +1 for array index, +1 for CSV header
+
+    try {
+      // Validate required fields
+      if (!productData.name || !productData.sku) {
+        results.errors.push({
+          row: rowNumber,
+          error: 'Missing required fields: name and sku are required'
+        });
+        results.failed++;
+        continue;
+      }
+
+      // Check if SKU already exists
+      const existing = await Product.findOne({
+        shopId: new mongoose.Types.ObjectId(shopId),
+        sku: productData.sku,
+        deleted: false,
+      });
+
+      if (existing) {
+        results.errors.push({
+          row: rowNumber,
+          error: `Duplicate SKU: ${productData.sku} already exists`
+        });
+        results.failed++;
+        continue;
+      }
+
+      // Validate numbers
+      const price = parseFloat(productData.price) || 0;
+      const cost = parseFloat(productData.cost) || 0;
+      const stock = parseInt(productData.stock) || 0;
+      const minStock = parseInt(productData.minStock) || 0;
+
+      if (price < 0 || cost < 0) {
+        results.errors.push({
+          row: rowNumber,
+          error: 'Price and cost must be positive numbers'
+        });
+        results.failed++;
+        continue;
+      }
+
+      // Create product
+      const product = await Product.create({
+        shopId: new mongoose.Types.ObjectId(shopId),
+        sku: productData.sku,
+        name: productData.name,
+        category: productData.category || 'General',
+        description: productData.description || '',
+        price,
+        cost,
+      });
+
+      // Create inventory
+      await Inventory.create({
+        shopId: new mongoose.Types.ObjectId(shopId),
+        productId: product._id,
+        stock,
+        minStock,
+      });
+
+      results.successful++;
+    } catch (err: any) {
+      results.errors.push({
+        row: rowNumber,
+        error: err.message || 'Unknown error occurred'
+      });
+      results.failed++;
+    }
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, results, 'Bulk import completed')
+  );
+});
+
 // Get all products for the active shop
 const getProducts = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!;
@@ -283,6 +380,7 @@ const softDeleteProduct = asyncHandler(async (req: Request, res: Response) => {
 
 export { 
   createProduct,
+  bulkImportProducts,
   getProducts,
   getProduct,
   updateProduct,

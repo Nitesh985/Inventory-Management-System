@@ -132,6 +132,16 @@ const getShops = asyncHandler(async (req: Request, res: Response) => {
   return res.status(200).json(new ApiResponse(200, shops, 'Shops fetched'));
 });
 
+// Public endpoint to get shop statistics (no auth required)
+const getShopStats = asyncHandler(async (req: Request, res: Response) => {
+  const totalShops = await Shop.countDocuments({});
+  const stats = {
+    totalShops,
+    displayCount: totalShops > 0 ? `${Math.floor(totalShops / 1000) > 0 ? Math.floor(totalShops / 1000) + 'K+' : totalShops + '+'}` : '0'
+  };
+  return res.status(200).json(new ApiResponse(200, stats, 'Shop statistics fetched'));
+});
+
 const getMyShops = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.id;
   if (!userId) throw new ApiError(401, 'User not authenticated');
@@ -243,6 +253,7 @@ const deleteShop = asyncHandler(async (req: Request, res: Response) => {
 export {
   createShop,
   getShops,
+  getShopStats,
   getMyShops,
   setActiveShop,
   getShop,
