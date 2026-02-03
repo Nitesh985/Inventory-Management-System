@@ -6,6 +6,17 @@ import Icon from '../../components/AppIcon';
 import { ChatWindow } from './components/ChatWindow';
 import { AIReasoningPanel } from './components/AIReasoningPanel';
 import { ChatInput } from './components/ChatInput';
+import { getDashboardMetrics, type DashboardMetricsData } from '@/api/dashboard';
+import { sendAnalyticsChat, type ChatMessage as APIChatMessage } from '@/api/chatbot';
+import { 
+  getAllChats, 
+  createChat, 
+  updateChat, 
+  deleteChat as deleteChatAPI,
+  archiveChat as archiveChatAPI,
+  type Chat,
+  type Message as ChatAPIMessage
+} from '@/api/chat';
 
 type SyncStatus = 'online' | 'syncing' | 'offline';
 
