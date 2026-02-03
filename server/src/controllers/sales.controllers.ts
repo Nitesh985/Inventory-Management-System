@@ -67,10 +67,37 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
   const invoiceNo = `INV-${shopIdStr}-${String(invoiceCounter).padStart(5, "0")}`;
 
   // -------------------------------------------------------
-  // 1️⃣ CUSTOMER MUST EXIST AND BELONG TO SHOP
+  // 1️⃣ HANDLE CUSTOMER - CREATE WALK-IN IF NEEDED
   // -------------------------------------------------------
+  let finalCustomerId = customerId;
+  
+  // If customerId is 'walk-in' or similar, find or create a default walk-in customer
+  if (!customerId || customerId === 'walk-in' || customerId.toLowerCase().includes('walk')) {
+    // Try to find existing walk-in customer for this shop
+    let walkInCustomer = await Customer.findOne({
+      shopId: new mongoose.Types.ObjectId(shopId),
+      name: { $regex: /^walk-?in/i },
+      deleted: false
+    });
+    
+    // If not found, create one
+    if (!walkInCustomer) {
+      walkInCustomer = await Customer.create({
+        shopId: new mongoose.Types.ObjectId(shopId),
+        name: 'Walk-in Customer',
+        contact: [],
+        address: '',
+        notes: 'Default walk-in customer',
+        deleted: false
+      });
+    }
+    
+    finalCustomerId = walkInCustomer._id.toString();
+  }
+  
+  // Verify the customer exists and belongs to shop
   const customer = await Customer.findOne({
-    _id: customerId,
+    _id: finalCustomerId,
     shopId: new mongoose.Types.ObjectId(shopId),
     deleted: false
   });
@@ -109,7 +136,7 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
   }));
 
   const sale = await Sales.create({
-    customerId: new mongoose.Types.ObjectId(customerId),
+    customerId: new mongoose.Types.ObjectId(finalCustomerId),
     shopId: new mongoose.Types.ObjectId(shopId),
     items: formattedItems,
     totalAmount,

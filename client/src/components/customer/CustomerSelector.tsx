@@ -12,7 +12,7 @@ import AddCustomer from './AddCustomer';
 export interface CustomerSelectorProps {
   selectedCustomer: string | null;
   onCustomerSelect: (customerId: string) => void;
-  onAddCustomer: (customer: {
+  onAddCustomer?: (customer: {
     value: string;
     label: string;
     phone?: string;
@@ -77,7 +77,10 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
           address: newCustomer?.address
         };
         
-        onAddCustomer(customer);
+        // Call onAddCustomer if provided
+        if (onAddCustomer) {
+          onAddCustomer(customer);
+        }
         onCustomerSelect(customer?.value);
         setNewCustomer({ name: '', phone: '', email: '', address: '' });
         setShowAddForm(false);

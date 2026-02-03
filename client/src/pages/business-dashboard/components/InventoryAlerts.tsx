@@ -33,29 +33,33 @@ const InventoryAlerts = () => {
     
     return products
       .filter((product: any) => {
-        const stock = product.stock ?? product.quantity ?? 0;
-        const minStock = product.minStock ?? product.reorderLevel ?? 10;
-        return stock <= minStock;
+        // Use backend's isLowStock flag or check stock level
+        return product.isLowStock || product.stock === 0 || product.stock <= (product.minStock ?? 10);
       })
       .map((product: any) => {
-        const stock = product.stock ?? product.quantity ?? 0;
-        const minStock = product.minStock ?? product.reorderLevel ?? 10;
+        const stock = product.stock ?? 0;
+        const minStock = product.minStock ?? 10;
         
         let type: Alert['type'] = 'low_stock';
         let priority: Alert['priority'] = 'medium';
         
+        // Determine type and priority based on stock levels
         if (stock === 0) {
           type = 'out_of_stock';
           priority = 'critical';
         } else if (stock <= minStock * 0.3) {
+          type = 'low_stock';
           priority = 'high';
+        } else if (stock <= minStock) {
+          type = 'low_stock';
+          priority = 'medium';
         }
         
         return {
           id: product._id || `alert-${Date.now()}`,
           type,
           product: product.name || 'Unknown Product',
-          sku: product.sku || product._id?.slice(-6) || 'N/A',
+          sku: product.sku || 'N/A',
           currentStock: stock,
           minStock,
           category: product.category || 'Uncategorized',
