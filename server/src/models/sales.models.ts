@@ -1,4 +1,4 @@
-import { Schema, Types, model, Document } from "mongoose";
+import { Schema, Types, model, Document } from 'mongoose';
 
 export interface ISaleItem {
   productId: Types.ObjectId; // fk -> Product.id
@@ -10,7 +10,7 @@ export interface ISaleItem {
 
 const saleItemSchema = new Schema<ISaleItem>(
   {
-    productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+    productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
     productName: { type: String, required: true },
     quantity: { type: Number, required: true },
     unitPrice: { type: Number, required: true },
@@ -19,18 +19,14 @@ const saleItemSchema = new Schema<ISaleItem>(
   { _id: false }
 );
 
-// =========================
-// Sales Model
-// =========================
 export interface ISales extends Document {
-  shopId: Types.ObjectId; // fk -> Shop.id
-  customerId: Types.ObjectId; // fk -> Customer.id
+  shopId: Types.ObjectId;
+  customerId: Types.ObjectId;
   invoiceNo: string;
   items: ISaleItem[];
   totalAmount: number;
   paidAmount: number;
-  paymentMethod: "CASH" | "CREDIT" | "ESEWA" | "KHALTI";
-  status: "PENDING" | "COMPLETED" | "CANCELLED";
+  status: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'PARTIALLY_PAID' | 'REFUNDED' | 'CREDIT';
   discount: number;
   notes?: string;
   createdAt: Date;
@@ -39,20 +35,19 @@ export interface ISales extends Document {
 
 const salesSchema = new Schema<ISales>(
   {
-    shopId: { type: Schema.Types.ObjectId, ref: "Shop", required: true },
-    customerId: { type: Schema.Types.ObjectId, ref: "Customer", required: true },
+    shopId: { type: Schema.Types.ObjectId, ref: 'Shop', required: true },
+    customerId: { type: Schema.Types.ObjectId, ref: 'Customer', required: true },
     invoiceNo: { type: String, required: true },
     items: { type: [saleItemSchema], required: true },
     totalAmount: { type: Number, required: true },
     paidAmount: { type: Number, default: 0 },
-    paymentMethod: { type: String, enum: ["CASH", "CREDIT", "ESEWA", "KHALTI"], default: "CASH" },
-    status: { type: String, enum: ["PENDING", "COMPLETED", "CANCELLED"], default: "COMPLETED" },
+    status: { type: String, enum: ['PENDING', 'COMPLETED', 'CANCELLED'], default: 'COMPLETED' },
     discount: { type: Number, default: 0 },
     notes: { type: String },
   },
   { timestamps: true }
 );
 
-salesSchema.index({shopId: 1, invoiceNo:1}, { unique: true })
+salesSchema.index({ shopId: 1, invoiceNo: 1 }, { unique: true });
 
-export default model<ISales>("Sales", salesSchema);
+export default model<ISales>('Sales', salesSchema);

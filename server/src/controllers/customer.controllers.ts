@@ -14,31 +14,11 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, "name is required");
   }
   
-  // Support both old 'phone' and new 'contact' fields for backwards compatibility
-  const phoneNumbers = contact || (req.body.phone ? [req.body.phone] : []);
-  
-  if (!phoneNumbers.length && !email && !address ){
+  if (!contact && !email && !address ){
     throw new ApiError(400, "Either of these fields contact, email and address should be given!")
   }
-
-  // Check each contact number to ensure it doesn't already exist
-  if (Array.isArray(phoneNumbers) && phoneNumbers.length) {
-    for (const indContact of phoneNumbers) {
-      if (indContact && indContact.trim()) {
-        const existingByContact = await Customer.findOne({ 
-          shopId: new mongoose.Types.ObjectId(shopId), 
-          contact: { $in: [indContact] },
-          deleted: false 
-        });
-        
-        if (existingByContact) {
-          throw new ApiError(400, `Contact "${indContact}" already exists for another customer!`);
-        }
-      }
-    }
-  }
   
-  // Check if email already exists
+
   if (email) {
     const existingByEmail = await Customer.findOne({ 
       shopId: new mongoose.Types.ObjectId(shopId), 
@@ -51,10 +31,22 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
     }
   }
 
+  if (contact){
+    const existingByContact = await Customer.findOne({
+      shopId: new mongoose.Types.ObjectId(shopId),
+      contact: contact,
+      deleted: false
+    });
+    
+    if (existingByContact){
+      throw new ApiError(400, "The user by that contact number already exists!!")
+    }
+  }
+
   const customer = await Customer.create({
     shopId: new mongoose.Types.ObjectId(shopId),
     name,
-    contact: phoneNumbers.filter((p: string) => p && p.trim()),
+    contact: contact,
     address: address || "",
     email: email ? email.toLowerCase() : "",
     notes: notes || ""
