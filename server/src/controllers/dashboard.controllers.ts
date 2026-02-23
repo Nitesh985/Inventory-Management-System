@@ -100,6 +100,11 @@ const getDashboardMetrics = asyncHandler(async (req: Request, res: Response) => 
     Inventory.find({ shopId: shopObjectId }).lean(),
   ]);
 
+  // Create a product map for quick cost price lookups
+  const productMap = new Map(
+    allProducts.map(p => [p._id.toString(), p])
+  );
+
   // Helper to check date ranges
   const isInRange = (date: Date | string, start: Date, end: Date): boolean => {
     const d = new Date(date);
@@ -130,14 +135,50 @@ const getDashboardMetrics = asyncHandler(async (req: Request, res: Response) => 
     ? []
     : allExpenses.filter(e => isInRange(e.createdAt, previousPeriodStart, previousPeriodEnd));
 
-  // Calculate revenue
-  const totalRevenue = periodSales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
-  const previousRevenue = previousPeriodSales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+  // Calculate revenue and COGS (Cost of Goods Sold)
+  const calculateRevenueAndCOGS = (salesList: any[]) => {
+    let revenue = 0;
+    let cogs = 0;
+    
+    salesList.forEach(sale => {
+      revenue += sale.totalAmount || 0;
+      
+      // Calculate COGS for this sale
+      sale.items?.forEach((item: any) => {
+        const product = productMap.get(item.productId.toString());
+        const costPrice = product?.cost || 0;
+        const quantity = item.quantity || 0;
+        cogs += costPrice * quantity;
+      });
+    });
+    
+    return { revenue, cogs };
+  };
+
+  const periodMetrics = calculateRevenueAndCOGS(periodSales);
+  const previousPeriodMetrics = calculateRevenueAndCOGS(previousPeriodSales);
+  const todayMetrics = calculateRevenueAndCOGS(todaySalesList);
+  const yesterdayMetrics = calculateRevenueAndCOGS(yesterdaySalesList);
+
+  // Revenue calculations
+  const totalRevenue = periodMetrics.revenue;
+  const previousRevenue = previousPeriodMetrics.revenue;
   const revenueChange = period === 'all' 
     ? { value: "", type: "neutral" as ChangeType }
     : calcPercentChange(totalRevenue, previousRevenue);
 
-  // Calculate expenses
+  // COGS calculations
+  const totalCOGS = periodMetrics.cogs;
+  const previousCOGS = previousPeriodMetrics.cogs;
+
+  // Gross Profit = Revenue - COGS
+  const grossProfit = totalRevenue - totalCOGS;
+  const previousGrossProfit = previousRevenue - previousCOGS;
+  const grossProfitChange = period === 'all'
+    ? { value: "", type: "neutral" as ChangeType }
+    : calcPercentChange(grossProfit, previousGrossProfit);
+
+  // Calculate operational expenses
   const totalExpenses = periodExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   const previousTotalExpenses = previousPeriodExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   const expenseChange = period === 'all'
@@ -146,12 +187,12 @@ const getDashboardMetrics = asyncHandler(async (req: Request, res: Response) => 
   // Invert expense change type (spending more = bad)
   const expenseChangeType: ChangeType = expenseChange.type === "positive" ? "negative" : expenseChange.type === "negative" ? "positive" : "neutral";
 
-  // Calculate profit
-  const netProfit = totalRevenue - totalExpenses;
-  const previousProfit = previousRevenue - previousTotalExpenses;
-  const profitChange = period === 'all'
+  // Calculate Net Profit = Gross Profit - Operational Expenses
+  const netProfit = grossProfit - totalExpenses;
+  const previousNetProfit = previousGrossProfit - previousTotalExpenses;
+  const netProfitChange = period === 'all'
     ? { value: "", type: "neutral" as ChangeType }
-    : calcPercentChange(netProfit, previousProfit);
+    : calcPercentChange(netProfit, previousNetProfit);
 
   // Product metrics
   const totalProducts = allProducts.length;
@@ -160,10 +201,16 @@ const getDashboardMetrics = asyncHandler(async (req: Request, res: Response) => 
     return inv.stock <= minStock;
   }).length;
 
-  // Today's sales
-  const todaysSales = todaySalesList.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
-  const yesterdaysSales = yesterdaySalesList.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
-  const todaySalesChange = calcPercentChange(todaysSales, yesterdaysSales);
+  // Today's sales (using gross profit for more accuracy)
+  const todaysRevenue = todayMetrics.revenue;
+  const todaysCOGS = todayMetrics.cogs;
+  const todaysGrossProfit = todaysRevenue - todaysCOGS;
+  
+  const yesterdaysRevenue = yesterdayMetrics.revenue;
+  const yesterdaysCOGS = yesterdayMetrics.cogs;
+  const yesterdaysGrossProfit = yesterdaysRevenue - yesterdaysCOGS;
+  
+  const todaySalesChange = calcPercentChange(todaysGrossProfit, yesterdaysGrossProfit);
 
   // Return calculated data for frontend to build metrics
   const data = {
@@ -173,22 +220,30 @@ const getDashboardMetrics = asyncHandler(async (req: Request, res: Response) => 
       change: revenueChange.value,
       changeType: revenueChange.type,
     },
+    cogs: {
+      total: totalCOGS,
+    },
+    grossProfit: {
+      total: grossProfit,
+      change: grossProfitChange.value,
+      changeType: grossProfitChange.type,
+    },
     expenses: {
       total: totalExpenses,
       change: expenseChange.value,
       changeType: expenseChangeType,
     },
-    profit: {
+    netProfit: {
       total: netProfit,
-      change: profitChange.value,
-      changeType: netProfit >= 0 ? profitChange.type : "negative" as ChangeType,
+      change: netProfitChange.value,
+      changeType: netProfit >= 0 ? netProfitChange.type : "negative" as ChangeType,
     },
     products: {
       total: totalProducts,
       lowStock: lowStockItems,
     },
     todaysSales: {
-      total: todaysSales,
+      total: todaysGrossProfit,
       change: todaySalesChange.value,
       changeType: todaySalesChange.type,
     },
@@ -232,7 +287,7 @@ const getChartData = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Fetch sales and expenses in the date range
-  const [sales, expenses] = await Promise.all([
+  const [sales, expenses, products] = await Promise.all([
     Sales.find({ 
       shopId: shopObjectId, 
       createdAt: { $gte: startDate, $lte: now } 
@@ -241,10 +296,30 @@ const getChartData = asyncHandler(async (req: Request, res: Response) => {
       shopId: shopObjectId, 
       createdAt: { $gte: startDate, $lte: now } 
     }).lean(),
+    Product.find({ shopId: shopObjectId, deleted: false }).lean(),
   ]);
 
+  // Create product map for cost price lookups
+  const productMap = new Map(
+    products.map(p => [p._id.toString(), p])
+  );
+
+  // Helper to calculate COGS for a list of sales
+  const calculateCOGS = (salesList: any[]) => {
+    let cogs = 0;
+    salesList.forEach(sale => {
+      sale.items?.forEach((item: any) => {
+        const product = productMap.get(item.productId.toString());
+        const costPrice = product?.cost || 0;
+        const quantity = item.quantity || 0;
+        cogs += costPrice * quantity;
+      });
+    });
+    return cogs;
+  };
+
   // Group data by the appropriate period
-  const chartData: { date: string; sales: number; expenses: number; profit: number }[] = [];
+  const chartData: { date: string; sales: number; cogs: number; grossProfit: number; expenses: number; netProfit: number }[] = [];
 
   if (groupBy === 'day') {
     // Group by day for 7 days
@@ -253,19 +328,25 @@ const getChartData = asyncHandler(async (req: Request, res: Response) => {
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
-      const daySales = sales
-        .filter(s => new Date(s.createdAt) >= dayStart && new Date(s.createdAt) < dayEnd)
-        .reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+      const daySalesList = sales.filter(s => new Date(s.createdAt) >= dayStart && new Date(s.createdAt) < dayEnd);
+      
+      const daySales = daySalesList.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+      const dayCOGS = calculateCOGS(daySalesList);
+      const dayGrossProfit = daySales - dayCOGS;
       
       const dayExpenses = expenses
         .filter(e => new Date(e.createdAt) >= dayStart && new Date(e.createdAt) < dayEnd)
         .reduce((sum, e) => sum + (e.amount || 0), 0);
+      
+      const dayNetProfit = dayGrossProfit - dayExpenses;
 
       chartData.push({
         date: dayStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         sales: daySales,
+        cogs: dayCOGS,
+        grossProfit: dayGrossProfit,
         expenses: dayExpenses,
-        profit: daySales - dayExpenses,
+        netProfit: dayNetProfit,
       });
     }
   } else if (groupBy === 'week') {
@@ -274,19 +355,25 @@ const getChartData = asyncHandler(async (req: Request, res: Response) => {
       const weekEnd = new Date(now.getTime() - (week - 1) * 7 * 24 * 60 * 60 * 1000);
       const weekStart = new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-      const weekSales = sales
-        .filter(s => new Date(s.createdAt) >= weekStart && new Date(s.createdAt) < weekEnd)
-        .reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+      const weekSalesList = sales.filter(s => new Date(s.createdAt) >= weekStart && new Date(s.createdAt) < weekEnd);
+      
+      const weekSales = weekSalesList.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+      const weekCOGS = calculateCOGS(weekSalesList);
+      const weekGrossProfit = weekSales - weekCOGS;
       
       const weekExpenses = expenses
         .filter(e => new Date(e.createdAt) >= weekStart && new Date(e.createdAt) < weekEnd)
         .reduce((sum, e) => sum + (e.amount || 0), 0);
+      
+      const weekNetProfit = weekGrossProfit - weekExpenses;
 
       chartData.push({
         date: `Week ${5 - week}`,
         sales: weekSales,
+        cogs: weekCOGS,
+        grossProfit: weekGrossProfit,
         expenses: weekExpenses,
-        profit: weekSales - weekExpenses,
+        netProfit: weekNetProfit,
       });
     }
   } else {
@@ -295,12 +382,14 @@ const getChartData = asyncHandler(async (req: Request, res: Response) => {
       const monthDate = new Date(now.getFullYear(), now.getMonth() - m, 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - m + 1, 0, 23, 59, 59);
 
-      const monthSales = sales
-        .filter(s => {
-          const d = new Date(s.createdAt);
-          return d >= monthDate && d <= monthEnd;
-        })
-        .reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+      const monthSalesList = sales.filter(s => {
+        const d = new Date(s.createdAt);
+        return d >= monthDate && d <= monthEnd;
+      });
+      
+      const monthSales = monthSalesList.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+      const monthCOGS = calculateCOGS(monthSalesList);
+      const monthGrossProfit = monthSales - monthCOGS;
       
       const monthExpenses = expenses
         .filter(e => {
@@ -308,28 +397,36 @@ const getChartData = asyncHandler(async (req: Request, res: Response) => {
           return d >= monthDate && d <= monthEnd;
         })
         .reduce((sum, e) => sum + (e.amount || 0), 0);
+      
+      const monthNetProfit = monthGrossProfit - monthExpenses;
 
       chartData.push({
         date: monthDate.toLocaleDateString('en-US', { month: 'short' }),
         sales: monthSales,
+        cogs: monthCOGS,
+        grossProfit: monthGrossProfit,
         expenses: monthExpenses,
-        profit: monthSales - monthExpenses,
+        netProfit: monthNetProfit,
       });
     }
   }
 
   // Calculate totals
   const totalSales = chartData.reduce((sum, d) => sum + d.sales, 0);
+  const totalCOGS = chartData.reduce((sum, d) => sum + d.cogs, 0);
+  const totalGrossProfit = chartData.reduce((sum, d) => sum + d.grossProfit, 0);
   const totalExpenses = chartData.reduce((sum, d) => sum + d.expenses, 0);
-  const totalProfit = totalSales - totalExpenses;
+  const totalNetProfit = chartData.reduce((sum, d) => sum + d.netProfit, 0);
 
   return res.status(200).json(
     new ApiResponse(200, {
       chartData,
       totals: {
         sales: totalSales,
+        cogs: totalCOGS,
+        grossProfit: totalGrossProfit,
         expenses: totalExpenses,
-        profit: totalProfit,
+        netProfit: totalNetProfit,
       }
     }, "Chart data fetched successfully")
   );

@@ -72,8 +72,10 @@ const BusinessDashboard: React.FC = () => {
   const safeMetrics = {
     period: metricsData?.period ?? 'This Month',
     revenue: metricsData?.revenue ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
+    cogs: metricsData?.cogs ?? { total: 0 },
+    grossProfit: metricsData?.grossProfit ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
     expenses: metricsData?.expenses ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
-    profit: metricsData?.profit ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
+    netProfit: metricsData?.netProfit ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
     products: metricsData?.products ?? { total: 0, lowStock: 0 },
     todaysSales: metricsData?.todaysSales ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
   };
@@ -102,6 +104,24 @@ const BusinessDashboard: React.FC = () => {
       trend: selectedPeriod !== 'all'
     },
     {
+      title: `COGS (${safeMetrics.period})`,
+      value: `Rs. ${Math.round(safeMetrics.cogs.total).toLocaleString()}`,
+      change: selectedPeriod === 'all' ? 'All time total' : 'Cost of Goods Sold',
+      changeType: "neutral" as ChangeType,
+      icon: "Package",
+      iconColor: "text-warning",
+      trend: false
+    },
+    {
+      title: `Gross Profit (${safeMetrics.period})`,
+      value: `Rs. ${Math.round(safeMetrics.grossProfit.total).toLocaleString()}`,
+      change: selectedPeriod === 'all' ? 'All time total' : `${safeMetrics.grossProfit.change} ${comparisonText}`,
+      changeType: safeMetrics.grossProfit.changeType,
+      icon: "TrendingUp",
+      iconColor: "text-primary",
+      trend: selectedPeriod !== 'all'
+    },
+    {
       title: `Expenses (${safeMetrics.period})`,
       value: `Rs. ${Math.round(safeMetrics.expenses.total).toLocaleString()}`,
       change: selectedPeriod === 'all' ? 'All time total' : `${safeMetrics.expenses.change} ${comparisonText}`,
@@ -112,33 +132,12 @@ const BusinessDashboard: React.FC = () => {
     },
     {
       title: `Net Profit (${safeMetrics.period})`,
-      value: `Rs. ${Math.round(safeMetrics.profit.total).toLocaleString()}`,
-      change: selectedPeriod === 'all' ? 'All time total' : `${safeMetrics.profit.change} ${comparisonText}`,
-      changeType: safeMetrics.profit.changeType,
-      icon: "TrendingUp",
-      iconColor: "text-primary",
+      value: `Rs. ${Math.round(safeMetrics.netProfit.total).toLocaleString()}`,
+      change: selectedPeriod === 'all' ? 'All time total' : `${safeMetrics.netProfit.change} ${comparisonText}`,
+      changeType: safeMetrics.netProfit.changeType,
+      icon: "BadgeDollarSign",
+      iconColor: safeMetrics.netProfit.total >= 0 ? "text-success" : "text-error",
       trend: selectedPeriod !== 'all'
-    },
-    {
-      title: "Active Products",
-      value: safeMetrics.products.total.toLocaleString(),
-      change: safeMetrics.products.total === 0 ? 'No products yet' : `${safeMetrics.products.total} total items`,
-      changeType: "neutral" as ChangeType,
-      icon: "Package",
-      iconColor: "text-accent"
-    },
-    {
-      title: "Low Stock Items",
-      value: safeMetrics.products.lowStock.toString(),
-      change:
-        safeMetrics.products.lowStock > 0
-          ? `${safeMetrics.products.lowStock} items need restock`
-          : "All stock levels are healthy",
-      changeType:
-        safeMetrics.products.lowStock > 0 ? "negative" as ChangeType : "positive" as ChangeType,
-      icon: "AlertTriangle",
-      iconColor:
-        safeMetrics.products.lowStock > 0 ? "text-warning" : "text-success"
     },
     {
       title: "Today's Sales",
