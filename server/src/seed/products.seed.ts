@@ -2,6 +2,7 @@
 import Product from "../models/product.models.ts";
 import { faker } from "@faker-js/faker";
 import { getDateForDay } from "./utils/dateHelpers.ts";
+import { Types } from "mongoose";
 
 // Realistic Nepali shop products with categories
 const PRODUCT_CATALOG = [
@@ -57,11 +58,19 @@ const PRODUCT_CATALOG = [
 
 export async function seedProducts(
   shopId: string,
+  categories: any[] = [],
+  suppliers: any[] = [],
   count = 30
 ) {
   const products = [];
   const usedProducts = new Set<string>();
   const productPool = [...PRODUCT_CATALOG];
+
+  // Build a map from category name to category _id
+  const categoryMap = new Map<string, any>();
+  for (const cat of categories) {
+    categoryMap.set(cat.name, cat._id);
+  }
 
   // Products are added on Day 0-1 (7-6 days ago) - setup phase
   for (let i = 0; i < count; i++) {
@@ -98,32 +107,28 @@ export async function seedProducts(
     }
     const createdAt = getDateForDay(dayOffset);
 
+    // Resolve categoryId from the category name
+    const categoryId = categoryMap.get(productData.category) || undefined;
+
+    // Assign a random supplier if available
+    const supplierId = suppliers.length > 0
+      ? faker.helpers.arrayElement(suppliers)._id
+      : undefined;
+
     products.push({
       shopId,
-      
-      // 80% chance SKU exists
-      sku: faker.helpers.maybe(
-        () => faker.string.alphanumeric(8).toUpperCase(),
-        { probability: 0.8 }
-      ),
-      
+      sku: faker.string.alphanumeric(8).toUpperCase(),
       name: productData.name,
       category: productData.category,
-      
-      // 60% chance description exists
+      categoryId,
+      supplierId,
       description: faker.helpers.maybe(
         () => `High quality ${productData.name.toLowerCase()}. ${faker.commerce.productDescription()}`,
         { probability: 0.6 }
       ),
-      
-      unit: faker.number.int({ min: 1, max: 10 }),
       cost,
       price,
-      reorderLevel: faker.number.int({ min: 5, max: 25 }),
-      
-      // 3% chance product is soft-deleted
       deleted: faker.datatype.boolean({ probability: 0.03 }),
-      
       createdAt,
       updatedAt: createdAt,
     });

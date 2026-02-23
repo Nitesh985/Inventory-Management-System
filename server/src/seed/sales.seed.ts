@@ -67,11 +67,37 @@ export async function seedSales(
 
     const totalAmount = grossAmount - discount;
 
-    // More cash sales than credit (60-40 split)
-    const paymentType = faker.helpers.weightedArrayElement([
-      { value: "CASH", weight: 60 },
-      { value: "CREDIT", weight: 40 },
+    // Determine payment status and paid amount
+    const statusRoll = faker.helpers.weightedArrayElement([
+      { value: "COMPLETED" as const, weight: 50 },
+      { value: "CREDIT" as const, weight: 20 },
+      { value: "PARTIALLY_PAID" as const, weight: 15 },
+      { value: "PENDING" as const, weight: 10 },
+      { value: "CANCELLED" as const, weight: 3 },
+      { value: "REFUNDED" as const, weight: 2 },
     ]);
+
+    let paidAmount: number;
+    switch (statusRoll) {
+      case "COMPLETED":
+        paidAmount = totalAmount;
+        break;
+      case "CREDIT":
+        paidAmount = 0;
+        break;
+      case "PARTIALLY_PAID":
+        paidAmount = faker.number.int({ min: Math.floor(totalAmount * 0.2), max: Math.floor(totalAmount * 0.8) });
+        break;
+      case "PENDING":
+        paidAmount = 0;
+        break;
+      case "CANCELLED":
+      case "REFUNDED":
+        paidAmount = 0;
+        break;
+      default:
+        paidAmount = totalAmount;
+    }
 
     // Sales distribution: fewer early, more recent (business growth)
     // Week 2: 10%, Month 1: 25%, Month 2: 30%, Month 3: 35%
@@ -96,8 +122,9 @@ export async function seedSales(
       invoiceNo: `INV-${shopIdStr}-${String(invoiceCounter++).padStart(5, "0")}`,
       items,
       totalAmount,
+      paidAmount,
+      status: statusRoll,
       discount,
-      paymentType,
       // 40% chance of having notes
       notes: faker.helpers.maybe(
         () => faker.helpers.arrayElement(SALE_NOTES),

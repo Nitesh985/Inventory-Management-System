@@ -1,140 +1,68 @@
 import Payment from "../models/payment.models.ts";
 import { faker } from "@faker-js/faker";
 import { Types } from "mongoose";
-import { getDateForDay } from "./utils/dateHelpers.ts";
 
-const PAYMENT_METHODS = [
-  "CASH",
-  "ESEWA",
-  "KHALTI",
-  "FONEPAY",
-  "BANK_TRANSFER",
-  "CARD",
-] as const;
-
-// Payment method weights (CASH is most common in Nepal)
-const PAYMENT_METHOD_WEIGHTS = [
-  { value: "CASH", weight: 45 },
-  { value: "ESEWA", weight: 20 },
-  { value: "KHALTI", weight: 15 },
-  { value: "FONEPAY", weight: 10 },
-  { value: "BANK_TRANSFER", weight: 7 },
-  { value: "CARD", weight: 3 },
-] as const;
-
-// Realistic payment notes
-const CUSTOMER_PAYMENT_NOTES = [
-  "Partial credit clearance",
-  "Full balance paid",
-  "Advance for next order",
-  "Weekly payment",
-  "Festival season payment",
-  "Monthly credit settlement",
-  "Urgent payment received",
-  null, // No note
-];
-
-const SUPPLIER_PAYMENT_NOTES = [
-  "Stock payment - invoice #",
-  "Advance for next delivery",
-  "Monthly settlement",
-  "Partial payment",
-  "Full invoice cleared",
-  "COD payment",
-  null, // No note
-];
-
-export async function seedPayments({
-  shopId,
-  customers = [],
-  suppliers = [],
-}: {
-  shopId: Types.ObjectId;
-  customers: any[];
-  suppliers: any[];
-}) {
+/**
+ * Create payment records linked to sales that have been paid (COMPLETED or PARTIALLY_PAID).
+ * Payment model: { shopId, salesId, amount, method (CASH|ESEWA|KHALTI) }
+ */
+export async function seedPayments(
+  shopId: Types.ObjectId,
+  sales: any[]
+) {
   const payments = [];
 
-  // 🔹 Customer payments (money received) - Days 3-6
-  for (const customer of customers) {
-    // 55% customers make at least one payment
-    if (faker.datatype.boolean({ probability: 0.55 })) {
-      const paymentCount = faker.number.int({ min: 1, max: 3 });
+  for (const sale of sales) {
+    // Only create payments for sales that have some payment
+    if (sale.paidAmount <= 0) continue;
 
-      for (let i = 0; i < paymentCount; i++) {
-        const method = faker.helpers.weightedArrayElement(PAYMENT_METHOD_WEIGHTS);
-        
-        // Payments happen throughout the 3 months (after first week)
-        const dayOffset = faker.number.int({ min: 7, max: 89 });
-        const createdAt = getDateForDay(dayOffset);
+    const method = faker.helpers.weightedArrayElement([
+      { value: "CASH" as const, weight: 60 },
+      { value: "ESEWA" as const, weight: 25 },
+      { value: "KHALTI" as const, weight: 15 },
+    ]);
 
-        // Note based on payment method
-        let note = null;
-        if (faker.datatype.boolean({ probability: 0.5 })) {
-          if (method === "CASH") {
-            note = faker.helpers.arrayElement(["Cash received", "Counter payment", null]);
-          } else {
-            note = `Paid via ${method}` + (faker.datatype.boolean({ probability: 0.3 }) 
-              ? ` - Txn: ${faker.string.alphanumeric(10).toUpperCase()}` 
-              : "");
-          }
-        }
+    const createdAt = new Date(sale.createdAt);
+    // Payment usually same day or within a few hours of sale
+    createdAt.setHours(
+      createdAt.getHours() + faker.number.int({ min: 0, max: 4 })
+    );
 
-        payments.push({
-          shopId,
-          partyType: "CUSTOMER",
-          partyId: customer._id,
-          amount: faker.number.int({ min: 500, max: 8000 }),
-          method,
-          note,
-          createdAt,
-          updatedAt: createdAt,
-        });
-      }
-    }
-  }
+    // For partially paid sales, might have multiple payments
+    if (sale.status === "PARTIALLY_PAID" && faker.datatype.boolean({ probability: 0.4 })) {
+      // Split into 2 payments
+      const firstAmount = Math.floor(sale.paidAmount * faker.number.float({ min: 0.3, max: 0.7 }));
+      const secondAmount = sale.paidAmount - firstAmount;
 
-  // 🔹 Supplier payments (money paid out) - Days 2-6
-  for (const supplier of suppliers) {
-    // 45% suppliers receive payments
-    if (faker.datatype.boolean({ probability: 0.45 })) {
-      const paymentCount = faker.number.int({ min: 1, max: 2 });
+      payments.push({
+        shopId,
+        salesId: sale._id,
+        amount: firstAmount,
+        method,
+        createdAt,
+        updatedAt: createdAt,
+      });
 
-      for (let i = 0; i < paymentCount; i++) {
-        // Suppliers more likely to receive bank transfer or cash
-        const method = faker.helpers.weightedArrayElement([
-          { value: "CASH", weight: 40 },
-          { value: "BANK_TRANSFER", weight: 35 },
-          { value: "FONEPAY", weight: 10 },
-          { value: "ESEWA", weight: 8 },
-          { value: "KHALTI", weight: 5 },
-          { value: "CARD", weight: 2 },
-        ]);
+      const laterDate = new Date(createdAt);
+      laterDate.setDate(laterDate.getDate() + faker.number.int({ min: 1, max: 7 }));
 
-        // Supplier payments throughout 3 months
-        const dayOffset = faker.number.int({ min: 7, max: 89 });
-        const createdAt = getDateForDay(dayOffset);
-
-        // Note for supplier payment
-        let note = null;
-        if (faker.datatype.boolean({ probability: 0.6 })) {
-          const noteBase = faker.helpers.arrayElement(SUPPLIER_PAYMENT_NOTES);
-          note = noteBase?.includes("#") 
-            ? noteBase + faker.number.int({ min: 1000, max: 9999 })
-            : noteBase;
-        }
-
-        payments.push({
-          shopId,
-          partyType: "SUPPLIER",
-          partyId: supplier._id,
-          amount: faker.number.int({ min: 2000, max: 25000 }),
-          method,
-          note,
-          createdAt,
-          updatedAt: createdAt,
-        });
-      }
+      payments.push({
+        shopId,
+        salesId: sale._id,
+        amount: secondAmount,
+        method: faker.helpers.arrayElement(["CASH", "ESEWA", "KHALTI"] as const),
+        createdAt: laterDate,
+        updatedAt: laterDate,
+      });
+    } else {
+      payments.push({
+        shopId,
+        salesId: sale._id,
+        amount: sale.paidAmount,
+        method,
+        createdAt,
+        updatedAt: createdAt,
+      });
     }
   }
 
