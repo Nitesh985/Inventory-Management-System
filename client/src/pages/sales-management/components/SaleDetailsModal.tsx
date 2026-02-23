@@ -1,6 +1,7 @@
 import Button from '@/components/ui/Button'
 import Icon from '@/components/AppIcon'
 import * as LucideIcons from 'lucide-react'
+import { useState } from 'react'
 
 interface SaleItem {
   productId: string
@@ -25,9 +26,29 @@ interface Sale {
 interface Props {
   sale: Sale
   onClose: () => void
+  onStatusUpdate?: (saleId: string, newStatus: string) => Promise<void>
 }
 
-const SaleDetailsModal = ({ sale, onClose }: Props) => {
+const SaleDetailsModal = ({ sale, onClose, onStatusUpdate }: Props) => {
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  const handleMarkAsCompleted = async () => {
+    if (!onStatusUpdate) return
+
+    if (window.confirm('Mark this sale as completed?')) {
+      try {
+        setIsUpdating(true)
+        await onStatusUpdate(sale._id, 'COMPLETED')
+        alert('Sale status updated to Completed!')
+        onClose()
+      } catch (error: any) {
+        console.error('Error updating status:', error)
+        alert(error?.response?.data?.message || 'Failed to update status. Please try again.')
+      } finally {
+        setIsUpdating(false)
+      }
+    }
+  }
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('en-IN', {
@@ -182,12 +203,24 @@ const SaleDetailsModal = ({ sale, onClose }: Props) => {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 bg-muted/30 border-t border-border flex items-center justify-end">
+          <div className="px-6 py-4 bg-muted/30 border-t border-border flex items-center justify-between">
+            {sale.status === 'PENDING' && onStatusUpdate && (
+              <Button 
+                variant="default" 
+                onClick={handleMarkAsCompleted}
+                loading={isUpdating}
+                iconName="CheckCircle" 
+                iconPosition="left"
+              >
+                Mark as Completed
+              </Button>
+            )}
+            {sale.status !== 'PENDING' && <div />}
             <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={onClose}>
+              <Button variant="outline" onClick={onClose} disabled={isUpdating}>
                 Close
               </Button>
-              <Button iconName="Printer" iconPosition="left">
+              <Button iconName="Printer" iconPosition="left" disabled={isUpdating}>
                 Print
               </Button>
             </div>

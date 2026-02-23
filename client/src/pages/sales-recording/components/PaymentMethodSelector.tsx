@@ -10,6 +10,7 @@ interface PaymentMethodSelectorProps {
   amountReceived: number;
   onAmountReceivedChange: (value: number) => void;
   totalAmount: number;
+  isWalkInCustomer?: boolean;
 }
 
 const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({ 
@@ -17,14 +18,20 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   onPaymentMethodChange, 
   amountReceived, 
   onAmountReceivedChange, 
-  totalAmount 
+  totalAmount,
+  isWalkInCustomer = false
 }) => {
-  const paymentMethods: { value: string; label: string; icon: keyof typeof LucideIcons }[] = [
+  const allPaymentMethods: { value: string; label: string; icon: keyof typeof LucideIcons }[] = [
     { value: 'CASH', label: 'Cash', icon: 'Banknote' },
     { value: 'CREDIT', label: 'Credit', icon: 'Book' },
     { value: 'ESEWA', label: 'Esewa', icon: 'Smartphone' },
     { value: 'KHALTI', label: 'Khalti', icon: 'Wallet' }
   ];
+
+  // Filter out credit option for walk-in customers
+  const paymentMethods = isWalkInCustomer 
+    ? allPaymentMethods.filter(method => method.value !== 'CREDIT')
+    : allPaymentMethods;
 
   const selectedMethod = paymentMethods?.find(method => method?.value === paymentMethod);
   const changeAmount = amountReceived - totalAmount;
@@ -32,6 +39,14 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-foreground">Payment Information</h3>
+      {isWalkInCustomer && (
+        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+          <div className="flex items-center space-x-2 text-blue-700">
+            <Icon name="Info" size={16} />
+            <span className="text-sm font-medium">Credit option is not available for walk-in customers</span>
+          </div>
+        </div>
+      )}
       <Select
         label="Payment Method"
         placeholder="Select payment method"

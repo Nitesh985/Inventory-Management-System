@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
@@ -43,9 +43,19 @@ const SalesRecording: React.FC = () => {
 
   const { mutate: createSaleMutation } = useMutation(createSale);
 
+  // Check if selected customer is walk-in
+  const isWalkInCustomer = selectedCustomer === 'walk-in';
+
   const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
   const discountedSubtotal = subtotal - discount;
   const totalAmount = discountedSubtotal;
+
+  // Clear payment method if credit is selected when switching to walk-in customer
+  useEffect(() => {
+    if (isWalkInCustomer && paymentMethod === 'CREDIT') {
+      setPaymentMethod('');
+    }
+  }, [selectedCustomer, isWalkInCustomer]);
 
   const handleAddLineItem = (lineItem: LineItem) => {
     setLineItems(prev => [...prev, lineItem]);
@@ -71,6 +81,12 @@ const SalesRecording: React.FC = () => {
 
   const handleRecordSale = async (): Promise<void> => {
     if (!isValidTransaction()) return;
+
+    // Prevent credit sales for walk-in customers
+    if (isWalkInCustomer && paymentMethod === 'CREDIT') {
+      alert('Credit sales are not allowed for walk-in customers. Please select a different payment method.');
+      return;
+    }
 
     setIsProcessing(true);
 
@@ -259,6 +275,7 @@ const SalesRecording: React.FC = () => {
                     amountReceived={amountReceived}
                     onAmountReceivedChange={setAmountReceived}
                     totalAmount={totalAmount}
+                    isWalkInCustomer={isWalkInCustomer}
                   />
                 </div>
               </div>

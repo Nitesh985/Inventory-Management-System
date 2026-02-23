@@ -429,4 +429,35 @@ const deleteSale = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-export { createSale, getSales, getSale, updateSale, deleteSale };
+// UPDATE SALE STATUS
+const updateSaleStatus = asyncHandler(async (req: Request, res: Response) => {
+  const shopId = req.user!.activeShopId!;
+  const saleId = req.params.id;
+  const { status } = req.body;
+
+  // Validate status
+  const validStatuses = ['PENDING', 'COMPLETED', 'CANCELLED', 'REFUNDED'];
+  if (!status || !validStatuses.includes(status)) {
+    throw new ApiError(400, `Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+  }
+
+  // Find and update the sale
+  const sale = await Sales.findOneAndUpdate(
+    {
+      _id: saleId,
+      shopId: new mongoose.Types.ObjectId(shopId),
+    },
+    { status },
+    { new: true }
+  ).populate('customerId', 'name phone email');
+
+  if (!sale) {
+    throw new ApiError(404, 'Sale not found');
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, sale, 'Sale status updated successfully'));
+});
+
+export { createSale, getSales, getSale, updateSale, deleteSale, updateSaleStatus };

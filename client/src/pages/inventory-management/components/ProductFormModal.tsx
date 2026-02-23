@@ -28,6 +28,7 @@ interface ProductFormModalProps {
   onClose: () => void;
   product?: Product | null;
   onSave: (productData: FormData) => void;
+  onSwitchToEdit?: (product: any) => void;
 }
 
 interface FormData {
@@ -67,7 +68,7 @@ const generateSKU = (name: string, category: string) => {
 
 
 
-const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, product = null, onSave }) => {
+const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, product = null, onSave, onSwitchToEdit }) => {
   
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -93,6 +94,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
   const [skuStatus, setSkuStatus] = useState<
     "idle" | "checking" | "available" | "taken"
   >("idle");
+  const [existingProduct, setExistingProduct] = useState<any>(null);
 
 
 console.log(formData)
@@ -156,6 +158,7 @@ console.log(formData)
     let timeout: NodeJS.Timeout;
   
     setSkuStatus("checking");
+    setExistingProduct(null);
   
     timeout = setTimeout(async () => {
       try {
@@ -164,9 +167,16 @@ console.log(formData)
           product?._id
         );
   
-        setSkuStatus(res.available ? "available" : "taken");
+        if (res.available) {
+          setSkuStatus("available");
+          setExistingProduct(null);
+        } else {
+          setSkuStatus("taken");
+          setExistingProduct(res.existingProduct || null);
+        }
       } catch {
         setSkuStatus("idle");
+        setExistingProduct(null);
       }
     }, 500); // debounce
   
@@ -332,6 +342,27 @@ console.log(formData)
                 <p className="text-sm text-green-600">
                   SKU is available
                 </p>
+              )}
+              
+              {skuStatus === "taken" && existingProduct && !product && onSwitchToEdit && (
+                <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800 font-medium mb-2">
+                    Product already exists: {existingProduct.name}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onSwitchToEdit(existingProduct);
+                      onClose();
+                    }}
+                    iconName="Edit"
+                    iconPosition="left"
+                  >
+                    Update Existing Product
+                  </Button>
+                </div>
               )}
 
               

@@ -4,7 +4,8 @@ import {
   getSales,
   getSale,
   updateSale,
-  deleteSale
+  deleteSale,
+  updateSaleStatus
 } from '../controllers/sales.controllers.ts'
 import { verifyBusinessAuth } from '../middlewares/auth.middlewares.ts'
 
@@ -20,6 +21,9 @@ router.get('/', getSales)
 
 // GET SINGLE SALE
 router.get('/:id', getSale)
+
+// UPDATE SALE STATUS
+router.patch('/:id/status', updateSaleStatus)
 
 // UPDATE SALE
 router.put('/:id', updateSale)

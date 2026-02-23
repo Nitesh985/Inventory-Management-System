@@ -9,7 +9,7 @@ import SalesFilterToolbar from './components/SalesFilterToolbar'
 import SalesTable from './components/SalesTable'
 import SalesPagination from './components/SalesPagination'
 import SaleDetailsModal from './components/SaleDetailsModal'
-import { getAllSales } from '@/api/sales'
+import { getAllSales, updateSaleStatus } from '@/api/sales'
 import { useNavigate } from 'react-router-dom'
 import { useAutoTour } from '@/hooks/useTour'
 import '@/styles/tour.css'
@@ -195,6 +195,17 @@ const SalesManagementPage = () => {
     navigate('/sales-recording')
   }
 
+  const handleStatusUpdate = async (saleId: string, newStatus: string): Promise<void> => {
+    try {
+      await updateSaleStatus(saleId, newStatus)
+      // Refresh the sales list after status update
+      await fetchSales()
+    } catch (error) {
+      console.error('Error updating sale status:', error)
+      throw error
+    }
+  }
+
   return (
     <>
       <Helmet>
@@ -299,6 +310,7 @@ const SalesManagementPage = () => {
         <SaleDetailsModal
           sale={selectedSale}
           onClose={handleCloseSaleModal}
+          onStatusUpdate={handleStatusUpdate}
         />
       )}
     </>

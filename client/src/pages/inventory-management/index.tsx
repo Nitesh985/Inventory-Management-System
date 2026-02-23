@@ -233,6 +233,37 @@ const InventoryManagement: React.FC = () => {
     setShowProductModal(true);
   };
 
+  const handleSwitchToEditMode = async (existingProductData: any): Promise<void> => {
+    if (!existingProductData) return;
+
+    console.log("Switching to edit mode for existing product:", existingProductData);
+
+    // Find the full product details from our products list
+    const fullProduct = products.find(p => p.id === existingProductData._id || p.sku === existingProductData.sku);
+    
+    if (fullProduct) {
+      // Use the full product data we already have
+      handleEditProduct(fullProduct);
+    } else {
+      // If not found in list, use the data returned from the API
+      const productForModal = {
+        _id: existingProductData._id,
+        name: existingProductData.name,
+        sku: existingProductData.sku,
+        category: existingProductData.category,
+        description: existingProductData.description || "",
+        stock: 0, // Will be fetched
+        minStock: 0,
+        price: existingProductData.price || 0,
+        cost: existingProductData.cost || 0,
+        supplier: "",
+      };
+      
+      setEditingProduct(productForModal as any);
+      setShowProductModal(true);
+    }
+  };
+
   const handleDeleteProduct = async (
     productId: string | number,
   ): Promise<void> => {
@@ -551,6 +582,7 @@ const InventoryManagement: React.FC = () => {
         }}
         product={editingProduct}
         onSave={handleSaveProduct}
+        onSwitchToEdit={handleSwitchToEditMode}
       />
       <BulkImportModal
         isOpen={showBulkImportModal}

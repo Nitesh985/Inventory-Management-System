@@ -73,5 +73,10 @@ async function getAllSales(){
   return res.data.data;
 }
 
+async function updateSaleStatus(saleId: string, status: string) {
+  const res = await api.patch(`/sales/${saleId}/status`, { status });
+  return res.data;
+}
 
-export { createSale, getSales, getSaleById, updateSale, deleteSale, getAllSales };
+
+export { createSale, getSales, getSaleById, updateSale, deleteSale, getAllSales, updateSaleStatus };

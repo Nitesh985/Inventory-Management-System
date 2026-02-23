@@ -27,11 +27,31 @@ const checkSkuAvailability = asyncHandler(async (req: Request, res: Response) =>
     query._id = { $ne: excludeProductId };
   }
 
-  const exists = await Product.exists(query);
+  const existingProduct = await Product.findOne(query)
+    .populate('category', 'name')
+    .lean();
+
+  // If product exists, return its details along with availability status
+  if (existingProduct) {
+    return res.status(200).json(
+      new ApiResponse(200, {
+        available: false,
+        existingProduct: {
+          _id: existingProduct._id,
+          name: existingProduct.name,
+          sku: existingProduct.sku,
+          category: existingProduct.category?.name || existingProduct.category,
+          price: existingProduct.price,
+          cost: existingProduct.cost,
+        }
+      })
+    );
+  }
 
   return res.status(200).json(
     new ApiResponse(200, {
-      available: !exists,
+      available: true,
+      existingProduct: null
     })
   );
 });
