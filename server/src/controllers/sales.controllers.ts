@@ -44,6 +44,7 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!;
   const {
     customerId,
+    invoiceNo,
     items,
     totalAmount,
     paidAmount = 0,
