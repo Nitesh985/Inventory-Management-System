@@ -41,27 +41,41 @@ const SalesRecording: React.FC = () => {
   const [discount, setDiscount] = useState<number>(0);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isLoadingInvoice, setIsLoadingInvoice] = useState<boolean>(true);
   // const [customers, setCustomers] = useState<Customer[]>([]);
   const [invoiceNo, setInvoiceNo] = useState<string>('');
 
   const { mutate: createSaleMutation } = useMutation(createSale);
 
+  // Check if selected customer is walk-in
+  const isWalkInCustomer = selectedCustomer === 'walk-in';
+
   // Fetch invoice number on component mount
   useEffect(() => {
-    const fetchInvoiceNo = async () => {
-      try {
-        const response = await axios.get('/api/sales/generate/invoiceNo');
-        console.log(response)
-        if (response.data && response.data.data && response.data.data.invoiceNo) {
-          setInvoiceNo(response.data.data.invoiceNo);
-        }
-      } catch (error) {
-        console.error('Error fetching invoice number:', error);
-      }
-    };
-
-    fetchInvoiceNo();
+    fetchInvoiceNumber();
   }, []);
+
+  const fetchInvoiceNumber = async () => {
+    setIsLoadingInvoice(true);
+    try {
+      const response = await axios.get('/api/sales/generate/invoiceNo');
+      console.log('Invoice response:', response);
+      if (response.data && response.data.data && response.data.data.invoiceNo) {
+        setInvoiceNo(response.data.data.invoiceNo);
+      } else {
+        // Fallback invoice number if API fails
+        setInvoiceNo(`SALE-${Date.now().toString().slice(-6)}`);
+        console.warn('Using fallback invoice number');
+      }
+    } catch (error) {
+      console.error('Error fetching invoice number:', error);
+      // Generate a fallback invoice number
+      setInvoiceNo(`SALE-${Date.now().toString().slice(-6)}`);
+      alert('Could not fetch invoice number from server. Using temporary invoice number.');
+    } finally {
+      setIsLoadingInvoice(false);
+    }
+  };
 
   const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
   const discountedSubtotal = subtotal - discount;
@@ -99,6 +113,12 @@ const SalesRecording: React.FC = () => {
   const handleRecordSale = async (): Promise<void> => {
     if (!isValidTransaction()) return;
 
+    // Check if invoice number is loaded
+    if (!invoiceNo || invoiceNo.trim() === '') {
+      alert('Invoice number is not ready. Please wait a moment and try again.');
+      return;
+    }
+
     // Prevent credit sales for walk-in customers
     if (isWalkInCustomer && paymentMethod === 'CREDIT') {
       alert('Credit sales are not allowed for walk-in customers. Please select a different payment method.');
@@ -130,6 +150,9 @@ const SalesRecording: React.FC = () => {
       console.log('Sale recorded:', result);
       handleClearTransaction();
       alert('Sale recorded successfully!');
+      
+      // Fetch new invoice number for next sale
+      fetchInvoiceNumber();
       
       // Navigate to sales management page after successful sale
       navigate('/sales-management');
@@ -184,6 +207,8 @@ const SalesRecording: React.FC = () => {
       lineItems.length > 0 &&
       !!selectedCustomer &&
       !!paymentMethod &&
+      !!invoiceNo &&
+      !isLoadingInvoice &&
       (paymentMethod.toUpperCase() !== 'CASH' || amountReceived >= totalAmount)
     );
   };
@@ -261,7 +286,7 @@ const SalesRecording: React.FC = () => {
                           className="text-muted-foreground"
                         />
                         <span className="text-sm font-medium text-foreground">
-                          {invoiceNo}
+                          {isLoadingInvoice ? 'Loading...' : (invoiceNo || 'Generating...')}
                         </span>
                       </div>
                     </div>
