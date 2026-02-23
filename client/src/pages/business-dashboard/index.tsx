@@ -122,7 +122,7 @@ const BusinessDashboard: React.FC = () => {
     {
       title: "Active Products",
       value: safeMetrics.products.total.toLocaleString(),
-      change: `${safeMetrics.products.total} total items`,
+      change: safeMetrics.products.total === 0 ? 'No products yet' : `${safeMetrics.products.total} total items`,
       changeType: "neutral" as ChangeType,
       icon: "Package",
       iconColor: "text-accent"
@@ -132,8 +132,8 @@ const BusinessDashboard: React.FC = () => {
       value: safeMetrics.products.lowStock.toString(),
       change:
         safeMetrics.products.lowStock > 0
-          ? `${safeMetrics.products.lowStock} need restock`
-          : "Stock is healthy",
+          ? `${safeMetrics.products.lowStock} items need restock`
+          : "All stock levels are healthy",
       changeType:
         safeMetrics.products.lowStock > 0 ? "negative" as ChangeType : "positive" as ChangeType,
       icon: "AlertTriangle",
@@ -143,11 +143,11 @@ const BusinessDashboard: React.FC = () => {
     {
       title: "Today's Sales",
       value: `Rs. ${Math.round(safeMetrics.todaysSales.total).toLocaleString()}`,
-      change: `${safeMetrics.todaysSales.change} vs yesterday`,
+      change: safeMetrics.todaysSales.total === 0 ? 'No sales today' : `${safeMetrics.todaysSales.change} vs yesterday`,
       changeType: safeMetrics.todaysSales.changeType,
       icon: "ShoppingCart",
       iconColor: "text-success",
-      trend: true
+      trend: safeMetrics.todaysSales.total > 0
     }
   ];
 

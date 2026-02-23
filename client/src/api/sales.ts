@@ -7,16 +7,20 @@ const api = axios.create({
 
 export interface SaleItem {
   productId: string;
+  productName: string;
   quantity: number;
   unitPrice: number;
+  totalPrice: number;
 }
 
 export interface CreateSaleDTO {
   customerId: string;
-  shopId: string;
   items: SaleItem[];
   totalAmount: number;
   paidAmount: number;
+  paymentMethod: string;
+  discount?: number;
+  notes?: string;
 }
 
 export interface UpdateSaleDTO {

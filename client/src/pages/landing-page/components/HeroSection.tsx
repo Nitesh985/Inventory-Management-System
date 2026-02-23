@@ -1,10 +1,29 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Button from "../../../components/ui/Button";
 import Icon from "../../../components/AppIcon";
 import type { HeroSectionProps } from "../types";
 import logooo from "../../../assets/logooo.png";
+import { getShopStats } from "@/api/shops";
 
 const HeroSection = ({ onGetStarted, onTryDemo }: HeroSectionProps) => {
+  const [userCount, setUserCount] = useState<string>("100+");
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await getShopStats();
+        if (response?.data?.displayCount) {
+          setUserCount(response.data.displayCount);
+        }
+      } catch (error) {
+        console.error("Failed to fetch shop stats:", error);
+        // Keep default value on error
+      }
+    };
+    
+    fetchStats();
+  }, []);
+
   return (
     <section className="relative py-12 sm:py-20 md:py-32 px-3 sm:px-4 overflow-hidden bg-gradient-to-br from-white via-blue-50 to-white">
       {/* Animated background elements - Hidden on mobile for performance */}
@@ -86,33 +105,26 @@ const HeroSection = ({ onGetStarted, onTryDemo }: HeroSectionProps) => {
           {/* Buttons with mobile optimization */}
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 justify-center items-stretch sm:items-center pt-4 sm:pt-6 animate-fade-in-delay-3">
             <Button
-              size="lg"
+              size="xl"
               onClick={onGetStarted}
               className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 rounded-lg sm:rounded-xl font-bold py-3 px-6 sm:px-8 shadow-lg hover:shadow-2xl transition-all transform hover:scale-105 text-base sm:text-lg active:scale-95"
             >
-              🚀 Get Started Free
+              🚀 Let's Get Started
             </Button>
 
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={onTryDemo}
-              className="w-full sm:w-auto border-2 border-blue-400 text-blue-600 hover:bg-blue-50 rounded-lg sm:rounded-xl font-bold py-3 px-6 sm:px-8 transition-all transform hover:scale-105 text-base sm:text-lg active:scale-95"
-            >
-              ▶️ Try Demo
-            </Button>
+            
           </div>
 
           {/* Trust Badges - Mobile optimized */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 md:gap-8 text-xs sm:text-sm text-gray-700 pt-4 sm:pt-6 animate-fade-in-delay-4">
             <div className="flex items-center space-x-1.5 bg-green-50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg">
               <Icon name="CheckCircle" size={16} className="text-green-500 font-bold" />
-              <span className="font-semibold">No card</span>
+              <span className="font-semibold">Easy to setup</span>
             </div>
 
             <div className="flex items-center space-x-1.5 bg-blue-50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg">
               <Icon name="Users" size={16} className="text-blue-600 font-bold" />
-              <span className="font-semibold">10K+ users</span>
+              <span className="font-semibold">{userCount} users</span>
             </div>
 
             <div className="flex items-center space-x-1.5 bg-yellow-50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg">

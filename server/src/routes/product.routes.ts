@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import {
   createProduct,
+  bulkImportProducts,
   getProducts,
   getProduct,
   updateProduct,
@@ -16,6 +17,9 @@ router.use(verifyBusinessAuth)
 
 // CREATE PRODUCT
 router.post('/', createProduct)
+
+// BULK IMPORT PRODUCTS
+router.post('/bulk-import', bulkImportProducts)
 
 // GET ALL PRODUCTS
 router.get('/', getProducts)

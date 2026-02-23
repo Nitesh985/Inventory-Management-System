@@ -16,9 +16,13 @@ interface Props {
 }
 
 const SalesStats = ({ sales, loading = false }: Props) => {
+  // Calculate total revenue from all sales
   const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0)
-  const totalPaid = sales.reduce((sum, sale) => sum + (sale.paidAmount || 0), 0)
-  const pendingAmount = totalRevenue - totalPaid
+  
+  // Calculate pending amount only from PENDING/CREDIT sales
+  const pendingAmount = sales
+    .filter(sale => sale.status === 'PENDING' || sale.paymentMethod === 'CREDIT')
+    .reduce((sum, sale) => sum + ((sale.totalAmount || 0) - (sale.paidAmount || 0)), 0)
 
   // Calculate today's sales
   const today = new Date()

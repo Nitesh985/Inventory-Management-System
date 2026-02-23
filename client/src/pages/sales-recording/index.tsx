@@ -4,7 +4,6 @@ import { Helmet } from 'react-helmet';
 import axios from 'axios';
 
 import Icon from '@/components/AppIcon';
-import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import CustomerSelector from '@/components/customer/CustomerSelector';
 import Header from '@/components/ui/Header';
@@ -28,11 +27,6 @@ interface LineItem {
   stock: number;
 }
 
-interface Customer {
-  id: string;
-  name: string;
-}
-
 const SalesRecording: React.FC = () => {
   const navigate = useNavigate();
 
@@ -47,10 +41,10 @@ const SalesRecording: React.FC = () => {
   const [discount, setDiscount] = useState<number>(0);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  // const [customers, setCustomers] = useState<Customer[]>([]);
   const [invoiceNo, setInvoiceNo] = useState<string>('');
 
-  const { mutate: createSaleMutation, loading: creatingSale } = useMutation(createSale);
+  const { mutate: createSaleMutation } = useMutation(createSale);
 
   // Fetch invoice number on component mount
   useEffect(() => {
@@ -72,10 +66,6 @@ const SalesRecording: React.FC = () => {
   const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
   const discountedSubtotal = subtotal - discount;
   const totalAmount = discountedSubtotal;
-
-  const handleAddCustomer = (customer: Customer) => {
-    setCustomers(prev => [...prev, customer]);
-  };
 
   const handleAddLineItem = (lineItem: LineItem) => {
     setLineItems(prev => [...prev, lineItem]);
@@ -118,18 +108,22 @@ const SalesRecording: React.FC = () => {
         })),
         totalAmount: totalAmount,
         paidAmount: paymentMethod === 'CREDIT' ? 0 : (paymentMethod === 'CASH' ? amountReceived : totalAmount),
-        paymentMethod: paymentMethod,
+        paymentMethod: paymentMethod.toUpperCase(),
         discount: discount
       };
 
-      await createSaleMutation(saleData);
+      const result = await createSaleMutation(saleData);
 
-      console.log('Sale recorded:', saleData);
+      console.log('Sale recorded:', result);
       handleClearTransaction();
       alert('Sale recorded successfully!');
-    } catch (error) {
+      
+      // Navigate to sales management page after successful sale
+      navigate('/sales-management');
+    } catch (error: any) {
       console.error('Error recording sale:', error);
-      alert('Error recording sale. Please try again.');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error recording sale. Please try again.';
+      alert(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -177,7 +171,7 @@ const SalesRecording: React.FC = () => {
       lineItems.length > 0 &&
       !!selectedCustomer &&
       !!paymentMethod &&
-      (paymentMethod !== 'cash' || amountReceived >= totalAmount)
+      (paymentMethod.toUpperCase() !== 'CASH' || amountReceived >= totalAmount)
     );
   };
 
@@ -266,7 +260,6 @@ const SalesRecording: React.FC = () => {
                   <CustomerSelector
                     selectedCustomer={selectedCustomer}
                     onCustomerSelect={setSelectedCustomer}
-                    onAddCustomer={handleAddCustomer}
                   />
                 </div>
 

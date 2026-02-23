@@ -38,6 +38,7 @@ import dataManagementRouter from './routes/data-management.routes.ts'
 import budgetRouter from './routes/budget.routes.ts'
 import creditRouter from './routes/credit.routes.ts'
 import categoryRouter from './routes/category.routes.ts'
+import chatRouter from './routes/chat.routes.ts'
 
 
 app.use("/api/customers", customerRouter)
@@ -53,6 +54,7 @@ app.use("/api/dashboard", dashboardRouter);
 app.use("/api/data-management", dataManagementRouter);
 app.use("/api/budgets", budgetRouter);
 app.use("/api/credits", creditRouter);
+app.use("/api/chats", chatRouter);
 
 
 

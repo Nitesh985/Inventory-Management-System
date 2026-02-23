@@ -14,17 +14,30 @@ interface ChatWindowProps {
 
 export function ChatWindow({ messages }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const lastMessageIdRef = useRef<string>('');
 
   useEffect(() => {
-    scrollToBottom();
+    // Auto-scroll only when a new message is added
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.id !== lastMessageIdRef.current) {
+        lastMessageIdRef.current = lastMessage.id;
+        
+        // Small delay to ensure DOM is updated
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-gradient-to-b from-white to-gray-50">
+    <div 
+      ref={scrollContainerRef}
+      className="h-full overflow-y-auto overflow-x-hidden p-4 md:p-6 bg-gradient-to-b from-white to-gray-50"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       {messages.length === 0 ? (
         <div className="h-full flex items-center justify-center">
           <div className="text-center max-w-md">
