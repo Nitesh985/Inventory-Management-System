@@ -1,0 +1,328 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
+import axios from 'axios';
+
+import Icon from '@/components/AppIcon';
+import Input from '@/components/ui/Input';
+import CustomerSelector from '@/components/customer/CustomerSelector';
+import Header from '@/components/ui/Header';
+import Sidebar from '@/components/ui/Sidebar';
+
+import ProductSelector from './components/ProductSelector';
+import TransactionSummary from './components/TransactionSummary';
+import PaymentMethodSelector from './components/PaymentMethodSelector';
+import TransactionActions from './components/TransactionActions';
+import { useMutation } from '@/hooks/useMutation';
+import { createSale } from '@/api/sales';
+
+
+interface LineItem {
+  id: number;
+  productId: string;
+  productName: string;
+  price: number;
+  quantity: number;
+  total: number;
+  stock: number;
+}
+
+const SalesRecording: React.FC = () => {
+  const navigate = useNavigate();
+
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<string>('');
+  const [transactionDate, setTransactionDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+  const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [amountReceived, setAmountReceived] = useState<number>(0);
+  const [discount, setDiscount] = useState<number>(0);
+  const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  // const [customers, setCustomers] = useState<Customer[]>([]);
+  const [invoiceNo, setInvoiceNo] = useState<string>('');
+
+  const { mutate: createSaleMutation } = useMutation(createSale);
+
+  // Fetch invoice number on component mount
+  useEffect(() => {
+    const fetchInvoiceNo = async () => {
+      try {
+        const response = await axios.get('/api/sales/generate/invoiceNo');
+        console.log(response)
+        if (response.data && response.data.data && response.data.data.invoiceNo) {
+          setInvoiceNo(response.data.data.invoiceNo);
+        }
+      } catch (error) {
+        console.error('Error fetching invoice number:', error);
+      }
+    };
+
+    fetchInvoiceNo();
+  }, []);
+
+  const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
+  const discountedSubtotal = subtotal - discount;
+  const totalAmount = discountedSubtotal;
+
+  // Clear payment method if credit is selected when switching to walk-in customer
+  useEffect(() => {
+    if (isWalkInCustomer && paymentMethod === 'CREDIT') {
+      setPaymentMethod('');
+    }
+  }, [selectedCustomer, isWalkInCustomer]);
+
+  const handleAddLineItem = (lineItem: LineItem) => {
+    setLineItems(prev => [...prev, lineItem]);
+  };
+
+  const handleUpdateLineItem = (id: number, newQuantity: number) => {
+    setLineItems(prev =>
+      prev.map(item =>
+        item.id === id
+          ? {
+              ...item,
+              quantity: newQuantity,
+              total: item.price * newQuantity,
+            }
+          : item
+      )
+    );
+  };
+
+  const handleRemoveLineItem = (id: number) => {
+    setLineItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const handleRecordSale = async (): Promise<void> => {
+    if (!isValidTransaction()) return;
+
+    // Prevent credit sales for walk-in customers
+    if (isWalkInCustomer && paymentMethod === 'CREDIT') {
+      alert('Credit sales are not allowed for walk-in customers. Please select a different payment method.');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const saleData = {
+        customerId: selectedCustomer,
+        invoiceNo: invoiceNo,
+        transactionDate: transactionDate,
+        items: lineItems.map(item => ({
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          totalPrice: item.total
+        })),
+        totalAmount: totalAmount,
+        paidAmount: paymentMethod === 'CREDIT' ? 0 : (paymentMethod === 'CASH' ? amountReceived : totalAmount),
+        paymentMethod: paymentMethod.toUpperCase(),
+        discount: discount
+      };
+
+      const result = await createSaleMutation(saleData);
+
+      console.log('Sale recorded:', result);
+      handleClearTransaction();
+      alert('Sale recorded successfully!');
+      
+      // Navigate to sales management page after successful sale
+      navigate('/sales-management');
+    } catch (error: any) {
+      console.error('Error recording sale:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error recording sale. Please try again.';
+      alert(errorMessage);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSaveAsDraft = (): void => {
+    const draftData = {
+      customer: selectedCustomer,
+      date: transactionDate,
+      items: lineItems,
+      paymentMethod,
+      savedAt: new Date().toISOString(),
+    };
+
+    console.log('Draft saved:', draftData);
+    // TODO: Implement actual draft saving logic (e.g., localStorage or backend)
+    alert('Transaction saved as draft!');
+  };
+
+  const handlePrintReceipt = (): void => {
+    const receiptData = {
+      customer: selectedCustomer,
+      date: transactionDate,
+      items: lineItems,
+      subtotal,
+      total: totalAmount,
+      paymentMethod,
+    };
+
+    console.log('Printing receipt:', receiptData);
+    // TODO: Implement actual printing logic
+    alert('Receipt sent to printer!');
+  };
+
+  const handleClearTransaction = (): void => {
+    setSelectedCustomer('');
+    setPaymentMethod('');
+    setAmountReceived(0);
+    setDiscount(0);
+    setLineItems([]);
+  };
+
+  const isValidTransaction = (): boolean => {
+    return (
+      lineItems.length > 0 &&
+      !!selectedCustomer &&
+      !!paymentMethod &&
+      (paymentMethod.toUpperCase() !== 'CASH' || amountReceived >= totalAmount)
+    );
+  };
+
+  return (
+    <>
+      <Helmet>
+        <title>Sales Recording - Digital Khata</title>
+        <meta name="description" content="Record and manage business sales transactions with customer details, product selection, and payment tracking for efficient sales management." />
+      </Helmet>
+      <div className="min-h-screen bg-background">
+        <Header 
+          onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          syncStatus="online"
+        />
+        
+        <Sidebar 
+          isCollapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          syncStatus="online"
+        />
+
+        <main className={`pt-16 pb-20 lg:pb-8 transition-all duration-300 ${
+          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72'
+        }`}>
+          <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+            {/* Page Header */}
+            <div className="mb-8">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Icon name="ShoppingCart" size={24} className="text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground">Sales Recording</h1>
+                  <p className="text-muted-foreground">
+                    Record new sales transactions with customer details and payment tracking
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Transaction Details */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-foreground">
+                      Transaction Details
+                    </h2>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date().toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Transaction Date"
+                      type="date"
+                      value={transactionDate}
+                      onChange={e => setTransactionDate(e.target.value)}
+                      required
+                    />
+                    <div className="flex items-end">
+                      <div className="bg-muted px-3 py-2 rounded-lg border border-border flex items-center space-x-2">
+                        <Icon
+                          name="Hash"
+                          size={16}
+                          className="text-muted-foreground"
+                        />
+                        <span className="text-sm font-medium text-foreground">
+                          {invoiceNo}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Selection */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <CustomerSelector
+                    selectedCustomer={selectedCustomer}
+                    onCustomerSelect={setSelectedCustomer}
+                  />
+                </div>
+
+                {/* Product Selection */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <ProductSelector
+                    lineItems={lineItems}
+                    onAddLineItem={handleAddLineItem}
+                    onUpdateLineItem={handleUpdateLineItem}
+                    onRemoveLineItem={handleRemoveLineItem}
+                  />
+                </div>
+
+                {/* Payment Method */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <PaymentMethodSelector
+                    paymentMethod={paymentMethod}
+                    onPaymentMethodChange={setPaymentMethod}
+                    amountReceived={amountReceived}
+                    onAmountReceivedChange={setAmountReceived}
+                    totalAmount={totalAmount}
+                    isWalkInCustomer={isWalkInCustomer}
+                  />
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-6">
+                <TransactionSummary 
+                  lineItems={lineItems} 
+                  discountAmount={discount}
+                  onDiscountChange={setDiscount}
+                />
+
+                <TransactionActions
+                  onRecordSale={handleRecordSale}
+                  onSaveAsDraft={handleSaveAsDraft}
+                  onPrintReceipt={handlePrintReceipt}
+                  onClearTransaction={handleClearTransaction}
+                  isValid={isValidTransaction()}
+                  isProcessing={isProcessing}
+                  hasItems={lineItems.length > 0}
+                />
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </>
+  );
+};
+
+export default SalesRecording;

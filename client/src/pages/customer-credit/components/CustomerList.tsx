@@ -32,6 +32,12 @@ interface CustomerListProps {
 
 type SortField = 'name' | 'balance' | 'lastTransaction';
 type SortOrder = 'asc' | 'desc';
+type CreditFilter = 'all' | 'has_due';
+
+const FILTER_OPTIONS: { value: CreditFilter; label: string; icon: string }[] = [
+  { value: 'all', label: 'All', icon: 'Users' },
+  { value: 'has_due', label: 'Has Due', icon: 'AlertCircle' },
+];
 
 const CustomerList = ({ 
   selectedCustomerId, 
@@ -46,15 +52,27 @@ const CustomerList = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [creditFilter, setCreditFilter] = useState<CreditFilter>('has_due');
 
   // Filter and sort customers
   const filteredCustomers = useMemo(() => {
     if (!customersWithData) return [];
     
     let result = customersWithData.filter((c) => {
+      // Search filter
       const primaryPhone = c.contact?.[0] || c.phone;
-      return c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (primaryPhone && primaryPhone.includes(searchTerm));
+      if (!matchesSearch) return false;
+
+      // Credit status filter
+      switch (creditFilter) {
+        case 'has_due':
+          return c.balance > 0;
+        case 'all':
+        default:
+          return true;
+      }
     });
 
     // Sort
@@ -77,7 +95,16 @@ const CustomerList = ({
     });
 
     return result;
-  }, [customersWithData, searchTerm, sortField, sortOrder]);
+  }, [customersWithData, searchTerm, sortField, sortOrder, creditFilter]);
+
+  // Compute filter counts
+  const filterCounts = useMemo(() => {
+    if (!customersWithData) return {} as Record<CreditFilter, number>;
+    return {
+      all: customersWithData.length,
+      has_due: customersWithData.filter(c => c.balance > 0).length,
+    };
+  }, [customersWithData]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -122,7 +149,7 @@ const CustomerList = ({
           <h3 className="font-bold text-foreground flex items-center gap-2">
             <Icon name="Users" size={18} className="text-primary" />
             Customers
-            {isExpanded && <span className="text-xs font-normal text-muted-foreground">({filteredCustomers.length})</span>}
+            <span className="text-xs font-normal text-muted-foreground">({filteredCustomers.length})</span>
           </h3>
           {onToggleExpand && (
             <Button 
@@ -149,6 +176,31 @@ const CustomerList = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+        {/* Credit Status Filters */}
+        <div className="flex flex-wrap gap-1.5">
+          {FILTER_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setCreditFilter(opt.value)}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                creditFilter === opt.value
+                  ? opt.value === 'has_due'
+                    ? 'bg-red-100 text-red-700 ring-1 ring-red-300'
+
+                    : 'bg-primary/10 text-primary ring-1 ring-primary/30'
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              <Icon name={opt.icon as any} size={12} />
+              {opt.label}
+              <span className={`ml-0.5 text-[10px] ${
+                creditFilter === opt.value ? 'opacity-80' : 'opacity-60'
+              }`}>
+                {filterCounts[opt.value] ?? 0}
+              </span>
+            </button>
+          ))}
         </div>
       </div>
 

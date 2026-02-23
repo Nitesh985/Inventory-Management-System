@@ -21,7 +21,7 @@ const CustomerCredit = () => {
   );
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isCustomerListExpanded, setIsCustomerListExpanded] = useState(false);
+  const [isCustomerListExpanded, setIsCustomerListExpanded] = useState(true);
   const [customerDetailsModalId, setCustomerDetailsModalId] = useState<string | null>(null);
 
   // Function to trigger a re-fetch across all components

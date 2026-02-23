@@ -13,8 +13,9 @@ export const getCustomersWithBalance = async () => {
 };
 
 // Get credit history for a specific customer (all credit sales + payments)
-export const getCustomerCreditHistory = async (customerId: string) => {
-  const response = await axios.get(`/api/credits/history/${customerId}`);
+export const getCustomerCreditHistory = async (customerId: string, limit?: number) => {
+  const params = limit ? { limit } : {};
+  const response = await axios.get(`/api/credits/history/${customerId}`, { params });
   return response.data;
 };
 

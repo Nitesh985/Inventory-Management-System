@@ -76,26 +76,55 @@ export async function seedExpenses(
   const expenses = [];
   const categories = Object.keys(EXPENSE_CATALOG);
 
-  // Distribute expenses across all 90 days
-  for (let i = 0; i < count; i++) {
-    const category = faker.helpers.arrayElement(categories);
+  // Monthly fixed expenses (Rent & Salary) — exactly 1 per month for 3 months
+  const monthlyCategories = ["Rent", "Salary"];
+  for (const category of monthlyCategories) {
+    const descriptions = EXPENSE_CATALOG[category as keyof typeof EXPENSE_CATALOG];
+    const amountRanges: Record<string, { min: number; max: number }> = {
+      "Rent": { min: 8000, max: 12000 },
+      "Salary": { min: 6000, max: 10000 },
+    };
+    const range = amountRanges[category]!;
+
+    for (let month = 0; month < 3; month++) {
+      // Place monthly expense on day 1-5 of each month block
+      const dayOffset = month * 30 + faker.number.int({ min: 1, max: 5 });
+      const createdAt = getDateForDay(Math.min(dayOffset, 89));
+
+      expenses.push({
+        shopId,
+        description: faker.helpers.arrayElement(descriptions),
+        amount: faker.number.int(range),
+        date: createdAt,
+        category,
+        deleted: false,
+        createdAt,
+        updatedAt: createdAt,
+      });
+    }
+  }
+
+  // Variable/operational expenses (everything except Rent & Salary)
+  const variableCategories = categories.filter(c => !monthlyCategories.includes(c));
+  const variableCount = count - 6; // subtract the 6 monthly entries above
+
+  for (let i = 0; i < variableCount; i++) {
+    const category = faker.helpers.arrayElement(variableCategories);
     const descriptions = EXPENSE_CATALOG[category as keyof typeof EXPENSE_CATALOG];
     const description = faker.helpers.arrayElement(descriptions);
 
-    // Amount ranges based on category (in NPR)
+    // Lower amount ranges for variable/operational expenses (in NPR)
     const amountRanges: Record<string, { min: number; max: number }> = {
-      "Rent": { min: 15000, max: 50000 },
-      "Utilities": { min: 500, max: 5000 },
-      "Supplies": { min: 200, max: 3000 },
-      "Transport": { min: 200, max: 2000 },
-      "Salary": { min: 8000, max: 35000 },
-      "Maintenance": { min: 500, max: 10000 },
-      "Taxes & Fees": { min: 1000, max: 15000 },
-      "Marketing": { min: 500, max: 8000 },
-      "Miscellaneous": { min: 100, max: 2000 },
+      "Utilities": { min: 200, max: 800 },
+      "Supplies": { min: 50, max: 500 },
+      "Transport": { min: 50, max: 400 },
+      "Maintenance": { min: 200, max: 1500 },
+      "Taxes & Fees": { min: 300, max: 2000 },
+      "Marketing": { min: 100, max: 800 },
+      "Miscellaneous": { min: 30, max: 300 },
     };
 
-    const range = amountRanges[category] || { min: 100, max: 5000 };
+    const range = amountRanges[category] || { min: 100, max: 1000 };
     const amount = faker.number.int(range);
 
     // Expenses spread evenly across 90 days
@@ -106,9 +135,8 @@ export async function seedExpenses(
       shopId,
       description,
       amount,
-      date: createdAt, // Expense date same as creation
+      date: createdAt,
       category,
-      // 2% chance expense is soft-deleted
       deleted: faker.datatype.boolean({ probability: 0.02 }),
       createdAt,
       updatedAt: createdAt,

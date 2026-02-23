@@ -7,6 +7,7 @@ import Sales from '../models/sales.models.ts';
 import Product from '../models/product.models.ts';
 import Inventory from '../models/inventory.models.ts';
 import Customer from '../models/customer.models.ts';
+import Credit from '../models/credit.models.ts';
 
 type SaleItemInput = {
   productId: string;
@@ -19,10 +20,12 @@ type SaleItemInput = {
 // GENERATE UNIQUE INVOICE NUMBER
 const generateInvoiceNo = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!;
+  const shopObjId = new mongoose.Types.ObjectId(shopId);
+  const shopIdStr = shopId.toString().slice(-4);
 
   // Find the latest invoice for this shop to get next counter
   const latestSale = await Sales.findOne(
-    { shopId: new mongoose.Types.ObjectId(shopId) },
+    { shopId: shopObjId },
     {},
     { sort: { createdAt: -1 } }
   );
@@ -34,8 +37,12 @@ const generateInvoiceNo = asyncHandler(async (req: Request, res: Response) => {
     invoiceCounter = lastCounter + 1;
   }
 
-  const shopIdStr = shopId.toString().slice(-4);
-  const invoiceNo = `INV-${shopIdStr}-${String(invoiceCounter).padStart(5, '0')}`;
+  // Keep incrementing until we find a unique invoice number
+  let invoiceNo = `INV-${shopIdStr}-${String(invoiceCounter).padStart(5, '0')}`;
+  while (await Sales.exists({ shopId: shopObjId, invoiceNo })) {
+    invoiceCounter++;
+    invoiceNo = `INV-${shopIdStr}-${String(invoiceCounter).padStart(5, '0')}`;
+  }
 
   return res.status(200).json(new ApiResponse(200, { invoiceNo }, 'Invoice number generated'));
 });
@@ -178,6 +185,24 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
     status,
     invoiceNo,
   });
+
+  // -------------------------------------------------------
+  // 4️⃣ CREATE CREDIT RECORD (if sale is on credit)
+  // -------------------------------------------------------
+  if (paymentMethod === 'CREDIT') {
+    const creditAmount = totalAmount - discount - paidAmount;
+    if (creditAmount > 0) {
+      await Credit.create({
+        shopId: new mongoose.Types.ObjectId(shopId),
+        customerId: new mongoose.Types.ObjectId(finalCustomerId),
+        saleId: sale._id,
+        type: 'CREDIT',
+        amount: creditAmount,
+        description: `Credit Sale - Invoice #${invoiceNo}`,
+        date: new Date(),
+      });
+    }
+  }
 
   return res.status(201).json(new ApiResponse(201, sale, 'Sale created successfully'));
 });

@@ -14,6 +14,7 @@ export { default as AIReportsDashboard } from "./ai-reports-dashboard";
 export { default as BusinessDashboard } from "./business-dashboard";
 export { default as BusinessSettings } from "./business-settings";
 export { default as CustomerCredit } from "./customer-credit";
+export { default as CreditHistoryPage } from "./customer-credit/credit-history";
 export { default as ExpenseTracking } from "./expense-tracking";
 export { default as InventoryManagement } from "./inventory-management";
 export { default as LandingPage } from "./landing-page";

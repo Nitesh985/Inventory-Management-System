@@ -14,6 +14,7 @@ import {
   LogIn as SignInPage,
   LandingPage,
   CustomerCredit as CustomerKhata,
+  CreditHistoryPage,
   TestPage,
   Signup as SignUp,
   Register as RegisterPage,
@@ -51,6 +52,7 @@ const Routes = () => {
           <Route path="/sales-recording" element={<SalesRecording />} />
           <Route path="/expense-tracking" element={<ExpenseTracking />} />
           <Route path="/customer-khata" element={<CustomerKhata />} />
+          <Route path="/customer-khata/credit-history" element={<CreditHistoryPage />} />
           <Route element={<AuthLayout />}>
             <Route path="/verify-email" element={<EmailVerification />} />
           </Route>

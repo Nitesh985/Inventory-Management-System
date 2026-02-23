@@ -101,9 +101,9 @@ async function seed() {
     const budgets = await seedBudgets(shop._id.toString());
     console.log(`   ✓ ${budgets.length} budget records`);
 
-    // Credits per shop
-    const credits = await seedCredits(shop._id, customers);
-    console.log(`   ✓ ${credits.length} credit records (throughout 3 months)`);
+    // Credits from credit sales + partial payments
+    const credits = await seedCredits(shop._id, customers, sales);
+    console.log(`   ✓ ${credits.length} credit records (from credit sales + payments)`);
   }
 
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");

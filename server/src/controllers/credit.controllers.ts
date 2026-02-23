@@ -3,15 +3,14 @@ import { Types } from 'mongoose'
 import { asyncHandler } from "../utils/asyncHandler.ts";
 import { ApiError } from "../utils/ApiError.ts";
 import { ApiResponse } from "../utils/ApiResponse.ts";
-import Sales from "../models/sales.models.ts";
-import Payment from "../models/payment.models.ts";
+import Credit from "../models/credit.models.ts";
 import Customer from "../models/customer.models.ts";
 
 // ========================
-// CUSTOMERS WITH BALANCE (from Sales & Payments)
+// CUSTOMERS WITH BALANCE (from Credit model)
 // ========================
 
-// Get all customers with their balance calculated from credit sales and payments
+// Get all customers with their balance calculated from credit records
 const getCustomersWithBalance = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!;
   const shopObjectId = new Types.ObjectId(shopId);
@@ -24,10 +23,10 @@ const getCustomersWithBalance = asyncHandler(async (req: Request, res: Response)
         deleted: false
       }
     },
-    // Lookup credit sales for each customer
+    // Lookup credit records for each customer
     {
       $lookup: {
-        from: "sales",
+        from: "credits",
         let: { customerId: "$_id" },
         pipeline: [
           {
@@ -36,81 +35,64 @@ const getCustomersWithBalance = asyncHandler(async (req: Request, res: Response)
                 $and: [
                   { $eq: ["$customerId", "$$customerId"] },
                   { $eq: ["$shopId", shopObjectId] },
-                  { $eq: ["$paymentMethod", "CREDIT"] }
+                  { $eq: ["$deleted", false] }
                 ]
               }
             }
           }
         ],
-        as: "creditSales"
-      }
-    },
-    // Lookup payments for each customer
-    {
-      $lookup: {
-        from: "payments",
-        let: { customerId: "$_id" },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ["$partyId", "$$customerId"] },
-                  { $eq: ["$shopId", shopObjectId] },
-                  { $eq: ["$partyType", "CUSTOMER"] }
-                ]
-              }
-            }
-          }
-        ],
-        as: "payments"
+        as: "creditRecords"
       }
     },
     // Calculate balance and stats
     {
       $addFields: {
-        // Total credit given (sum of credit sales after discount)
-        totalCredit: { 
+        // Total credit given (CREDIT type records)
+        totalCredit: {
           $sum: {
             $map: {
-              input: "$creditSales",
-              as: "sale",
-              in: { $subtract: ["$$sale.totalAmount", { $ifNull: ["$$sale.discount", 0] }] }
+              input: { $filter: { input: "$creditRecords", as: "r", cond: { $eq: ["$$r.type", "CREDIT"] } } },
+              as: "r",
+              in: "$$r.amount"
             }
           }
         },
-        // Total amount paid back
-        totalPaid: { $sum: "$payments.amount" },
+        // Total payments received (PAYMENT type records)
+        totalPaid: {
+          $sum: {
+            $map: {
+              input: { $filter: { input: "$creditRecords", as: "r", cond: { $eq: ["$$r.type", "PAYMENT"] } } },
+              as: "r",
+              in: "$$r.amount"
+            }
+          }
+        },
         // Number of credit transactions
-        creditSalesCount: { $size: "$creditSales" },
-        // Number of payments made
-        paymentsCount: { $size: "$payments" },
-        // Last credit sale date
-        lastCreditSale: { $max: "$creditSales.createdAt" },
-        // Last payment date
-        lastPayment: { $max: "$payments.createdAt" }
+        creditCount: {
+          $size: {
+            $filter: { input: "$creditRecords", as: "r", cond: { $eq: ["$$r.type", "CREDIT"] } }
+          }
+        },
+        // Number of payments
+        paymentsCount: {
+          $size: {
+            $filter: { input: "$creditRecords", as: "r", cond: { $eq: ["$$r.type", "PAYMENT"] } }
+          }
+        },
+        // Last transaction date
+        lastTransaction: { $max: "$creditRecords.date" }
       }
     },
     // Calculate balance (credit - paid = what they still owe)
     {
       $addFields: {
-        balance: { $subtract: ["$totalCredit", "$totalPaid"] },
-        lastTransaction: {
-          $cond: {
-            if: { $gt: ["$lastCreditSale", "$lastPayment"] },
-            then: "$lastCreditSale",
-            else: { $ifNull: ["$lastPayment", "$lastCreditSale"] }
-          }
-        }
+        balance: { $subtract: ["$totalCredit", "$totalPaid"] }
       }
     },
-    // Remove temporary arrays from output
+    // Remove temporary array from output
     {
       $project: {
-        creditSales: 0,
-        payments: 0,
-        lastCreditSale: 0,
-        lastPayment: 0
+        creditRecords: 0
       }
     },
     // Sort by name
@@ -126,7 +108,7 @@ const getCustomersWithBalance = asyncHandler(async (req: Request, res: Response)
 // CREDIT HISTORY FOR A CUSTOMER
 // ========================
 
-// Get full credit history (credit sales + payments) for a customer
+// Get full credit history (credits + payments) for a customer
 const getCustomerCreditHistory = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!;
   const { customerId } = req.params;
@@ -144,70 +126,47 @@ const getCustomerCreditHistory = asyncHandler(async (req: Request, res: Response
     throw new ApiError(404, "Customer not found");
   }
 
-  // Get all credit sales for this customer
-  const creditSales = await Sales.find({
+  // Support optional limit query param
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 0;
+
+  // Get credit records for this customer
+  let query = Credit.find({
     shopId: shopObjectId,
     customerId: customerObjectId,
-    paymentMethod: "CREDIT"
-  }).sort({ createdAt: -1 }).lean();
+    deleted: false
+  })
+    .populate("saleId", "invoiceNo items")
+    .sort({ date: -1 });
 
-  // Get all payments for this customer
-  const payments = await Payment.find({
-    shopId: shopObjectId,
-    partyId: customerObjectId,
-    partyType: "CUSTOMER"
-  }).sort({ createdAt: -1 }).lean();
-
-  // Combine and format as unified history
-  const history: Array<{
-    _id: string;
-    type: 'CREDIT' | 'PAYMENT';
-    date: Date;
-    amount: number;
-    description: string;
-    invoiceNo?: string;
-    items?: any[];
-    paymentMethod?: string;
-    note?: string;
-    runningBalance?: number;
-  }> = [];
-
-  // Add credit sales to history
-  for (const sale of creditSales) {
-    const saleAmount = sale.totalAmount - (sale.discount || 0);
-    history.push({
-      _id: sale._id.toString(),
-      type: 'CREDIT',
-      date: sale.createdAt,
-      amount: saleAmount,
-      description: `Credit Sale - Invoice #${sale.invoiceNo}`,
-      invoiceNo: sale.invoiceNo,
-      items: sale.items,
-      note: sale.notes
-    });
+  if (limit > 0) {
+    query = query.limit(limit);
   }
 
-  // Add payments to history
-  for (const payment of payments) {
-    history.push({
-      _id: payment._id.toString(),
-      type: 'PAYMENT',
-      date: payment.createdAt,
-      amount: payment.amount,
-      description: `Payment received via ${payment.method}`,
-      paymentMethod: payment.method,
-      note: payment.note || undefined
-    });
-  }
+  const creditRecords = await query.lean();
 
-  // Sort by date (newest first)
-  history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Get total count for pagination info
+  const totalCount = limit > 0
+    ? await Credit.countDocuments({ shopId: shopObjectId, customerId: customerObjectId, deleted: false })
+    : creditRecords.length;
 
-  // Calculate running balance (oldest to newest, then reverse)
-  const historyReversed = [...history].reverse();
+  // Format as unified history with running balance
+  const history = creditRecords.map((record) => ({
+    _id: record._id.toString(),
+    type: record.type,
+    date: record.date,
+    amount: record.amount,
+    description: record.description,
+    invoiceNo: (record.saleId as any)?.invoiceNo || undefined,
+    items: (record.saleId as any)?.items || undefined,
+    paymentMethod: record.paymentMethod || undefined,
+    runningBalance: 0, // will be calculated below
+  }));
+
+  // Calculate running balance (oldest to newest)
+  const historyOldestFirst = [...history].reverse();
   let runningBalance = 0;
-  for (const item of historyReversed) {
-    if (item.type === 'CREDIT') {
+  for (const item of historyOldestFirst) {
+    if (item.type === "CREDIT") {
       runningBalance += item.amount;
     } else {
       runningBalance -= item.amount;
@@ -216,15 +175,19 @@ const getCustomerCreditHistory = asyncHandler(async (req: Request, res: Response
   }
 
   // Calculate summary
-  const totalCredit = creditSales.reduce((sum, s) => sum + (s.totalAmount - (s.discount || 0)), 0);
-  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+  const totalCredit = creditRecords
+    .filter((r) => r.type === "CREDIT")
+    .reduce((sum, r) => sum + r.amount, 0);
+  const totalPaid = creditRecords
+    .filter((r) => r.type === "PAYMENT")
+    .reduce((sum, r) => sum + r.amount, 0);
   const currentBalance = totalCredit - totalPaid;
 
   return res.status(200).json(new ApiResponse(200, {
     customer: {
       _id: customer._id,
       name: customer.name,
-      phone: customer.phone,
+      phone: (customer as any).phone,
       email: customer.email,
       address: customer.address
     },
@@ -233,142 +196,90 @@ const getCustomerCreditHistory = asyncHandler(async (req: Request, res: Response
       totalPaid,
       currentBalance
     },
-    history
+    history,
+    totalCount
   }, "Credit history fetched"));
 });
 
 // ========================
-// CREDIT SUMMARY (existing)
+// CREDIT SUMMARY
 // ========================
 
 const getCustomersCreditSummary = asyncHandler(async (
   req: Request,
   res: Response
 ) => {
-  const shopId = req.user!.activeShopId!
+  const shopId = req.user!.activeShopId!;
   const shopObjectId = new Types.ObjectId(shopId);
 
-  // ============================
-  // 1️⃣ Total CREDIT sales
-  // ============================
-  const creditSalesAgg = await Sales.aggregate([
+  // Aggregate all credit records for this shop
+  const summaryAgg = await Credit.aggregate([
     {
       $match: {
         shopId: shopObjectId,
-        paymentMethod: "CREDIT",
+        deleted: false,
       },
     },
     {
       $group: {
-        _id: null,
-        total: { $sum: "$totalAmount" },
+        _id: "$type",
+        total: { $sum: "$amount" },
+        customers: { $addToSet: "$customerId" },
       },
     },
   ]);
 
-  const totalCreditSales = creditSalesAgg[0]?.total ?? 0;
+  const creditEntry = summaryAgg.find((e) => e._id === "CREDIT");
+  const paymentEntry = summaryAgg.find((e) => e._id === "PAYMENT");
 
-  // ============================
-  // 2️⃣ Total customer payments
-  // ============================
-  const paymentAgg = await Payment.aggregate([
+  const totalCreditGiven = creditEntry?.total ?? 0;
+  const totalCollected = paymentEntry?.total ?? 0;
+  const totalReceivable = totalCreditGiven - totalCollected;
+
+  // Unique customers involved in any credit activity
+  const allCustomerIds = new Set([
+    ...(creditEntry?.customers || []).map((id: any) => id.toString()),
+    ...(paymentEntry?.customers || []).map((id: any) => id.toString()),
+  ]);
+  const activeCustomersCount = allCustomerIds.size;
+
+  // Per-customer breakdown for stats
+  const perCustomerAgg = await Credit.aggregate([
     {
       $match: {
         shopId: shopObjectId,
-        partyType: "CUSTOMER",
+        deleted: false,
       },
     },
     {
       $group: {
-        _id: null,
+        _id: { customerId: "$customerId", type: "$type" },
         total: { $sum: "$amount" },
       },
     },
+    {
+      $group: {
+        _id: "$_id.customerId",
+        credits: {
+          $sum: { $cond: [{ $eq: ["$_id.type", "CREDIT"] }, "$total", 0] },
+        },
+        payments: {
+          $sum: { $cond: [{ $eq: ["$_id.type", "PAYMENT"] }, "$total", 0] },
+        },
+      },
+    },
   ]);
-
-  const totalCollected = paymentAgg[0]?.total ?? 0;
-
-  // ============================
-  // 3️⃣ Total receivable
-  // ============================
-  const totalReceivable = totalCreditSales - totalCollected;
-
-  // ============================
-  // 4️⃣ Active customers
-  // ============================
-  const activeCustomerIds = await Promise.all([
-    // Customers with credit sales
-    Sales.distinct("customerId", {
-      shopId: shopObjectId,
-      paymentMethod: "CREDIT",
-    }),
-
-    // Customers with payments
-    Payment.distinct("partyId", {
-      shopId: shopObjectId,
-      partyType: "CUSTOMER",
-    }),
-  ]);
-
-  const activeCustomerSet = new Set(
-    activeCustomerIds.flat().map(id => id.toString())
-  );
-
-  const activeCustomersCount = activeCustomerSet.size;
-
-  // ============================
-  // 5️⃣ Per-customer breakdown (optional but useful)
-  // ============================
-  const customers = await Customer.find({ shopId: shopObjectId, deleted: false });
 
   let customersWithOutstanding = 0;
   let customersSettled = 0;
   let customersOverpaid = 0;
 
-  for (const customer of customers) {
-    const creditAgg = await Sales.aggregate([
-      {
-        $match: {
-          shopId: shopObjectId,
-          customerId: customer._id,
-          paymentMethod: "CREDIT",
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$totalAmount" },
-        },
-      },
-    ]);
-
-    const paymentAgg = await Payment.aggregate([
-      {
-        $match: {
-          shopId: shopObjectId,
-          partyType: "CUSTOMER",
-          partyId: customer._id,
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$amount" },
-        },
-      },
-    ]);
-
-    const credit = creditAgg[0]?.total ?? 0;
-    const paid = paymentAgg[0]?.total ?? 0;
-
-    if (credit > paid) customersWithOutstanding++;
-    else if (credit === paid && credit > 0) customersSettled++;
-    else if (paid > credit) customersOverpaid++;
+  for (const c of perCustomerAgg) {
+    if (c.credits > c.payments) customersWithOutstanding++;
+    else if (c.credits === c.payments && c.credits > 0) customersSettled++;
+    else if (c.payments > c.credits) customersOverpaid++;
   }
 
-  // ============================
-  // RESPONSE
-  // ============================
   return res.status(200).json(new ApiResponse(200, {
     shopId,
     totalReceivable,
@@ -382,10 +293,13 @@ const getCustomersCreditSummary = asyncHandler(async (
   }, "Credit summary fetched"));
 });
 
+// ========================
+// CUSTOMER OUTSTANDING
+// ========================
 
 const getCustomerOutstanding = asyncHandler(
   async (req: Request, res: Response) => {
-    const shopId = req.user!.activeShopId!
+    const shopId = req.user!.activeShopId!;
     const { customerId } = req.params;
 
     const customerObjectId = new Types.ObjectId(customerId);
@@ -395,108 +309,73 @@ const getCustomerOutstanding = asyncHandler(
     const customer = await Customer.findOne({
       _id: customerObjectId,
       shopId: shopObjectId,
-      deleted: false
+      deleted: false,
     });
     if (!customer) throw new ApiError(404, "Customer not found");
 
-    const data = await Sales.aggregate([
-      // 1️⃣ Match customer + shop
+    // Aggregate credits per customer
+    const agg = await Credit.aggregate([
       {
         $match: {
+          shopId: shopObjectId,
           customerId: customerObjectId,
-          shopId: shopObjectId
-        }
+          deleted: false,
+        },
       },
-
-      // 2️⃣ Join sale items
-      {
-        $lookup: {
-          from: "saleitems",
-          localField: "_id",
-          foreignField: "saleId",
-          as: "items"
-        }
-      },
-
-      // 3️⃣ Flatten items
-      {
-        $unwind: "$items"
-      },
-
-      // 4️⃣ Join product
-      {
-        $lookup: {
-          from: "products",
-          localField: "items.productId",
-          foreignField: "_id",
-          as: "product"
-        }
-      },
-
-      // 5️⃣ Flatten product
-      {
-        $unwind: "$product"
-      },
-
-      // 6️⃣ Prepare fields
-      {
-        $project: {
-          createdAt: {
-            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
-          },
-          totalAmount: 1,
-          paidAmount: 1,
-          item: {
-            productId: "$product._id",
-            productName: "$product.name",
-            quantity: "$items.quantity",
-            price: "$items.price",
-            total: "$items.total"
-          }
-        }
-      },
-
-      // 7️⃣ Group by date (internal _id only)
       {
         $group: {
-          _id: "$createdAt",
-          createdAt: { $first: "$createdAt" },
-          items: { $push: "$item" },
-          totalAmount: { $sum: "$totalAmount" },
-          paidAmount: { $sum: "$paidAmount" }
-        }
+          _id: "$type",
+          total: { $sum: "$amount" },
+        },
       },
-
-      // 8️⃣ Compute outstanding
-      {
-        $addFields: {
-          dueAmount: {
-            $subtract: ["$totalAmount", "$paidAmount"]
-          }
-        }
-      },
-
-      // 9️⃣ Cleanup internal _id
-      {
-        $project: {
-          _id: 0
-        }
-      },
-
-      // 🔟 Sort latest first
-      {
-        $sort: { createdAt: -1 }
-      }
     ]);
 
+    const totalCredit = agg.find((e) => e._id === "CREDIT")?.total ?? 0;
+    const totalPaid = agg.find((e) => e._id === "PAYMENT")?.total ?? 0;
+    const dueAmount = totalCredit - totalPaid;
+
+    // Get recent credit sales with details
+    const recentCredits = await Credit.find({
+      shopId: shopObjectId,
+      customerId: customerObjectId,
+      type: "CREDIT",
+      deleted: false,
+    })
+      .populate("saleId", "invoiceNo items totalAmount paidAmount discount createdAt")
+      .sort({ date: -1 })
+      .limit(20)
+      .lean();
+
+    const creditSales = recentCredits.map((cr) => {
+      const sale = cr.saleId as any;
+      return {
+        creditId: cr._id,
+        invoiceNo: sale?.invoiceNo,
+        items: sale?.items || [],
+        totalAmount: sale?.totalAmount || cr.amount,
+        paidAmount: sale?.paidAmount || 0,
+        dueAmount: cr.amount,
+        createdAt: sale?.createdAt || cr.date,
+      };
+    });
+
     return res.status(200).json(
-      new ApiResponse(200, data, "Customer outstanding fetched")
+      new ApiResponse(200, {
+        customer: {
+          _id: customer._id,
+          name: customer.name,
+        },
+        totalCredit,
+        totalPaid,
+        dueAmount,
+        creditSales,
+      }, "Customer outstanding fetched")
     );
   }
 );
 
 // ========================
-// CREATE PAYMENT
+// CREATE PAYMENT (record against credit)
 // ========================
 
 const createPayment = asyncHandler(async (req: Request, res: Response) => {
@@ -523,14 +402,15 @@ const createPayment = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(404, "Customer not found");
   }
 
-  const payment = await Payment.create({
+  // Create a PAYMENT type credit record
+  const payment = await Credit.create({
     shopId: shopObjectId,
-    partyType: "CUSTOMER",
-    partyId: customerObjectId,
+    customerId: customerObjectId,
+    type: "PAYMENT",
     amount: Number(amount),
-    method: method || "CASH",
-    note: note || "",
-    createdAt: date ? new Date(date) : new Date()
+    description: note || `Payment received via ${method || "CASH"}`,
+    paymentMethod: method || "CASH",
+    date: date ? new Date(date) : new Date(),
   });
 
   return res.status(201).json(new ApiResponse(201, payment, "Payment recorded successfully"));

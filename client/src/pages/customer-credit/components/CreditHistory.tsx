@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFetch } from '@/hooks/useFetch';
 import Icon from '@/components/AppIcon';
 import Loader from '@/components/Loader';
@@ -34,6 +35,7 @@ interface CreditHistoryData {
     currentBalance: number;
   };
   history: HistoryItem[];
+  totalCount: number;
 }
 
 interface CreditHistoryProps {
@@ -41,12 +43,15 @@ interface CreditHistoryProps {
   refreshKey?: number;
 }
 
+const RECENT_LIMIT = 5;
+
 const CreditHistory: React.FC<CreditHistoryProps> = ({ customerId, refreshKey }) => {
+  const navigate = useNavigate();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   const fetchHistory = useCallback(() => {
     if (!customerId) return Promise.resolve(null);
-    return getCustomerCreditHistory(customerId);
+    return getCustomerCreditHistory(customerId, RECENT_LIMIT);
   }, [customerId]);
 
   const { data, loading } = useFetch<CreditHistoryData>(fetchHistory, [customerId, refreshKey]);
@@ -98,13 +103,24 @@ const CreditHistory: React.FC<CreditHistoryProps> = ({ customerId, refreshKey })
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Icon name="History" size={20} className="text-primary" />
-            Credit History
+            Recent Transactions
           </h2>
-          {data?.history && (
-            <span className="text-xs text-muted-foreground">
-              {data.history.length} transactions
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {data?.history && (
+              <span className="text-xs text-muted-foreground">
+                Showing {data.history.length} of {data.totalCount}
+              </span>
+            )}
+            {customerId && (
+              <button
+                onClick={() => navigate(`/customer-khata/credit-history?customerId=${customerId}`)}
+                className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-primary/5 border border-primary/20"
+              >
+                Show All
+                <Icon name="ArrowRight" size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Summary Cards */}
@@ -233,6 +249,19 @@ const CreditHistory: React.FC<CreditHistoryProps> = ({ customerId, refreshKey })
           )}
         </div>
       </Loader>
+
+      {/* View All Link */}
+      {data?.totalCount && data.totalCount > RECENT_LIMIT && customerId && (
+        <div className="p-3 border-t border-border bg-muted/20">
+          <button
+            onClick={() => navigate(`/customer-khata/credit-history?customerId=${customerId}`)}
+            className="w-full flex items-center justify-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors py-1.5 rounded-lg hover:bg-primary/5"
+          >
+            View All {data.totalCount} Transactions
+            <Icon name="ArrowRight" size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
