@@ -19,10 +19,7 @@ export async function seedInventory(shopId: string, products: any[]) {
       shopId,
       productId: product._id,
       stock,
-      // 30% chance some stock is reserved (only if stock > 5)
-      reserved: (stock > 5 && faker.datatype.boolean({ probability: 0.3 }))
-        ? faker.number.int({ min: 1, max: Math.max(1, Math.min(10, Math.floor(stock * 0.2))) })
-        : 0,
+      minStock: faker.number.int({ min: 5, max: 25 }),
       createdAt,
       updatedAt: createdAt,
     };
