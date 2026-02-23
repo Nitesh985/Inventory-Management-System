@@ -23,7 +23,6 @@ const BusinessChart: React.FC = () => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [totals, setTotals] = useState({ 
     sales: 0, 
-    cogs: 0, 
     grossProfit: 0, 
     expenses: 0, 
     netProfit: 0 
@@ -45,7 +44,6 @@ const BusinessChart: React.FC = () => {
         // Use the totals from backend
         setTotals({
           sales: data.totals.totalSales || 0,
-          cogs: data.totals.totalCOGS || 0,
           grossProfit: data.totals.totalGrossProfit || 0,
           expenses: data.totals.totalExpenses || 0,
           netProfit: data.totals.totalNetProfit || 0
@@ -88,10 +86,7 @@ const BusinessChart: React.FC = () => {
                 <stop offset="5%" stopColor="rgb(34, 197, 94)" stopOpacity={0.3}/>
                 <stop offset="95%" stopColor="rgb(34, 197, 94)" stopOpacity={0}/>
               </linearGradient>
-              <linearGradient id="cogsGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="rgb(251, 146, 60)" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="rgb(251, 146, 60)" stopOpacity={0}/>
-              </linearGradient>
+
               <linearGradient id="grossProfitGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="rgb(59, 130, 246)" stopOpacity={0.3}/>
                 <stop offset="95%" stopColor="rgb(59, 130, 246)" stopOpacity={0}/>
@@ -124,14 +119,6 @@ const BusinessChart: React.FC = () => {
               fillOpacity={1}
               fill="url(#salesGradient)"
               name="Revenue"
-            />
-            <Area
-              type="monotone"
-              dataKey="cogs"
-              stroke="rgb(251, 146, 60)"
-              fillOpacity={1}
-              fill="url(#cogsGradient)"
-              name="COGS"
             />
             <Area
               type="monotone"
@@ -176,7 +163,6 @@ const BusinessChart: React.FC = () => {
             />
             <Legend />
             <Bar dataKey="sales" fill="rgb(34, 197, 94)" name="Revenue" radius={[2, 2, 0, 0]} />
-            <Bar dataKey="cogs" fill="rgb(251, 146, 60)" name="COGS" radius={[2, 2, 0, 0]} />
             <Bar dataKey="grossProfit" fill="rgb(59, 130, 246)" name="Gross Profit" radius={[2, 2, 0, 0]} />
             <Bar dataKey="expenses" fill="rgb(239, 68, 68)" name="Expenses" radius={[2, 2, 0, 0]} />
             <Bar dataKey="netProfit" fill="rgb(168, 85, 247)" name="Net Profit" radius={[2, 2, 0, 0]} />
@@ -205,14 +191,6 @@ const BusinessChart: React.FC = () => {
               strokeWidth={2}
               dot={{ fill: 'rgb(34, 197, 94)', strokeWidth: 2, r: 3 }}
               name="Revenue"
-            />
-            <Line
-              type="monotone"
-              dataKey="cogs"
-              stroke="rgb(251, 146, 60)"
-              strokeWidth={2}
-              dot={{ fill: 'rgb(251, 146, 60)', strokeWidth: 2, r: 3 }}
-              name="COGS"
             />
             <Line
               type="monotone"
@@ -307,18 +285,12 @@ const BusinessChart: React.FC = () => {
       </div>
       {/* Chart Summary */}
       <div className="mt-6 pt-4 border-t border-border">
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 text-xs sm:text-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
           <div className="text-center">
             <div className="lg:text-xl text-base font-bold text-success">
               Rs. {Math.round(totals.sales).toLocaleString()}
             </div>
             <div className="text-xs text-muted-foreground">Revenue</div>
-          </div>
-          <div className="text-center">
-            <div className="lg:text-xl text-base font-bold" style={{ color: 'rgb(251, 146, 60)' }}>
-              Rs. {Math.round(totals.cogs).toLocaleString()}
-            </div>
-            <div className="text-xs text-muted-foreground">COGS</div>
           </div>
           <div className="text-center">
             <div className="lg:text-xl text-base font-bold text-primary">
