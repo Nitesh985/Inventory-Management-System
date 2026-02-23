@@ -73,7 +73,7 @@ const BusinessDashboard: React.FC = () => {
   const safeMetrics = {
     period: metricsData?.period ?? 'This Month',
     revenue: metricsData?.revenue ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
-    cogs: metricsData?.cogs ?? { total: 0 },
+    inventory: metricsData?.inventory ?? { totalValue: 0, totalProducts: 0, lowStock: 0 },
     grossProfit: metricsData?.grossProfit ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
     expenses: metricsData?.expenses ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
     netProfit: metricsData?.netProfit ?? { total: 0, change: "", changeType: "neutral" as ChangeType },
@@ -105,9 +105,9 @@ const BusinessDashboard: React.FC = () => {
       trend: selectedPeriod !== 'all'
     },
     {
-      title: `COGS (${safeMetrics.period})`,
-      value: `Rs. ${Math.round(safeMetrics.cogs.total).toLocaleString()}`,
-      change: selectedPeriod === 'all' ? 'All time total' : 'Cost of Goods Sold',
+      title: `Inventory Value`,
+      value: `Rs. ${Math.round(safeMetrics.inventory.totalValue).toLocaleString()}`,
+      change: `${safeMetrics.inventory.totalProducts} products, ${safeMetrics.inventory.lowStock} low stock`,
       changeType: "neutral" as ChangeType,
       icon: "Package",
       iconColor: "text-warning",

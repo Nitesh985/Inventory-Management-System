@@ -17,7 +17,11 @@ export interface MetricData {
 export interface DashboardMetricsData {
   period: string;
   revenue: MetricData;
-  cogs: { total: number };
+  inventory: {
+    totalValue: number;
+    totalProducts: number;
+    lowStock: number;
+  };
   grossProfit: MetricData;
   expenses: MetricData;
   netProfit: MetricData;
@@ -31,7 +35,6 @@ export interface DashboardMetricsData {
 export interface ChartDataPoint {
   date: string;
   sales: number;
-  cogs: number;
   grossProfit: number;
   expenses: number;
   netProfit: number;
@@ -40,11 +43,18 @@ export interface ChartDataPoint {
 export interface ChartData {
   chartData: ChartDataPoint[];
   totals: {
+<<<<<<< HEAD
     sales: number;
     cogs: number;
     grossProfit: number;
     expenses: number;
     netProfit: number;
+=======
+    totalSales: number;
+    totalGrossProfit: number;
+    totalExpenses: number;
+    totalNetProfit: number;
+>>>>>>> refs/remotes/origin/main
   };
 }
 
