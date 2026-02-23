@@ -4,13 +4,17 @@ import {
   getSales,
   getSale,
   updateSale,
-  deleteSale
+  deleteSale,
+  generateInvoiceNo
 } from '../controllers/sales.controllers.ts'
 import { verifyBusinessAuth } from '../middlewares/auth.middlewares.ts'
 
 
 const router = Router()
 router.use(verifyBusinessAuth)
+
+// GENERATE INVOICE NUMBER
+router.get('/generate/invoiceNo', generateInvoiceNo)
 
 // CREATE SALE
 router.post('/', createSale)

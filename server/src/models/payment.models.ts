@@ -1,6 +1,6 @@
 import { Schema, model, Types, Document } from 'mongoose';
 
-export type PaymentMethod = 'CASH' | 'ESEWA' | 'KHALTI' | 'FONEPAY' | 'BANK_TRANSFER' | 'CARD';
+export type PaymentMethod = 'CASH' | 'ESEWA' | 'KHALTI';
 
 export type PaymentFor = 'CUSTOMER' | 'SUPPLIER';
 
@@ -9,7 +9,7 @@ export interface IPayment extends Document {
   salesId: Types.ObjectId;
   amount: number;
   method: PaymentMethod;
-  note?: string;
+  status: 'SUCCESS' | 'PENDING' | 'FAILED' | 'REFUNDED';
   createdAt: Date;
   updatedAt: Date
 }
@@ -19,19 +19,6 @@ const PaymentSchema = new Schema<IPayment>(
     shopId: {
       type: Schema.Types.ObjectId,
       ref: 'Shop',
-      required: true,
-      index: true,
-    },
-
-    partyType: {
-      type: String,
-      enum: ['CUSTOMER', 'SUPPLIER'],
-      required: true,
-      index: true,
-    },
-
-    partyId: {
-      type: Schema.Types.ObjectId,
       required: true,
       index: true,
     },
@@ -48,13 +35,8 @@ const PaymentSchema = new Schema<IPayment>(
 
     method: {
       type: String,
-      enum: ['CASH', 'ESEWA', 'KHALTI', 'FONEPAY', 'BANK_TRANSFER', 'CARD'],
+      enum: ['CASH', 'ESEWA', 'KHALTI'],
       required: true,
-    },
-
-    note: {
-      type: String,
-      default: null,
     },
   },
   { timestamps: true }

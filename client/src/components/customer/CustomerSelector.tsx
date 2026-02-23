@@ -63,7 +63,7 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
       try {
         const result = await createCustomerMutation({
           name: newCustomer.name,
-          phone: newCustomer.phone,
+          contact: newCustomer.phone,
           address: newCustomer.address,
           shopId: 'default-shop-id', // TODO: Get from context
           clientId: 'default-client-id' // TODO: Get from context

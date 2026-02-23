@@ -61,16 +61,21 @@ const LoginPage = () => {
     setIsLoading(true)
     validateForm(data)
     
-    await signIn.email({
+    const { data: resData } = await signIn.email({
       email: data.email,
       password: data.password,
       rememberMe: data.rememberMe,
-    },{
-      onSuccess: () => {
-        setIsLoading(false)
-        navigate("/business-dashboard", {replace:true})
+    })
+ 
+    if (resData){
+      const {user} = resData
+      if (!user?.onBoardingCompleted){
+        navigate('/inventory-management', {replace:true})
+        return
       }
-    })   
+      
+      navigate('/business-dashboard', {replace:true})
+    }
   }
 
   const submitGoogle = async (data: LoginFormData) => {
