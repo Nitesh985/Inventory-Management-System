@@ -16,6 +16,30 @@ type SaleItemInput = {
   totalPrice?: number;
 };
 
+// GENERATE UNIQUE INVOICE NUMBER
+const generateInvoiceNo = asyncHandler(async (req: Request, res: Response) => {
+  const shopId = req.user!.activeShopId!;
+
+  // Find the latest invoice for this shop to get next counter
+  const latestSale = await Sales.findOne(
+    { shopId: new mongoose.Types.ObjectId(shopId) },
+    {},
+    { sort: { createdAt: -1 } }
+  );
+
+  let invoiceCounter = 1;
+  if (latestSale?.invoiceNo) {
+    // Extract counter from last invoice (format: INV-XXXX-NNNNN)
+    const lastCounter = parseInt(latestSale.invoiceNo.split('-')[2]) || 0;
+    invoiceCounter = lastCounter + 1;
+  }
+
+  const shopIdStr = shopId.toString().slice(-4);
+  const invoiceNo = `INV-${shopIdStr}-${String(invoiceCounter).padStart(5, '0')}`;
+
+  return res.status(200).json(new ApiResponse(200, { invoiceNo }, 'Invoice number generated'));
+});
+
 const createSale = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!;
   const {
@@ -56,24 +80,21 @@ const createSale = asyncHandler(async (req: Request, res: Response) => {
   });
 
   // -------------------------------------------------------
-  // 0️⃣ AUTO-GENERATE UNIQUE INVOICE NUMBER
+  // 0️⃣ VALIDATE INVOICE NUMBER EXISTS
   // -------------------------------------------------------
-  // Find the latest invoice for this shop to get next counter
-  const latestSale = await Sales.findOne(
-    { shopId: new mongoose.Types.ObjectId(shopId) },
-    {},
-    { sort: { createdAt: -1 } }
-  );
-
-  let invoiceCounter = 1;
-  if (latestSale?.invoiceNo) {
-    // Extract counter from last invoice (format: INV-XXXX-NNNNN)
-    const lastCounter = parseInt(latestSale.invoiceNo.split('-')[2]) || 0;
-    invoiceCounter = lastCounter + 1;
+  if (!invoiceNo) {
+    throw new ApiError(400, 'Invoice number is required');
   }
 
-  const shopIdStr = shopId.toString().slice(-4);
-  const invoiceNo = `INV-${shopIdStr}-${String(invoiceCounter).padStart(5, '0')}`;
+  // Check if invoice already exists
+  const existingInvoice = await Sales.findOne({
+    invoiceNo: invoiceNo,
+    shopId: new mongoose.Types.ObjectId(shopId),
+  });
+  
+  if (existingInvoice) {
+    throw new ApiError(400, `Invoice number ${invoiceNo} already exists`);
+  }
 
   // -------------------------------------------------------
   // 1️⃣ HANDLE CUSTOMER - CREATE WALK-IN IF NEEDED
@@ -429,35 +450,4 @@ const deleteSale = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-// UPDATE SALE STATUS
-const updateSaleStatus = asyncHandler(async (req: Request, res: Response) => {
-  const shopId = req.user!.activeShopId!;
-  const saleId = req.params.id;
-  const { status } = req.body;
-
-  // Validate status
-  const validStatuses = ['PENDING', 'COMPLETED', 'CANCELLED', 'REFUNDED'];
-  if (!status || !validStatuses.includes(status)) {
-    throw new ApiError(400, `Invalid status. Must be one of: ${validStatuses.join(', ')}`);
-  }
-
-  // Find and update the sale
-  const sale = await Sales.findOneAndUpdate(
-    {
-      _id: saleId,
-      shopId: new mongoose.Types.ObjectId(shopId),
-    },
-    { status },
-    { new: true }
-  ).populate('customerId', 'name phone email');
-
-  if (!sale) {
-    throw new ApiError(404, 'Sale not found');
-  }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, sale, 'Sale status updated successfully'));
-});
-
-export { createSale, getSales, getSale, updateSale, deleteSale, updateSaleStatus };
+export { createSale, getSales, getSale, updateSale, deleteSale, generateInvoiceNo };

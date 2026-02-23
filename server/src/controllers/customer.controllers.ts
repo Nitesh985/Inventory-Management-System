@@ -46,7 +46,7 @@ const createCustomer = asyncHandler(async (req: Request, res: Response) => {
   const customer = await Customer.create({
     shopId: new mongoose.Types.ObjectId(shopId),
     name,
-    contact: contact,
+    contact: contact || "",
     address: address || "",
     email: email ? email.toLowerCase() : "",
     notes: notes || ""
@@ -84,6 +84,8 @@ const getCustomer = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, customer, "Customer fetched"));
 });
 
+
+
 const updateCustomer = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!
   const updates = { ...req.body };
@@ -100,6 +102,8 @@ const updateCustomer = asyncHandler(async (req: Request, res: Response) => {
     .status(200)
     .json(new ApiResponse(200, customer, "Customer updated"));
 });
+
+
 
 const deleteCustomer = asyncHandler(async (req: Request, res: Response) => {
   const shopId = req.user!.activeShopId!

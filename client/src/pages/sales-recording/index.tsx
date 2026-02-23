@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import axios from 'axios';
 
 import Icon from '@/components/AppIcon';
 import Input from '@/components/ui/Input';
@@ -40,11 +41,27 @@ const SalesRecording: React.FC = () => {
   const [discount, setDiscount] = useState<number>(0);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  // const [customers, setCustomers] = useState<Customer[]>([]);
+  const [invoiceNo, setInvoiceNo] = useState<string>('');
 
   const { mutate: createSaleMutation } = useMutation(createSale);
 
-  // Check if selected customer is walk-in
-  const isWalkInCustomer = selectedCustomer === 'walk-in';
+  // Fetch invoice number on component mount
+  useEffect(() => {
+    const fetchInvoiceNo = async () => {
+      try {
+        const response = await axios.get('/api/sales/generate/invoiceNo');
+        console.log(response)
+        if (response.data && response.data.data && response.data.data.invoiceNo) {
+          setInvoiceNo(response.data.data.invoiceNo);
+        }
+      } catch (error) {
+        console.error('Error fetching invoice number:', error);
+      }
+    };
+
+    fetchInvoiceNo();
+  }, []);
 
   const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
   const discountedSubtotal = subtotal - discount;
@@ -93,6 +110,8 @@ const SalesRecording: React.FC = () => {
     try {
       const saleData = {
         customerId: selectedCustomer,
+        invoiceNo: invoiceNo,
+        transactionDate: transactionDate,
         items: lineItems.map(item => ({
           productId: item.productId,
           productName: item.productName,
@@ -242,7 +261,7 @@ const SalesRecording: React.FC = () => {
                           className="text-muted-foreground"
                         />
                         <span className="text-sm font-medium text-foreground">
-                          SALE-{Date.now().toString().slice(-6)}
+                          {invoiceNo}
                         </span>
                       </div>
                     </div>

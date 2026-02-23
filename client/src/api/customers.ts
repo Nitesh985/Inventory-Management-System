@@ -8,7 +8,7 @@ export interface CreateCustomerDTO {
   shopId: string;
   clientId: string;
   name: string;
-  contact?: string[];
+  contact?: string;
   email?: string;
   address?: string;
   notes?: string;
@@ -16,7 +16,7 @@ export interface CreateCustomerDTO {
 
 export interface UpdateCustomerDTO {
   name?: string;
-  contact?: string[];
+  contact?: string;
   email?: string;
   address?: string;
   notes?: string;
@@ -27,7 +27,7 @@ export interface Customer {
   shopId: string;
   clientId: string;
   name: string;
-  contact?: string[];
+  contact?: string;
   email?: string;
   address?: string;
   notes?: string;

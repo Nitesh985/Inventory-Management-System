@@ -41,7 +41,11 @@ const salesSchema = new Schema<ISales>(
     items: { type: [saleItemSchema], required: true },
     totalAmount: { type: Number, required: true },
     paidAmount: { type: Number, default: 0 },
-    status: { type: String, enum: ['PENDING', 'COMPLETED', 'CANCELLED'], default: 'COMPLETED' },
+    status: {
+      type: String,
+      enum: ['PENDING', 'COMPLETED', 'CANCELLED', 'PARTIALLY_PAID', 'REFUNDED', 'CREDIT'],
+      default: 'PENDING',
+    },
     discount: { type: Number, default: 0 },
     notes: { type: String },
   },

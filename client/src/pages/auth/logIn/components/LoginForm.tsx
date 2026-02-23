@@ -16,7 +16,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, submitGoogle, errors, i
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
-    rememberMe: false
+    rememberMe: true
   });
 
   const ICON_SIZE = 36;
