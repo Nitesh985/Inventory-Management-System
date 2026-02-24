@@ -19,9 +19,9 @@ const SalesStats = ({ sales, loading = false }: Props) => {
   // Calculate total revenue from all sales
   const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0)
   
-  // Calculate pending amount only from PENDING/CREDIT sales
+  // Calculate pending amount from PENDING/PARTIALLY_PAID/CREDIT sales
   const pendingAmount = sales
-    .filter(sale => sale.status === 'PENDING' || sale.paymentMethod === 'CREDIT')
+    .filter(sale => sale.status === 'PENDING' || sale.status === 'PARTIALLY_PAID' || sale.paymentMethod === 'CREDIT')
     .reduce((sum, sale) => sum + ((sale.totalAmount || 0) - (sale.paidAmount || 0)), 0)
 
   // Calculate today's sales

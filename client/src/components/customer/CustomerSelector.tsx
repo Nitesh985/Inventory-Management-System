@@ -41,10 +41,10 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
   useEffect(() => {
     if (data && Array.isArray(data)) {
       
-      const formatted = data.map((c) => ({
+      const formatted = data.map((c: any) => ({
         value: c._id,
         label: c.name,
-        phone: c.phone,
+        phone: Array.isArray(c.contact) ? c.contact[0] ?? "" : c.contact ?? "",
         email: c.email ?? "",
         address: c.address ?? "",
         raw: c
@@ -59,11 +59,13 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
 
   
   const handleAddCustomer = async () => {
+  
     if (newCustomer?.name?.trim()) {
       try {
         const result = await createCustomerMutation({
           name: newCustomer.name,
           contact: newCustomer.phone,
+          email: newCustomer.email,
           address: newCustomer.address,
           shopId: 'default-shop-id', // TODO: Get from context
           clientId: 'default-client-id' // TODO: Get from context
@@ -93,7 +95,6 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
   };
 
   const selectedCustomerData = customers?.find(c => c?.value === selectedCustomer);
-  
   
   
   return (
@@ -147,7 +148,7 @@ const CustomerSelector = ({ selectedCustomer, onCustomerSelect, onAddCustomer }:
             />
           </div>
           <div className="flex space-x-2">
-            <AddCustomer handleAddCustomer={handleAddCustomer} newCustomer={newCustomer} />
+            <AddCustomer handleAddCustomer={handleAddCustomer} loading={creating} />
             <Button
               variant="outline"
               size="sm"

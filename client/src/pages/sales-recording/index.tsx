@@ -149,10 +149,6 @@ const SalesRecording: React.FC = () => {
 
       console.log('Sale recorded:', result);
       handleClearTransaction();
-      alert('Sale recorded successfully!');
-      
-      // Fetch new invoice number for next sale
-      fetchInvoiceNumber();
       
       // Navigate to sales management page after successful sale
       navigate('/sales-management');

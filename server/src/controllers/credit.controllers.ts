@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.ts";
 import { ApiResponse } from "../utils/ApiResponse.ts";
 import Credit from "../models/credit.models.ts";
 import Customer from "../models/customer.models.ts";
+import Sales from "../models/sales.models.ts";
 
 // ========================
 // CUSTOMERS WITH BALANCE (from Credit model)
@@ -412,6 +413,35 @@ const createPayment = asyncHandler(async (req: Request, res: Response) => {
     paymentMethod: method || "CASH",
     date: date ? new Date(date) : new Date(),
   });
+
+  // Update sale paidAmount and status for PENDING/PARTIALLY_PAID sales
+  // Apply payment to oldest pending sales first
+  let remainingPayment = Number(amount);
+  const pendingSales = await Sales.find({
+    shopId: shopObjectId,
+    customerId: customerObjectId,
+    status: { $in: ['PENDING', 'PARTIALLY_PAID'] },
+  }).sort({ createdAt: 1 }); // oldest first
+
+  for (const sale of pendingSales) {
+    if (remainingPayment <= 0) break;
+
+    const dueAmount = sale.totalAmount - (sale.discount || 0) - sale.paidAmount;
+    if (dueAmount <= 0) continue;
+
+    const paymentForThisSale = Math.min(remainingPayment, dueAmount);
+    sale.paidAmount += paymentForThisSale;
+    remainingPayment -= paymentForThisSale;
+
+    const newDue = sale.totalAmount - (sale.discount || 0) - sale.paidAmount;
+    if (newDue <= 0) {
+      sale.status = 'COMPLETED';
+    } else {
+      sale.status = 'PARTIALLY_PAID';
+    }
+
+    await sale.save();
+  }
 
   return res.status(201).json(new ApiResponse(201, payment, "Payment recorded successfully"));
 });

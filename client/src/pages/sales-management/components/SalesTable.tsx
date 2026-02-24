@@ -81,6 +81,7 @@ const SalesTable = ({ sales, loading = false, onViewSale, onRefresh }: Props) =>
     const statusConfig: Record<string, { bg: string; text: string; icon: keyof typeof LucideIcons }> = {
       COMPLETED: { bg: 'bg-green-100', text: 'text-green-700', icon: 'CheckCircle' },
       PENDING: { bg: 'bg-amber-100', text: 'text-amber-700', icon: 'Clock' },
+      PARTIALLY_PAID: { bg: 'bg-blue-100', text: 'text-blue-700', icon: 'Clock' },
       CANCELLED: { bg: 'bg-red-100', text: 'text-red-700', icon: 'XCircle' },
       REFUNDED: { bg: 'bg-purple-100', text: 'text-purple-700', icon: 'RotateCcw' }
     }
@@ -273,9 +274,16 @@ const SalesTable = ({ sales, loading = false, onViewSale, onRefresh }: Props) =>
                 {getPaymentMethodBadge(sale.paymentMethod)}
               </td>
               <td className="py-4 px-4 text-right">
-                <span className="font-semibold text-foreground">
-                  Rs. {Math.round(sale.totalAmount || 0).toLocaleString()}
-                </span>
+                <div>
+                  <span className="font-semibold text-foreground">
+                    Rs. {Math.round(sale.totalAmount || 0).toLocaleString()}
+                  </span>
+                  {(sale.status === 'PENDING' || sale.status === 'PARTIALLY_PAID') && sale.totalAmount > sale.paidAmount && (
+                    <div className="text-xs text-amber-600 font-medium mt-0.5">
+                      Due: Rs. {Math.round((sale.totalAmount || 0) - (sale.paidAmount || 0)).toLocaleString()}
+                    </div>
+                  )}
+                </div>
               </td>
               <td className="py-4 px-4 text-center">
                 {getStatusBadge(sale.status)}

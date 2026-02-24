@@ -41,7 +41,9 @@ const AddCustomerModal = ({ onClose, onSuccess }: AddCustomerModalProps) => {
           <Input label="Full Name *" value={data.name} onChange={e => setData({...data, name: e.target.value})} required />
           <Input label="Phone Number" value={data.phone} onChange={e => setData({...data, phone: e.target.value})} />
           <Input label="Address" value={data.address} onChange={e => setData({...data, address: e.target.value})} />
-          <Button type="submit" className="w-full bg-blue-600 h-12 font-bold text-lg mt-4">Save Customer</Button>
+          <Button type="submit" loading={loading} disabled={loading} className="w-full bg-blue-600 h-12 font-bold text-lg mt-4">
+            {loading ? 'Saving...' : 'Save Customer'}
+          </Button>
         </form>
       </div>
     </div>

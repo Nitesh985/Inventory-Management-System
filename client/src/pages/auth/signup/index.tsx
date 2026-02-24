@@ -143,6 +143,7 @@ const SignupPage = () => {
       callbackURL: "http://localhost:5173/inventory-management"
     })
 
+
   }
   
 

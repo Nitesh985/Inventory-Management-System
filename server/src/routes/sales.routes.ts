@@ -4,6 +4,7 @@ import {
   getSales,
   getSale,
   updateSale,
+  updateSaleStatus,
   deleteSale,
   generateInvoiceNo
 } from '../controllers/sales.controllers.ts'
@@ -26,7 +27,7 @@ router.get('/', getSales)
 router.get('/:id', getSale)
 
 // UPDATE SALE STATUS
-// router.patch('/:id/status', updateSaleStatus)
+router.patch('/:id/status', updateSaleStatus)
 
 // UPDATE SALE
 router.put('/:id', updateSale)

@@ -43,18 +43,11 @@ export interface ChartDataPoint {
 export interface ChartData {
   chartData: ChartDataPoint[];
   totals: {
-<<<<<<< HEAD
     sales: number;
     cogs: number;
     grossProfit: number;
     expenses: number;
     netProfit: number;
-=======
-    totalSales: number;
-    totalGrossProfit: number;
-    totalExpenses: number;
-    totalNetProfit: number;
->>>>>>> refs/remotes/origin/main
   };
 }
 

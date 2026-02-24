@@ -33,6 +33,13 @@ export default function BusinessOnboardingModal() {
     phone: "",
     email: "",
   });
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && step < 4) {
+      e.preventDefault();
+      setStep(step + 1);
+    }
+  };
   
   const handleSubmit = async (e) => {
     try{      
@@ -51,6 +58,7 @@ export default function BusinessOnboardingModal() {
   return (
     <form
       onSubmit={handleSubmit}
+      onKeyDown={handleKeyDown}
       className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in duration-300">
       {/* HEADER */}
       <div className="bg-gradient-to-r from-blue-500 to-blue-500 px-10 py-7 text-white">

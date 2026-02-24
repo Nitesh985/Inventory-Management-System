@@ -476,4 +476,36 @@ const deleteSale = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-export { createSale, getSales, getSale, updateSale, deleteSale, generateInvoiceNo };
+// UPDATE SALE STATUS
+const updateSaleStatus = asyncHandler(async (req: Request, res: Response) => {
+  const shopId = req.user!.activeShopId!;
+  const saleId = req.params.id;
+  const { status } = req.body;
+
+  const validStatuses = ['PENDING', 'COMPLETED', 'CANCELLED', 'PARTIALLY_PAID', 'REFUNDED', 'CREDIT'];
+  if (!status || !validStatuses.includes(status)) {
+    throw new ApiError(400, `Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+  }
+
+  const sale = await Sales.findOne({
+    _id: saleId,
+    shopId: new mongoose.Types.ObjectId(shopId),
+  });
+  if (!sale) throw new ApiError(404, 'Sale not found');
+
+  // If marking as COMPLETED, set paidAmount to full amount
+  const updates: any = { status };
+  if (status === 'COMPLETED') {
+    updates.paidAmount = sale.totalAmount - (sale.discount || 0);
+  }
+
+  const updatedSale = await Sales.findByIdAndUpdate(
+    saleId,
+    { $set: updates },
+    { new: true }
+  );
+
+  return res.status(200).json(new ApiResponse(200, updatedSale, 'Sale status updated'));
+});
+
+export { createSale, getSales, getSale, updateSale, updateSaleStatus, deleteSale, generateInvoiceNo };

@@ -72,6 +72,7 @@ const SaleDetailsModal = ({ sale, onClose, onStatusUpdate }: Props) => {
     const configs: Record<string, { bg: string; text: string; icon: keyof typeof LucideIcons }> = {
       COMPLETED: { bg: 'bg-green-100', text: 'text-green-700', icon: 'CheckCircle' },
       PENDING: { bg: 'bg-amber-100', text: 'text-amber-700', icon: 'Clock' },
+      PARTIALLY_PAID: { bg: 'bg-blue-100', text: 'text-blue-700', icon: 'Clock' },
       CANCELLED: { bg: 'bg-red-100', text: 'text-red-700', icon: 'XCircle' },
       REFUNDED: { bg: 'bg-purple-100', text: 'text-purple-700', icon: 'RotateCcw' }
     }
@@ -204,7 +205,9 @@ const SaleDetailsModal = ({ sale, onClose, onStatusUpdate }: Props) => {
 
           {/* Footer */}
           <div className="px-6 py-4 bg-muted/30 border-t border-border flex items-center justify-between">
-            {sale.status === 'PENDING' && onStatusUpdate && (
+            {(sale.status === 'PENDING' || sale.status === 'PARTIALLY_PAID') && 
+             (sale.paymentMethod === 'ESEWA' || sale.paymentMethod === 'KHALTI') && 
+             onStatusUpdate && (
               <Button 
                 variant="default" 
                 onClick={handleMarkAsCompleted}
@@ -215,7 +218,8 @@ const SaleDetailsModal = ({ sale, onClose, onStatusUpdate }: Props) => {
                 Mark as Completed
               </Button>
             )}
-            {sale.status !== 'PENDING' && <div />}
+            {!(sale.status === 'PENDING' || sale.status === 'PARTIALLY_PAID') || 
+             !(sale.paymentMethod === 'ESEWA' || sale.paymentMethod === 'KHALTI') ? <div /> : null}
             <div className="flex items-center gap-3">
               <Button variant="outline" onClick={onClose} disabled={isUpdating}>
                 Close
