@@ -2,11 +2,13 @@ import { useState, useMemo } from 'react'
 import Icon from '@/components/AppIcon'
 import Button from '@/components/ui/Button'
 import * as LucideIcons from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 interface Sale {
   _id: string
   invoiceNo: string
   customerName: string
+  customerId?: string
   items: {
     productId: string
     name: string
@@ -35,6 +37,7 @@ interface SortConfig {
 
 const SalesTable = ({ sales, loading = false, onViewSale, onRefresh }: Props) => {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'createdAt', direction: 'desc' })
+  const navigate = useNavigate()
 
   const handleSort = (key: string): void => {
     setSortConfig(prevConfig => ({
@@ -261,9 +264,19 @@ const SalesTable = ({ sales, loading = false, onViewSale, onRefresh }: Props) =>
                 </span>
               </td>
               <td className="py-4 px-4">
-                <span className="font-medium text-foreground">
-                  {sale.customerName}
-                </span>
+                {sale.customerId && sale.customerName !== 'Walk-in Customer' ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigate(`/customer-khata?customerId=${sale.customerId}`)
+                    }}
+                    className="text-foreground hover:underline font-medium text-left"
+                  >
+                    {sale.customerName}
+                  </button>
+                ) : (
+                  <span className="text-muted-foreground">{sale.customerName}</span>
+                )}
               </td>
               <td className="py-4 px-4 text-center">
                 <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm font-medium">

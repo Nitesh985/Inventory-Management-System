@@ -42,6 +42,7 @@ interface Sale {
   _id: string
   invoiceNo: string
   customerName: string
+  customerId?: string
   items: {
     productId: string
     name: string
@@ -104,6 +105,7 @@ const SalesManagementPage = () => {
         _id: sale._id,
         invoiceNo: sale.invoiceNo || `INV-${sale._id.slice(-6).toUpperCase()}`,
         customerName: sale.customerName || 'Walk-in Customer',
+        customerId: sale.customerId || undefined,
         items: sale.items || [],
         totalAmount: sale.totalAmount || 0,
         paidAmount: sale.paidAmount || 0,

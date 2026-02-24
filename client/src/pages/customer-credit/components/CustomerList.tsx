@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Icon from '@/components/AppIcon';
 import Button from '@/components/ui/Button';
 import Loader from '@/components/Loader';
@@ -34,6 +34,8 @@ type SortField = 'name' | 'balance' | 'lastTransaction';
 type SortOrder = 'asc' | 'desc';
 type CreditFilter = 'all' | 'has_due';
 
+const PAGE_SIZE = 15;
+
 const FILTER_OPTIONS: { value: CreditFilter; label: string; icon: string }[] = [
   { value: 'all', label: 'All', icon: 'Users' },
   { value: 'has_due', label: 'Has Due', icon: 'AlertCircle' },
@@ -53,6 +55,11 @@ const CustomerList = ({
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [creditFilter, setCreditFilter] = useState<CreditFilter>('has_due');
+  const [currentPage, setCurrentPage] = useState(1);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hasScrolledToSelected = useRef(false);
+  const isAutoScrolling = useRef(false);
+  const pendingScrollId = useRef<string | null>(null);
 
   // Filter and sort customers
   const filteredCustomers = useMemo(() => {
@@ -96,6 +103,77 @@ const CustomerList = ({
 
     return result;
   }, [customersWithData, searchTerm, sortField, sortOrder, creditFilter]);
+
+  // Reset page when filters change (skip if auto-scroll triggered the change)
+  React.useEffect(() => {
+    if (isAutoScrolling.current) return;
+    setCurrentPage(1);
+  }, [searchTerm, creditFilter, sortField, sortOrder]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredCustomers.length / PAGE_SIZE));
+  const paginatedCustomers = filteredCustomers.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  // Auto-scroll to pre-selected customer (e.g. from URL param)
+  useEffect(() => {
+    if (!selectedCustomerId || !customersWithData?.length || hasScrolledToSelected.current) return;
+
+    // Check if customer is in filtered list; if not, switch to 'all'
+    let list = filteredCustomers;
+    const inFiltered = list.findIndex(c => c._id === selectedCustomerId);
+    if (inFiltered === -1) {
+      // Customer not in current filter, switch to 'all'
+      const allList = customersWithData.filter(c => {
+        const primaryPhone = c.contact?.[0] || c.phone;
+        return c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (primaryPhone && primaryPhone.includes(searchTerm));
+      });
+      const inAll = allList.findIndex(c => c._id === selectedCustomerId);
+      if (inAll === -1) return; // customer truly not found
+      isAutoScrolling.current = true;
+      setCreditFilter('all');
+      list = allList;
+    }
+
+    // Find the customer's index and jump to that page
+    const idx = list.findIndex(c => c._id === selectedCustomerId);
+    if (idx === -1) return;
+    const targetPage = Math.floor(idx / PAGE_SIZE) + 1;
+    isAutoScrolling.current = true;
+    setCurrentPage(targetPage);
+    hasScrolledToSelected.current = true;
+    pendingScrollId.current = selectedCustomerId;
+  }, [selectedCustomerId, customersWithData, filteredCustomers, searchTerm]);
+
+  // Scroll into view after the correct page has rendered
+  useEffect(() => {
+    if (!pendingScrollId.current) return;
+    const scrollTarget = pendingScrollId.current;
+
+    // Check if the target customer is in the current paginated list
+    const isOnPage = paginatedCustomers.some(c => c._id === scrollTarget);
+    if (!isOnPage) return;
+
+    isAutoScrolling.current = false;
+    pendingScrollId.current = null;
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const el = document.querySelector(`[data-customer-id="${scrollTarget}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+    });
+  }, [paginatedCustomers]);
+
+  // Reset scroll tracker when selected customer changes
+  useEffect(() => {
+    hasScrolledToSelected.current = false;
+  }, [selectedCustomerId]);
 
   // Compute filter counts
   const filterCounts = useMemo(() => {
@@ -230,13 +308,14 @@ const CustomerList = ({
       )}
 
       {/* Scrollable List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar">
         <Loader loading={loading}>
-          {filteredCustomers.length > 0 ? (
+          {paginatedCustomers.length > 0 ? (
             <div className="divide-y divide-border">
-              {filteredCustomers.map((customer) => (
+              {paginatedCustomers.map((customer) => (
                 <button
                   key={customer._id}
+                  data-customer-id={customer._id}
                   onClick={() => handleCustomerClick(customer._id)}
                   className={`w-full text-left p-4 transition-colors hover:bg-muted/50 flex items-center justify-between group ${
                     selectedCustomerId === customer._id ? 'bg-primary/5 border-r-4 border-primary' : ''
@@ -335,6 +414,60 @@ const CustomerList = ({
           )}
         </Loader>
       </div>
+
+      {/* Pagination */}
+      {filteredCustomers.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border bg-muted/30 flex-shrink-0">
+          <span className="text-xs text-muted-foreground">
+            {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredCustomers.length)} of {filteredCustomers.length}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-1.5 rounded-md hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <Icon name="ChevronLeft" size={14} />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((page) => {
+                // Show first, last, current, and neighbors
+                if (page === 1 || page === totalPages) return true;
+                if (Math.abs(page - currentPage) <= 1) return true;
+                return false;
+              })
+              .reduce<(number | '...')[]>((acc, page, idx, arr) => {
+                if (idx > 0 && page - (arr[idx - 1] as number) > 1) acc.push('...');
+                acc.push(page);
+                return acc;
+              }, [])
+              .map((page, idx) =>
+                page === '...' ? (
+                  <span key={`dots-${idx}`} className="px-1 text-xs text-muted-foreground">…</span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`min-w-[28px] h-7 rounded-md text-xs font-medium transition-colors ${
+                      currentPage === page
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-1.5 rounded-md hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <Icon name="ChevronRight" size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

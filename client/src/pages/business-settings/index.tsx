@@ -8,6 +8,7 @@ import TaxConfigurationSection from './components/TaxConfigurationSection';
 import DataManagementSection from './components/DataManagementSection';
 import SyncStatusSection from './components/SyncStatusSection';
 import PWASettingsSection from './components/PWASettingsSection';
+import { useNavigate } from 'react-router-dom';
 
 interface Preferences {
   syncFrequency: string;
@@ -143,6 +144,8 @@ const BusinessSettings: React.FC = () => {
     keepScreenAwake: false,
     fullscreenMode: false
   });
+
+  const navigate = useNavigate();
 
   const tabs: Tab[] = [
     {
@@ -310,7 +313,7 @@ const BusinessSettings: React.FC = () => {
                 variant="default"
                 iconName="ArrowLeft"
                 iconPosition="left"
-                onClick={() => window.location.href = '/business-dashboard'}
+                onClick={() => navigate('/business-dashboard')}
               >
                 Back to Dashboard
               </Button>

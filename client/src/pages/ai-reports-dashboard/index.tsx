@@ -481,7 +481,6 @@ const AIReportsDashboard: React.FC = () => {
                         </div>
                         <div>
                           <h2 className="font-bold text-gray-900">AI Assistant</h2>
-                          <p className="text-xs text-gray-500">Powered by Ollama</p>
                         </div>
                       </div>
                       <button

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import Icon from "@/components/AppIcon";
 import Button from "@/components/ui/Button";
@@ -14,6 +14,7 @@ import CustomerDetailsModal from "./components/CustomerDetailsModal";
 
 const CustomerCredit = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
@@ -24,8 +25,23 @@ const CustomerCredit = () => {
   const [isCustomerListExpanded, setIsCustomerListExpanded] = useState(true);
   const [customerDetailsModalId, setCustomerDetailsModalId] = useState<string | null>(null);
 
+  // Auto-select customer from URL query param
+  useEffect(() => {
+    const customerId = searchParams.get('customerId');
+    if (customerId) {
+      setSelectedCustomerId(customerId);
+      setIsCustomerListExpanded(false);
+    }
+  }, [searchParams]);
+
   // Function to trigger a re-fetch across all components
   const handleRefresh = () => setRefreshKey((prev) => prev + 1);
+
+  // Select customer and sync URL
+  const handleCustomerSelect = (id: string) => {
+    setSelectedCustomerId(id);
+    setSearchParams({ customerId: id }, { replace: true });
+  };
 
   return (
     <>
@@ -101,7 +117,7 @@ const CustomerCredit = () => {
                 >
                   <CustomerList
                     selectedCustomerId={selectedCustomerId}
-                    onCustomerSelect={setSelectedCustomerId}
+                    onCustomerSelect={handleCustomerSelect}
                     onAddClick={() => setIsAddModalOpen(true)}
                     refreshKey={refreshKey}
                     isExpanded={isCustomerListExpanded}

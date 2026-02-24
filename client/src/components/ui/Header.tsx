@@ -24,7 +24,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) 
       icon: "LayoutDashboard",
     },
     { label: "Inventory", path: "/inventory-management", icon: "Package" },
-    { label: "Sales", path: "/sales-recording", icon: "ShoppingCart" },
+    { label: "Sales", path: "/sales-management", icon: "ShoppingCart" },
     { label: "Expenses", path: "/expense-tracking", icon: "Receipt" },
     { label: "Suppliers", path: "/supplier-management", icon: "Truck" },
     { label: "Customers", path: "/customer-khata", icon: "Users" },
@@ -96,7 +96,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) 
                 variant={isActive ? "default" : "ghost"}
                 size="sm"
                 className="flex items-center space-x-2 px-3"
-                onClick={() => (window.location.href = item?.path)}
+                onClick={() => navigate(item?.path)}
               >
                 <Icon name={item?.icon} size={16} />
                 <span>{item?.label}</span>

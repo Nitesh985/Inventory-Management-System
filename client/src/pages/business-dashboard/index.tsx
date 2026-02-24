@@ -237,15 +237,10 @@ const BusinessDashboard: React.FC = () => {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 ">
-            {/* Left Column - Chart */}
-            <div className="lg:col-span-2" data-tour="business-chart">
+          <div className="mb-8">
+            {/* Chart - Full Width */}
+            <div data-tour="business-chart">
               <BusinessChart />
-            </div>
-            
-            {/* Right Column - Sync Status */}
-            <div>
-              {/* <SyncStatus /> */}
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import { useFetch } from '@/hooks/useFetch';
 import { getSales } from '@/api/sales';
 import { getExpenses } from '@/api/expenses';
 import Loader from '@/components/Loader';
+import {useNavigate} from 'react-router-dom'
 
 interface Transaction {
   id: string;
@@ -23,7 +24,8 @@ const RecentTransactions = () => {
   const [activeTab, setActiveTab] = useState('all');
   const { data: salesResponse, loading: salesLoading } = useFetch(getSales, []);
   const { data: expensesResponse, loading: expensesLoading } = useFetch(getExpenses, []);
-  
+  const navigate = useNavigate();
+
   const salesData = useMemo(() => {
     if (Array.isArray(salesResponse)) return salesResponse;
     if (Array.isArray(salesResponse?.data)) return salesResponse.data;
@@ -96,7 +98,7 @@ const RecentTransactions = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => window.location.href = '/sales-recording'}
+          onClick={() => navigate('/sales-management')}
         >
           View All
         </Button>
