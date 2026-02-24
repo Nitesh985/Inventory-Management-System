@@ -66,33 +66,58 @@ const LoginPage = () => {
   };
 
   const submitLoginForm = async (data: LoginFormData) => {
-    setIsLoading(true)
-    validateForm(data)
+    // Validate first
+    const validationErrors = validateForm(data);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setErrors({});
+    setIsLoading(true);
     
-    const { data: resData } = await signIn.email({
-      email: data.email,
-      password: data.password,
-      rememberMe: data.rememberMe,
-    })
- 
-    if (resData){
-      const {user} = resData
-      if (!user?.onBoardingCompleted){
-        navigate('/inventory-management', {replace:true})
-        return
+    try {
+      const { data: resData, error } = await signIn.email({
+        email: data.email,
+        password: data.password,
+        rememberMe: data.rememberMe,
+      });
+
+      if (error) {
+        setErrors({ general: error.message || 'Invalid email or password. Please try again.' });
+        return;
       }
-      
-      navigate('/business-dashboard', {replace:true})
+   
+      if (resData) {
+        const { user } = resData;
+        if (!user?.onBoardingCompleted) {
+          navigate('/inventory-management', { replace: true });
+          return;
+        }
+        navigate('/business-dashboard', { replace: true });
+      } else {
+        setErrors({ general: 'Invalid email or password. Please try again.' });
+      }
+    } catch (error: any) {
+      setErrors({ general: error?.message || 'Something went wrong. Please try again.' });
+    } finally {
+      setIsLoading(false);
     }
   }
 
   const submitGoogle = async (data: LoginFormData) => {
-    setIsLoading(true)
+    setIsLoading(true);
 
-    await signIn.social({
-      provider: "google",
-      callbackURL: "http://localhost:5173/business-dashboard"
-    })
+    try {
+      await signIn.social({
+        provider: "google",
+        callbackURL: "http://localhost:5173/business-dashboard"
+      });
+    } catch (error: any) {
+      setErrors({ general: error?.message || 'Google sign-in failed. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

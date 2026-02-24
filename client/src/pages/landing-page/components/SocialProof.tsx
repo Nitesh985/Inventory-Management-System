@@ -1,6 +1,6 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
-import type { SocialProofProps, TestimonialProps, StatisticProps, BusinessStoryProps } from '../types';
+import type { SocialProofProps, TestimonialProps, StatisticProps } from '../types';
 
 const SocialProof = ({ className = '' }: SocialProofProps) => {
   const statistics: StatisticProps[] = [
@@ -56,27 +56,6 @@ const SocialProof = ({ className = '' }: SocialProofProps) => {
     avatar: "https://img.rocket.new/generatedImages/rocket_gen_img_158585551-1763292628455.png",
     alt: 'Mohammed Ali, restaurant owner in chef attire standing in his kitchen',
     rating: 5
-  }];
-
-
-  const businessStories: BusinessStoryProps[] = [
-  {
-    businessName: 'Tech Mobile Hub',
-    ownerName: 'Amit Patel',
-    category: 'Mobile Accessories',
-    achievement: '300% Revenue Growth',
-    description: 'Scaled from single shop to 3 locations using Digital Khata\'s multi-location inventory management and sales analytics.',
-    image: "https://images.unsplash.com/photo-1681008195107-92c82cb1c38f",
-    alt: 'Modern mobile phone accessories shop with organized display cases and bright lighting'
-  },
-  {
-    businessName: 'Fresh Mart Grocery',
-    ownerName: 'Sunita Devi',
-    category: 'Grocery Store',
-    achievement: 'Zero Stock-Outs',
-    description: 'Smart inventory alerts and supplier management eliminated stock-outs completely. Customer satisfaction increased dramatically.',
-    image: "https://images.unsplash.com/photo-1721173841073-8fb97b4a30d4",
-    alt: 'Well-organized grocery store with fresh produce displays and systematic shelving'
   }];
 
 
@@ -154,40 +133,7 @@ const SocialProof = ({ className = '' }: SocialProofProps) => {
           </div>
         </div>
 
-        {/* Business Success Stories */}
-        <div>
-          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 text-center mb-6 sm:mb-8 md:mb-10">
-            Success Stories
-          </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {businessStories.map((story, index) =>
-            <div key={index} className="group relative bg-white border border-gray-200 rounded-lg sm:rounded-2xl overflow-hidden hover:shadow-2xl hover:border-blue-400 transition-all duration-300 transform hover:-translate-y-1">
-                <div className="relative overflow-hidden h-40 sm:h-48">
-                  <img
-                  src={story.image}
-                  alt={story.alt}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  loading="lazy" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                </div>
 
-                <div className="p-4 sm:p-6">
-                  <div className="flex items-center justify-between mb-2 sm:mb-3 gap-2">
-                    <div>
-                      <h4 className="text-base sm:text-lg font-bold text-gray-900">{story.businessName}</h4>
-                      <p className="text-xs sm:text-sm text-gray-600 font-medium">{story.category}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{story.achievement}</div>
-                      <div className="text-xs text-gray-600">{story.ownerName}</div>
-                    </div>
-                  </div>
-                  <p className="text-gray-700 text-xs sm:text-sm leading-relaxed font-medium">{story.description}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </section>);
 

@@ -55,7 +55,7 @@ const HeroSection = ({ onGetStarted, onTryDemo }: HeroSectionProps) => {
             <h2 className="text-xl sm:text-2xl md:text-4xl lg:text-6xl font-black leading-tight text-gray-900">
               Manage Your Business
               <span className="block bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                Smarter, Faster, Offline
+                Smarter, Faster, Easier
               </span>
             </h2>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto font-medium">
@@ -67,9 +67,9 @@ const HeroSection = ({ onGetStarted, onTryDemo }: HeroSectionProps) => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6 max-w-5xl mx-auto pt-2 sm:pt-4 animate-fade-in-delay-2">
             {[
               {
-                icon: "WifiOff",
-                title: "Works Offline",
-                description: "Continue without internet.",
+                icon: "Clock",
+                title: "24/7 Access",
+                description: "Available anytime, anywhere.",
                 color: "from-purple-500 to-purple-900"
               },
               {

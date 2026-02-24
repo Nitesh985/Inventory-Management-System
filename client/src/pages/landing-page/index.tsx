@@ -194,7 +194,7 @@ const LandingPage: React.FC = () => {
           {/* Footer Bottom */}
           <div className="border-t border-blue-800 pt-8 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
             <p className="text-sm text-blue-200 font-medium">
-              © 2024 Digital Khata. All rights reserved.
+              © 2026 Digital Khata. All rights reserved.
             </p>
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2 text-sm text-blue-200 font-medium">

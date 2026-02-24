@@ -13,9 +13,21 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { startTour } = useTour('business-dashboard');
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Sign out error:", error);
+    } finally {
+      window.location.href = "/sign-in";
+    }
+  };
 
   const primaryNavItems = [
     {
@@ -124,7 +136,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) 
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              onClick={() => !isSigningOut && setShowMoreMenu(!showMoreMenu)}
               className="relative"
             >
               <Icon name="MoreVertical" size={20} />
@@ -161,12 +173,21 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) 
                   </button>
 
                   <button 
-                  className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
-                  onClick={()=>
-                    signOut().then(()=>navigate("/sign-in", {replace:true}))}
+                  className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth disabled:opacity-50"
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
                   >
-                    <Icon name="LogOut" size={16} />
-                    <span>Sign Out</span>
+                    {isSigningOut ? (
+                      <>
+                        <Icon name="Loader2" size={16} className="animate-spin" />
+                        <span>Signing out...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="LogOut" size={16} />
+                        <span>Sign Out</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -178,7 +199,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) 
       {showMoreMenu && (
         <div
           className="fixed inset-0 bg-black/20 z-50 lg:hidden"
-          onClick={() => setShowMoreMenu(false)}
+          onClick={() => !isSigningOut && setShowMoreMenu(false)}
         />
       )}
     </header>
