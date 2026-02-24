@@ -30,6 +30,7 @@
     "react-google-places-autocomplete": "^4.1.0",
     "react-helmet": "^6.1.0",
     "react-hook-form": "^7.69.0",
+    "react-markdown": "^10.1.0",
     "react-phone-input-2": "^2.15.1",
     "react-router-dom": "6.0.2",
     "react-router-hash-link": "^2.4.3",
