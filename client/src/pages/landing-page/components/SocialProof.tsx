@@ -1,8 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import type { SocialProofProps, TestimonialProps, StatisticProps } from '../types';
+import { getPublicReviews, type PublicReview } from '../../../api/reviews';
 
 const SocialProof = ({ className = '' }: SocialProofProps) => {
+  const [reviews, setReviews] = useState<PublicReview[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await getPublicReviews(6);
+        if (res?.data?.length) {
+          setReviews(res.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch reviews:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
   const statistics: StatisticProps[] = [
   {
     value: '10,000+',
@@ -26,15 +45,14 @@ const SocialProof = ({ className = '' }: SocialProofProps) => {
   }];
 
 
-  const testimonials: TestimonialProps[] = [
+  const fallbackTestimonials: TestimonialProps[] = [
   {
     id: 1,
     name: 'Rajesh Kumar',
     role: 'Shop Owner',
     company: 'Kumar Electronics',
-    message: 'Digital Khata transformed how I manage my electronics shop. The offline feature is a game-changer during power cuts. Sales tracking and inventory management have never been this easy.',
+    message: 'Digital Khata transformed how I manage my electronics shop. Sales tracking and inventory management have never been this easy.',
     avatar: "https://images.unsplash.com/photo-1574901200090-ca061722bdb9",
-    alt: 'Rajesh Kumar, electronics shop owner wearing glasses and smiling',
     rating: 5
   },
   {
@@ -44,7 +62,6 @@ const SocialProof = ({ className = '' }: SocialProofProps) => {
     company: 'Elegant Fashion',
     message: 'The AI insights helped me understand which designs sell best. Customer management features keep track of preferences. My boutique revenue increased by 40% in 6 months.',
     avatar: "https://images.unsplash.com/photo-1612684352323-b79cfec32b7a",
-    alt: 'Priya Sharma, boutique owner in traditional Indian attire smiling confidently',
     rating: 5
   },
   {
@@ -54,26 +71,38 @@ const SocialProof = ({ className = '' }: SocialProofProps) => {
     company: 'Spice Garden',
     message: 'Managing inventory for my restaurant was chaotic before Digital Khata. Now I track ingredients, predict demand, and control costs. The expense tracking saves me hours every week.',
     avatar: "https://img.rocket.new/generatedImages/rocket_gen_img_158585551-1763292628455.png",
-    alt: 'Mohammed Ali, restaurant owner in chef attire standing in his kitchen',
     rating: 5
   }];
 
+  // Map real reviews to testimonial format
+  const testimonials: TestimonialProps[] = reviews.length > 0
+    ? reviews.map((r, i) => ({
+        id: i + 1,
+        name: r.userName,
+        role: r.businessType || 'Business Owner',
+        company: r.shopName,
+        message: r.content,
+        avatar: r.userImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(r.userName)}&background=3b82f6&color=fff`,
+        rating: r.stars,
+      }))
+    : fallbackTestimonials;
 
-  const TestimonialCard = ({ testimonial }: {testimonial: TestimonialProps;}) =>
+
+  const ReviewCard = ({ testimonial }: {testimonial: TestimonialProps;}) =>
   <div className="group relative bg-white border border-gray-200 rounded-2xl p-6 h-full hover:shadow-2xl hover:border-blue-400 transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
     <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
     <div className="relative">
       <div className="flex items-center mb-4">
         <img
         src={testimonial.avatar}
-        alt={testimonial.alt}
-        className="w-12 h-12 rounded-full mr-4 border-2 border-blue-200 group-hover:border-blue-400 transition-colors"
+        alt={testimonial.name}
+        className="w-12 h-12 rounded-full mr-4 border-2 border-blue-200 group-hover:border-blue-400 transition-colors object-cover"
         loading="lazy" />
 
         <div>
           <h4 className="font-bold text-gray-900">{testimonial.name}</h4>
           <p className="text-xs text-gray-600">
-            {testimonial.role}
+            {testimonial.role}{testimonial.company ? ` · ${testimonial.company}` : ''}
           </p>
         </div>
       </div>
@@ -126,11 +155,34 @@ const SocialProof = ({ className = '' }: SocialProofProps) => {
           <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 text-center mb-6 sm:mb-8 md:mb-10">
             What Users Say
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {testimonials.map((testimonial) =>
-            <TestimonialCard key={testimonial.id} testimonial={testimonial} />
-            )}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white border border-gray-200 rounded-2xl p-6 h-48 animate-pulse">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 rounded-full bg-gray-200 mr-4"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                      <div className="h-3 w-16 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="flex mb-3 space-x-1">
+                    {[1,2,3,4,5].map((s) => <div key={s} className="w-4 h-4 bg-gray-200 rounded"></div>)}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 w-full bg-gray-200 rounded"></div>
+                    <div className="h-3 w-3/4 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {testimonials.map((testimonial) =>
+                <ReviewCard key={testimonial.id} testimonial={testimonial} />
+              )}
+            </div>
+          )}
         </div>
 
 

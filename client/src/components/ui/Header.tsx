@@ -5,6 +5,7 @@ import Button from "./Button";
 import Logo from "../../assets/logo.png";
 import { signOut } from "@/lib/auth-client";
 import { useTour } from "@/hooks/useTour";
+import FeedbackModal from "./FeedbackModal";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -14,6 +15,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { startTour } = useTour('business-dashboard');
@@ -173,6 +175,17 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) 
                   </button>
 
                   <button 
+                    className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      setShowFeedback(true);
+                    }}
+                  >
+                    <Icon name="MessageSquare" size={16} />
+                    <span>Feedback</span>
+                  </button>
+
+                  <button 
                   className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth disabled:opacity-50"
                   onClick={handleSignOut}
                   disabled={isSigningOut}
@@ -202,6 +215,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, syncStatus = "online" }) 
           onClick={() => !isSigningOut && setShowMoreMenu(false)}
         />
       )}
+
+      {/* Feedback Modal */}
+      <FeedbackModal isOpen={showFeedback} onClose={() => setShowFeedback(false)} />
     </header>
   );
 };

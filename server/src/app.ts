@@ -41,6 +41,7 @@ import categoryRouter from './routes/category.routes.ts'
 import supplierRouter from './routes/supplier.routes.ts'
 import chatRouter from './routes/chat.routes.ts'
 import chatbotRoutes from './routes/chatbot.routes.ts'
+import reviewRouter from './routes/review.routes.ts'
 
 
 app.use("/api/customers", customerRouter)
@@ -58,6 +59,7 @@ app.use("/api/credits", creditRouter);
 app.use("/api/chats", chatRouter);
 app.use("/api/suppliers", supplierRouter);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/reviews", reviewRouter);
 
 
 
