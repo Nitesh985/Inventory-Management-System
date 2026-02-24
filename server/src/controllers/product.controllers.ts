@@ -137,7 +137,7 @@ const createProduct = asyncHandler(async (req: Request, res: Response) => {
 
   const product = await Product.create({
     shopId,
-    supplier,
+    supplierId: supplier || undefined,
     category,
     sku,
     name,
@@ -341,6 +341,10 @@ const updateProduct = asyncHandler(async (req: Request, res: Response) => {
   console.log(minStock)
 
   // Map frontend field names to backend field names FIRST
+  if (updates.supplier !== undefined) {
+    updates.supplierId = updates.supplier || undefined;
+    delete updates.supplier;
+  }
   if (updates.unitPrice !== undefined) {
     updates.price = updates.unitPrice;
     delete updates.unitPrice;

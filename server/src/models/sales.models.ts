@@ -26,6 +26,7 @@ export interface ISales extends Document {
   items: ISaleItem[];
   totalAmount: number;
   paidAmount: number;
+  paymentMethod: 'CASH' | 'CREDIT' | 'ESEWA' | 'KHALTI';
   status: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'PARTIALLY_PAID' | 'REFUNDED' | 'CREDIT';
   discount: number;
   notes?: string;
@@ -41,6 +42,11 @@ const salesSchema = new Schema<ISales>(
     items: { type: [saleItemSchema], required: true },
     totalAmount: { type: Number, required: true },
     paidAmount: { type: Number, default: 0 },
+    paymentMethod: {
+      type: String,
+      enum: ['CASH', 'CREDIT', 'ESEWA', 'KHALTI'],
+      default: 'CASH',
+    },
     status: {
       type: String,
       enum: ['PENDING', 'COMPLETED', 'CANCELLED', 'PARTIALLY_PAID', 'REFUNDED', 'CREDIT'],

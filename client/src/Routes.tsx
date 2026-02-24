@@ -20,6 +20,7 @@ import {
   Register as RegisterPage,
   EmailVerification,
   SalesManagement,
+  SupplierManagement,
 } from "./pages";
 import ProtectedLayout from "./ProtectedLayout";
 import Protected from "./components/Protected";
@@ -51,6 +52,7 @@ const Routes = () => {
           <Route path="/sales-management" element={<SalesManagement />} />
           <Route path="/sales-recording" element={<SalesRecording />} />
           <Route path="/expense-tracking" element={<ExpenseTracking />} />
+          <Route path="/supplier-management" element={<SupplierManagement />} />
           <Route path="/customer-khata" element={<CustomerKhata />} />
           <Route path="/customer-khata/credit-history" element={<CreditHistoryPage />} />
           <Route element={<AuthLayout />}>

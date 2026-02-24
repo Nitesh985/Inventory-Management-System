@@ -49,6 +49,142 @@ const SaleDetailsModal = ({ sale, onClose, onStatusUpdate }: Props) => {
       }
     }
   }
+
+  const handleDownloadReceipt = () => {
+    const date = new Date(sale.createdAt)
+    const formattedDate = date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+    const formattedTime = date.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    })
+
+    const dueAmount = sale.totalAmount - sale.paidAmount
+    const statusLabel = sale.status.charAt(0) + sale.status.slice(1).toLowerCase().replace('_', ' ')
+
+    const canvas = document.createElement('canvas')
+    const width = 480
+    const padding = 32
+    const lineHeight = 22
+    const itemCount = sale.items?.length || 0
+    // Calculate height dynamically
+    const height = 380 + itemCount * lineHeight + (dueAmount > 0 ? 24 : 0)
+    canvas.width = width * 2 // 2x for retina
+    canvas.height = height * 2
+    const ctx = canvas.getContext('2d')!
+    ctx.scale(2, 2)
+
+    // Background
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, width, height)
+
+    let y = padding
+
+    // Helper functions
+    const drawText = (text: string, x: number, yPos: number, opts?: { font?: string; color?: string; align?: CanvasTextAlign }) => {
+      ctx.font = opts?.font || '13px monospace'
+      ctx.fillStyle = opts?.color || '#1a1a1a'
+      ctx.textAlign = opts?.align || 'left'
+      ctx.fillText(text, x, yPos)
+      ctx.textAlign = 'left'
+    }
+
+    const drawLine = (yPos: number) => {
+      ctx.strokeStyle = '#d1d5db'
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.moveTo(padding, yPos)
+      ctx.lineTo(width - padding, yPos)
+      ctx.stroke()
+    }
+
+    // Title
+    drawText('SALES RECEIPT', width / 2, y, { font: 'bold 18px sans-serif', align: 'center' })
+    y += 12
+    drawLine(y)
+    y += 24
+
+    // Invoice details
+    const labelX = padding
+    const valueX = padding + 140
+    drawText('Invoice No:', labelX, y, { font: '13px sans-serif', color: '#6b7280' })
+    drawText(sale.invoiceNo, valueX, y, { font: 'bold 13px sans-serif' })
+    y += lineHeight
+    drawText('Date:', labelX, y, { font: '13px sans-serif', color: '#6b7280' })
+    drawText(`${formattedDate}  ${formattedTime}`, valueX, y, { font: '13px sans-serif' })
+    y += lineHeight
+    drawText('Customer:', labelX, y, { font: '13px sans-serif', color: '#6b7280' })
+    drawText(sale.customerName, valueX, y, { font: '13px sans-serif' })
+    y += lineHeight
+    drawText('Payment:', labelX, y, { font: '13px sans-serif', color: '#6b7280' })
+    drawText(sale.paymentMethod, valueX, y, { font: '13px sans-serif' })
+    y += lineHeight
+    drawText('Status:', labelX, y, { font: '13px sans-serif', color: '#6b7280' })
+    const statusColor = sale.status === 'COMPLETED' ? '#15803d' : sale.status === 'PENDING' ? '#b45309' : '#1d4ed8'
+    drawText(statusLabel, valueX, y, { font: 'bold 13px sans-serif', color: statusColor })
+    y += 16
+
+    // Items header
+    drawLine(y)
+    y += 18
+    drawText('Item', labelX, y, { font: 'bold 12px sans-serif', color: '#6b7280' })
+    drawText('Qty', width - padding - 160, y, { font: 'bold 12px sans-serif', color: '#6b7280', align: 'right' })
+    drawText('Price', width - padding - 80, y, { font: 'bold 12px sans-serif', color: '#6b7280', align: 'right' })
+    drawText('Total', width - padding, y, { font: 'bold 12px sans-serif', color: '#6b7280', align: 'right' })
+    y += 8
+    drawLine(y)
+    y += 16
+
+    // Items
+    sale.items?.forEach(item => {
+      const itemName = (item.name || 'Unknown Item').length > 22 ? (item.name || 'Unknown Item').slice(0, 22) + '…' : (item.name || 'Unknown Item')
+      drawText(itemName, labelX, y, { font: '13px sans-serif' })
+      drawText(String(item.quantity), width - padding - 160, y, { font: '13px sans-serif', align: 'right' })
+      drawText(`Rs.${Math.round(item.unitPrice || 0).toLocaleString()}`, width - padding - 80, y, { font: '13px sans-serif', align: 'right' })
+      drawText(`Rs.${Math.round(item.total || 0).toLocaleString()}`, width - padding, y, { font: '13px sans-serif', align: 'right' })
+      y += lineHeight
+    })
+
+    y += 4
+    drawLine(y)
+    y += 20
+
+    // Totals
+    drawText('Total Amount:', labelX, y, { font: 'bold 14px sans-serif' })
+    drawText(`Rs.${Math.round(sale.totalAmount).toLocaleString()}`, width - padding, y, { font: 'bold 14px sans-serif', color: '#7c3aed', align: 'right' })
+    y += lineHeight + 2
+    drawText('Paid Amount:', labelX, y, { font: '13px sans-serif', color: '#6b7280' })
+    drawText(`Rs.${Math.round(sale.paidAmount).toLocaleString()}`, width - padding, y, { font: '13px sans-serif', align: 'right' })
+    y += lineHeight
+
+    if (dueAmount > 0) {
+      drawText('Due Amount:', labelX, y, { font: 'bold 13px sans-serif', color: '#b45309' })
+      drawText(`Rs.${Math.round(dueAmount).toLocaleString()}`, width - padding, y, { font: 'bold 13px sans-serif', color: '#b45309', align: 'right' })
+      y += lineHeight
+    }
+
+    y += 8
+    drawLine(y)
+    y += 22
+    drawText('Thank you for your purchase!', width / 2, y, { font: '13px sans-serif', color: '#6b7280', align: 'center' })
+
+    // Download
+    canvas.toBlob((blob) => {
+      if (!blob) return
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `receipt-${sale.invoiceNo}.png`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    }, 'image/png')
+  }
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('en-IN', {
@@ -224,8 +360,8 @@ const SaleDetailsModal = ({ sale, onClose, onStatusUpdate }: Props) => {
               <Button variant="outline" onClick={onClose} disabled={isUpdating}>
                 Close
               </Button>
-              <Button iconName="Printer" iconPosition="left" disabled={isUpdating}>
-                Print
+              <Button iconName="Download" iconPosition="left" disabled={isUpdating} onClick={handleDownloadReceipt}>
+                Download Receipt
               </Button>
             </div>
           </div>

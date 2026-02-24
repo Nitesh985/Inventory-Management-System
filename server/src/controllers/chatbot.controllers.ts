@@ -1,207 +1,104 @@
-import type { Request, Response } from 'express';
-import { geminiService } from '../services/gemini.service.ts';
-import Product from '../models/product.models.ts';
-import Sales from '../models/sales.models.ts';
-import Inventory from '../models/inventory.models.ts';
-import Expense from '../models/expense.models.ts';
-import Customer from '../models/customer.models.ts';
+import type { Request, Response } from "express";
+import { asyncHandler } from "../utils/asyncHandler.ts";
+import { ApiResponse } from "../utils/ApiResponse.ts";
+import { ApiError } from "../utils/ApiError.ts";
+import { runAgent } from "../services/langchain-agent.service.ts";
 
-export class ChatbotController {
-  async chat(req: Request, res: Response) {
-    try {
-      console.log(req.body);
-      const { message, conversationHistory } = req.body;
+/**
+ * POST /api/chatbot/chat
+ * General chatbot endpoint (landing page - no auth required)
+ */
+const generalChat = asyncHandler(async (req: Request, res: Response) => {
+  const { message, conversationHistory } = req.body;
 
-      if (!message || typeof message !== 'string') {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Message is required' 
-        });
-      }
-
-      const response = await geminiService.chat(message, conversationHistory);
-
-      res.json({
-        success: true,
-        data: {
-          message: response,
-          timestamp: new Date().toISOString()
-        }
-      });
-    } catch (error: any) {
-      console.error('Chat error:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to process chat message'
-      });
-    }
+  if (!message || typeof message !== "string" || !message.trim()) {
+    throw new ApiError(400, "Message is required");
   }
 
-  async getBusinessAdvice(req: Request, res: Response) {
-    try {
-      const { businessType } = req.body;
+  // For unauthenticated users, respond with a helpful pre-programmed message
+  const content = message.toLowerCase();
 
-      if (!businessType) {
-        return res.status(400).json({
-          success: false,
-          error: 'Business type is required'
-        });
-      }
+  let response = "";
 
-      const advice = await geminiService.generateBusinessSetupAdvice(businessType);
-
-      res.json({
-        success: true,
-        data: { advice }
-      });
-    } catch (error: any) {
-      console.error('Business advice error:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to generate business advice'
-      });
-    }
+  if (
+    content.includes("hello") ||
+    content.includes("hi") ||
+    content.includes("hey")
+  ) {
+    response =
+      "Hello! Welcome to **Digital Khata** 🙏\n\nI'm your AI assistant. Digital Khata helps you manage your shop's inventory, sales, expenses, and customer credit (khata) — all in one place.\n\n**Here's what you can do:**\n- 📦 Track products & inventory\n- 💰 Record sales & payments\n- 📊 Get AI-powered business insights\n- 👥 Manage customer credit (udhar)\n- 📋 Track expenses & budgets\n\nSign up to get started!";
+  } else if (
+    content.includes("feature") ||
+    content.includes("what can") ||
+    content.includes("help")
+  ) {
+    response =
+      "**Digital Khata Features:**\n\n• **Inventory Management** — Track products, stock levels, SKUs, and low-stock alerts\n• **Sales Recording** — Record sales with multiple payment methods (Cash, Credit, eSewa, Khalti)\n• **Expense Tracking** — Track business expenses with budget limits\n• **Customer Khata** — Manage customer credit/debit (udhar) records\n• **Supplier Management** — Keep track of your suppliers\n• **AI Reports** — Get intelligent business insights and analytics\n• **Receipt Generation** — Download receipts as images\n\nSign up to start managing your business!";
+  } else if (
+    content.includes("price") ||
+    content.includes("cost") ||
+    content.includes("free")
+  ) {
+    response =
+      "Digital Khata is currently **free to use**! 🎉\n\nSign up and start managing your business right away. No credit card required.";
+  } else if (
+    content.includes("register") ||
+    content.includes("sign up") ||
+    content.includes("account")
+  ) {
+    response =
+      'You can **sign up** by clicking the "Get Started" button on the homepage. You\'ll need:\n\n1. Your email address\n2. A password\n3. Your business details (name, type, location)\n\nThe setup takes less than 2 minutes!';
+  } else {
+    response = `Thanks for your message! I'm the Digital Khata assistant. Here's how I can help:\n\n- **Before sign-up**: I can tell you about our features, pricing, and how to get started\n- **After sign-up**: I become your AI business analyst — I can analyze your sales, inventory, expenses, and give you insights based on your real data\n\nWould you like to know about our features, or are you ready to sign up?`;
   }
 
-  async analyticsChat(req: Request, res: Response) {
-    try {
-      console.log('Analytics chat request received');
-      const { message, conversationHistory } = req.body;
-      const user = (req as any).user;
-      const shopId = user?.activeShopId;
+  return res.status(200).json({
+    success: true,
+    data: {
+      message: response,
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
 
-      console.log('User:', user?.id);
-      console.log('Shop ID:', shopId);
-      console.log('Message:', message);
+/**
+ * POST /api/chatbot/analytics
+ * AI-powered analytics chat (requires auth)
+ */
+const analyticsChat = asyncHandler(async (req: Request, res: Response) => {
+  const shopId = req.user?.activeShopId;
 
-      if (!shopId) {
-        console.error('No shop ID found. User:', user);
-        return res.status(401).json({
-          success: false,
-          error: 'Shop authentication required. Please complete business registration.'
-        });
-      }
-
-      if (!message || typeof message !== 'string') {
-        console.error('Invalid message:', message);
-        return res.status(400).json({
-          success: false,
-          error: 'Message is required'
-        });
-      }
-
-      console.log('Fetching shop data...');
-      // Fetch shop data for context
-      const [products, sales, inventory, expenses, customers] = await Promise.all([
-        Product.find({ shopId }).limit(100).lean(),
-        Sales.find({ shopId }).sort({ createdAt: -1 }).limit(100).lean(),
-        Inventory.find({ shopId }).populate('productId').limit(100).lean(),
-        Expense.find({ shopId }).sort({ date: -1 }).limit(50).lean(),
-        Customer.find({ shopId }).limit(50).lean()
-      ]);
-
-      console.log('Data fetched:', {
-        products: products.length,
-        sales: sales.length,
-        inventory: inventory.length,
-        expenses: expenses.length,
-        customers: customers.length
-      });
-
-      // Calculate key metrics
-      const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-      const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
-      const totalProfit = totalRevenue - totalExpenses;
-      const lowStockProducts = inventory.filter((inv: any) => inv.stock <= (inv.minStock || 5));
-      
-      const shopContext = {
-        products: {
-          total: products.length,
-          categories: [...new Set(products.map(p => p.category))],
-          sample: products.slice(0, 10).map(p => ({
-            name: p.name,
-            price: p.price,
-            category: p.category
-          }))
-        },
-        sales: {
-          total: sales.length,
-          totalRevenue: totalRevenue.toFixed(2),
-          recentSales: sales.slice(0, 5).map(s => ({
-            date: s.createdAt,
-            amount: s.totalAmount,
-            items: s.items?.length || 0
-          }))
-        },
-        inventory: {
-          total: inventory.length,
-          lowStock: lowStockProducts.length,
-          lowStockItems: lowStockProducts.slice(0, 5).map((inv: any) => ({
-            name: inv.productId?.name,
-            stock: inv.stock,
-            minStock: inv.minStock
-          }))
-        },
-        expenses: {
-          total: expenses.length,
-          totalAmount: totalExpenses.toFixed(2),
-          recentExpenses: expenses.slice(0, 5).map(e => ({
-            category: e.category,
-            amount: e.amount,
-            date: e.date
-          }))
-        },
-        customers: {
-          total: customers.length,
-          sample: customers.slice(0, 5).map(c => ({
-            name: c.name,
-            contact: c.contact?.[0] || 'N/A'
-          }))
-        },
-        metrics: {
-          totalRevenue: totalRevenue.toFixed(2),
-          totalExpenses: totalExpenses.toFixed(2),
-          totalProfit: totalProfit.toFixed(2)
-        }
-      };
-
-      console.log('Calling Gemini/Ollama service...');
-      // Get AI response with shop context
-      const response = await geminiService.analyzeBusinessData(
-        message,
-        shopContext,
-        conversationHistory
-      );
-
-      console.log('AI response received, length:', response.length);
-
-      res.json({
-        success: true,
-        data: {
-          message: response,
-          timestamp: new Date().toISOString(),
-          context: {
-            dataPoints: {
-              products: products.length,
-              sales: sales.length,
-              lowStockItems: lowStockProducts.length
-            }
-          }
-        }
-      });
-    } catch (error: any) {
-      console.error('Analytics chat error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to process analytics query'
-      });
-    }
+  if (!shopId) {
+    throw new ApiError(401, "No active shop found. Please select a shop first.");
   }
-}
 
-export const chatbotController = new ChatbotController();
+  const { message, conversationHistory } = req.body;
+
+  if (!message || typeof message !== "string" || !message.trim()) {
+    throw new ApiError(400, "Message is required");
+  }
+
+  // Map frontend conversation history format to LangChain format
+  const history = (conversationHistory || []).map(
+    (msg: { role: string; content: string }) => ({
+      role: msg.role === "assistant" ? "ai" : "user",
+      content: msg.content,
+    })
+  );
+
+  const aiResponse = await runAgent(
+    shopId.toString(),
+    message.trim(),
+    history
+  );
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      message: aiResponse,
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
+
+export { generalChat, analyticsChat };

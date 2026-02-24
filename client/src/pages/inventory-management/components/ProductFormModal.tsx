@@ -5,6 +5,8 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { useFetch } from "@/hooks/useFetch";
 import { getCategories } from "@/api/category";
+import { getSuppliers, createSupplier } from "@/api/suppliers";
+import type { CreateSupplierDTO } from "@/api/suppliers";
 import { checkSkuAvailability } from '@/api/products';
 
 
@@ -90,6 +92,43 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
     value: cat.name,
     label: cat.name,
   }));
+
+  const [supplierRefreshKey, setSupplierRefreshKey] = useState(0);
+  const { data: supplierData, loading: supplierLoading } = useFetch(getSuppliers, [supplierRefreshKey]);
+  const suppliers = (supplierData || []).map((s: any) => ({
+    value: s._id,
+    label: s.company ? `${s.name} (${s.company})` : s.name,
+  }));
+
+  const [showAddSupplier, setShowAddSupplier] = useState(false);
+  const [newSupplier, setNewSupplier] = useState({ name: '', phone: '', company: '', email: '', address: '' });
+  const [addingSupplier, setAddingSupplier] = useState(false);
+
+  const handleAddSupplier = async () => {
+    if (!newSupplier.name.trim()) return;
+    setAddingSupplier(true);
+    try {
+      const res = await createSupplier({
+        name: newSupplier.name,
+        phone: newSupplier.phone || undefined,
+        company: newSupplier.company || undefined,
+        email: newSupplier.email || undefined,
+        address: newSupplier.address || undefined,
+      } as CreateSupplierDTO);
+      const created = res?.data || res;
+      if (created?._id) {
+        handleInputChange('supplier', created._id);
+      }
+      setSupplierRefreshKey((k) => k + 1);
+      setNewSupplier({ name: '', phone: '', company: '', email: '', address: '' });
+      setShowAddSupplier(false);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to add supplier');
+    } finally {
+      setAddingSupplier(false);
+    }
+  };
+
   const [isSkuManual, setIsSkuManual] = useState(false);
   const [skuStatus, setSkuStatus] = useState<
     "idle" | "checking" | "available" | "taken"
@@ -105,13 +144,7 @@ console.log(formData)
 
 
 
-  const suppliers = [
-    { value: 'supplier1', label: 'ABC Electronics Ltd.' },
-    { value: 'supplier2', label: 'Global Fashion House' },
-    { value: 'supplier3', label: 'Fresh Foods Co.' },
-    { value: 'supplier4', label: 'Tech Solutions Inc.' },
-    { value: 'supplier5', label: 'Local Distributor' }
-  ];
+
   
 
 
@@ -263,6 +296,7 @@ console.log(formData)
         minStock: formData?.minStock ? parseInt(formData?.minStock) : 0,
         price: parseFloat(formData?.price) || 0,
         cost: formData?.cost ? parseFloat(formData?.cost) : 0,
+        supplier: formData.supplier || '',
         lastUpdated: new Date()?.toISOString()
       };
 
@@ -453,16 +487,92 @@ console.log(formData)
               <h3 className="text-lg font-medium text-foreground mb-4">Additional Details</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select
-                  label="Supplier"
-                  placeholder="Select supplier (optional)"
-                  options={suppliers}
-                  value={formData?.supplier}
-                  onChange={(value) => handleInputChange('supplier', value)}
-                  disabled={isSubmitting}
-                />
-
+                <div>
+                  <Select
+                    label="Supplier"
+                    placeholder={
+                      supplierLoading
+                        ? "Loading suppliers..."
+                        : "Select supplier (optional)"
+                    }
+                    options={suppliers}
+                    value={formData?.supplier}
+                    onChange={(value) => handleInputChange('supplier', value)}
+                    disabled={isSubmitting || supplierLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSupplier(!showAddSupplier)}
+                    className="mt-2 inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+                  >
+                    <Icon name={showAddSupplier ? 'ChevronUp' : 'Plus'} size={14} />
+                    {showAddSupplier ? 'Cancel' : 'Add New Supplier'}
+                  </button>
+                </div>
               </div>
+
+              {showAddSupplier && (
+                <div className="p-4 bg-muted/40 border border-border rounded-lg space-y-3">
+                  <p className="text-sm font-medium text-foreground">Quick Add Supplier</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <Input
+                      label="Name"
+                      type="text"
+                      placeholder="Supplier name"
+                      value={newSupplier.name}
+                      onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
+                      required
+                      disabled={addingSupplier}
+                    />
+                    <Input
+                      label="Phone"
+                      type="tel"
+                      placeholder="98XXXXXXXX"
+                      value={newSupplier.phone}
+                      onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
+                      disabled={addingSupplier}
+                    />
+                    <Input
+                      label="Company"
+                      type="text"
+                      placeholder="Company name"
+                      value={newSupplier.company}
+                      onChange={(e) => setNewSupplier({ ...newSupplier, company: e.target.value })}
+                      disabled={addingSupplier}
+                    />
+                    <Input
+                      label="Email"
+                      type="email"
+                      placeholder="supplier@email.com"
+                      value={newSupplier.email}
+                      onChange={(e) => setNewSupplier({ ...newSupplier, email: e.target.value })}
+                      disabled={addingSupplier}
+                    />
+                    <Input
+                      label="Address"
+                      type="text"
+                      placeholder="Enter address"
+                      value={newSupplier.address}
+                      onChange={(e) => setNewSupplier({ ...newSupplier, address: e.target.value })}
+                      disabled={addingSupplier}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={handleAddSupplier}
+                      loading={addingSupplier}
+                      disabled={!newSupplier.name.trim() || addingSupplier}
+                      iconName="Plus"
+                      iconPosition="left"
+                    >
+                      Add Supplier
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

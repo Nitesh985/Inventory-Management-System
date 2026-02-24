@@ -3,7 +3,7 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { auth } from "./lib/auth.ts";
 import { toNodeHandler } from "better-auth/node";
-import chatbotRoutes from "./routes/chatbot.routes.ts";
+
 
 
 
@@ -38,7 +38,9 @@ import dataManagementRouter from './routes/data-management.routes.ts'
 import budgetRouter from './routes/budget.routes.ts'
 import creditRouter from './routes/credit.routes.ts'
 import categoryRouter from './routes/category.routes.ts'
+import supplierRouter from './routes/supplier.routes.ts'
 import chatRouter from './routes/chat.routes.ts'
+import chatbotRoutes from './routes/chatbot.routes.ts'
 
 
 app.use("/api/customers", customerRouter)
@@ -49,12 +51,13 @@ app.use("/api/products", productRouter)
 app.use("/api/categories", categoryRouter)
 app.use("/api/sales", salesRouter)
 app.use("/api/shops", shopRouter)
-app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/data-management", dataManagementRouter);
 app.use("/api/budgets", budgetRouter);
 app.use("/api/credits", creditRouter);
 app.use("/api/chats", chatRouter);
+app.use("/api/suppliers", supplierRouter);
+app.use("/api/chatbot", chatbotRoutes);
 
 
 

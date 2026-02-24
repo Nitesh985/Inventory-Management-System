@@ -35,6 +35,7 @@ interface BackendProduct {
   cost: number;
   stock: number;
   minStock: number;
+  supplierId?: string;
   availableStock: number;
   isLowStock: boolean;
   createdAt: string;
@@ -52,6 +53,7 @@ interface Product {
   maxStock: number;
   unitPrice: number;
   costPrice: number;
+  supplier: string;
   description: string;
   lastUpdated: string;
   reserved: number;
@@ -113,6 +115,7 @@ const InventoryManagement: React.FC = () => {
       maxStock: 0, // Not tracked
       unitPrice: parseInt(p.price) ?? 0,
       costPrice: parseInt(p.cost) ?? 0,
+      supplier: p.supplierId || '',
       description: p.description || "",
       lastUpdated: p.updatedAt || p.createdAt || new Date().toISOString(),
       reserved: 0, // No longer tracking reserved
@@ -293,6 +296,7 @@ const InventoryManagement: React.FC = () => {
       sku: productData.sku,
       category: productData.category,
       description: productData.description,
+      supplier: productData.supplier || '',
       currentStock: typeof productData.stock === 'string' ? parseInt(productData.stock) || 0 : productData.stock,
       minStock: typeof productData.minStock === 'string' ? parseInt(productData.minStock) || 0 : productData.minStock,
       unitPrice: typeof productData.price === 'string' ? parseFloat(productData.price) || 0 : productData.price,
@@ -316,6 +320,7 @@ const InventoryManagement: React.FC = () => {
             description: transformedData.description,
             price: parseInt(transformedData.unitPrice) || 0,
             cost: parseInt(transformedData.costPrice) || 0,
+            supplier: transformedData.supplier || '',
           } as any,
         });
         productId = String(editingProduct._id);
@@ -339,6 +344,7 @@ const InventoryManagement: React.FC = () => {
           cost: parseInt(transformedData.costPrice) || 0,
           category: transformedData.category,
           description: transformedData.description,
+          supplier: transformedData.supplier || '',
           stock: transformedData.currentStock || 0,
           minStock: transformedData.minStock || 0,
         });

@@ -53,6 +53,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: "Receipt",
         },
         {
+          label: "Supplier Management",
+          path: "/supplier-management",
+          icon: "Truck",
+        },
+        {
           label: "Customer Khata",
           path: "/customer-khata",
           icon: "Users",
