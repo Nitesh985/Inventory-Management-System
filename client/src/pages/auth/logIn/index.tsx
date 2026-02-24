@@ -13,7 +13,8 @@ import { useSession } from '@/lib/auth-client';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const {data: session} = useSession()
+  const {data: session, isPending} = useSession()
+  const hasCheckedSession = useRef(false);
 
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -21,7 +22,14 @@ const LoginPage = () => {
   const [errors, setErrors] = useState<LoginFormErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
 
-  
+  // Redirect if already signed in (only on initial load, not after sign-out)
+  useEffect(() => {
+    if (isPending || hasCheckedSession.current) return;
+    hasCheckedSession.current = true;
+    if (session?.user) {
+      navigate('/business-dashboard', { replace: true });
+    }
+  }, [session, isPending, navigate]);
 
   // Monitor online/offline status
   useEffect(() => {
