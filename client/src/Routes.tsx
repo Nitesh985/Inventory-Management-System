@@ -38,23 +38,24 @@ const Routes = () => {
           <Route path="/test" element={<TestPage />} />
           <Route path="*" element={<NotFound />} />
 
-          <Route path="/business-dashboard" element={<BusinessDashboard />} />
-
-          <Route
-            path="/inventory-management"
-            element={<InventoryManagement />}
-          />
-          <Route
-            path="/ai-reports-dashboard"
-            element={<AIReportsDashboard />}
-          />
-          <Route path="/business-settings" element={<BusinessSettings />} />
-          <Route path="/sales-management" element={<SalesManagement />} />
-          <Route path="/sales-recording" element={<SalesRecording />} />
-          <Route path="/expense-tracking" element={<ExpenseTracking />} />
-          <Route path="/supplier-management" element={<SupplierManagement />} />
-          <Route path="/customer-khata" element={<CustomerKhata />} />
-          <Route path="/customer-khata/credit-history" element={<CreditHistoryPage />} />
+          <Route element={<ProtectedLayout />} >
+            <Route path="/business-dashboard" element={<BusinessDashboard />} />
+            <Route
+              path="/inventory-management"
+              element={<InventoryManagement />}
+            />
+            <Route
+              path="/ai-reports-dashboard"
+              element={<AIReportsDashboard />}
+            />
+            <Route path="/business-settings" element={<BusinessSettings />} />
+            <Route path="/sales-management" element={<SalesManagement />} />
+            <Route path="/sales-recording" element={<SalesRecording />} />
+            <Route path="/expense-tracking" element={<ExpenseTracking />} />
+            <Route path="/supplier-management" element={<SupplierManagement />} />
+            <Route path="/customer-khata" element={<CustomerKhata />} />
+            <Route path="/customer-khata/credit-history" element={<CreditHistoryPage />} />
+          </Route>
           <Route element={<AuthLayout />}>
             <Route path="/verify-email" element={<EmailVerification />} />
           </Route>
