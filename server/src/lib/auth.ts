@@ -10,7 +10,7 @@ if (!process.env.MONGODB_URI) {
 
 
 const client = new MongoClient(`${process.env.MONGODB_URI}/auth`);
-const db = client.db();
+export const db = client.db();
 
 export const auth = betterAuth({
   baseURL: "http://localhost:3000",
@@ -25,7 +25,8 @@ export const auth = betterAuth({
       activeShopId: { type: ["string", "null"], optional:true },
       emailVerified: {type: "boolean"},
       onBoardingCompleted: {type: "boolean", defaultValue:false},
-      hasCompletedTour: {type: "boolean", defaultValue:false}
+      hasCompletedTour: {type: "boolean", defaultValue:false},
+      role: {type: "string", defaultValue: "user"}
     }
   },
   database: mongodbAdapter(db, {

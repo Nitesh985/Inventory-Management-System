@@ -11,6 +11,7 @@ declare global {
         hasCompletedTour: boolean;
         onBoardingCompleted: boolean;
         emailVerified: boolean;
+        role?: string;
       };
     }
   }

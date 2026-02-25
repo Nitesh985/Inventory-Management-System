@@ -47,4 +47,21 @@ const verifyBusinessAuth = asyncHandler(async (req: Request, res: Response, next
   next();
 });
 
-export { verifyUserAuth, verifyBusinessAuth };
+const verifyAdminAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const session = await auth.api.getSession({
+    headers: req.headers,
+  });
+
+  if (!session) {
+    throw new ApiError(401, 'Unauthorized access!');
+  }
+
+  if (session.user.role !== 'admin') {
+    throw new ApiError(403, 'Forbidden! Admin access required.');
+  }
+
+  req.user = session.user;
+  next();
+});
+
+export { verifyUserAuth, verifyBusinessAuth, verifyAdminAuth };

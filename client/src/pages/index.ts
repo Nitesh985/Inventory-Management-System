@@ -22,5 +22,8 @@ export { default as LandingPage } from "./landing-page";
 export { default as SalesRecording } from "./sales-recording";
 export { default as SalesManagement } from "./sales-management";
 
+// Admin pages
+export { AdminLayout, AdminOverview, AdminUsers, AdminShops, AdminReviews, AdminSignIn } from "./admin";
+
 // Test pages
 export { default as TestPage } from "./test-pages/TestPage";

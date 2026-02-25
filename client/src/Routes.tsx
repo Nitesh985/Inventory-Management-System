@@ -21,6 +21,12 @@ import {
   EmailVerification,
   SalesManagement,
   SupplierManagement,
+  AdminLayout,
+  AdminOverview,
+  AdminUsers,
+  AdminShops,
+  AdminReviews,
+  AdminSignIn,
 } from "./pages";
 import ProtectedLayout from "./ProtectedLayout";
 import Protected from "./components/Protected";
@@ -55,6 +61,15 @@ const Routes = () => {
             <Route path="/supplier-management" element={<SupplierManagement />} />
             <Route path="/customer-khata" element={<CustomerKhata />} />
             <Route path="/customer-khata/credit-history" element={<CreditHistoryPage />} />
+          </Route>
+
+          {/* Admin — completely separate layout */}
+          <Route path="/admin/sign-in" element={<AdminSignIn />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminOverview />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="shops" element={<AdminShops />} />
+            <Route path="reviews" element={<AdminReviews />} />
           </Route>
           <Route element={<AuthLayout />}>
             <Route path="/verify-email" element={<EmailVerification />} />

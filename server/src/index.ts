@@ -1,11 +1,14 @@
 import 'dotenv/config';
 import { connectToDB } from './db/index.ts';
 import app from './app.ts';
+import {db} from './lib/auth.ts'
+
 
 
 connectToDB()
   .then(async()=>{
- 
+
+
 
   })
   .then(async () => {

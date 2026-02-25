@@ -1,6 +1,4 @@
 import type { Request, Response } from 'express'
-import User from '../models/user.models.ts'
-import Shop from '../models/shop.models.ts'
 import { asyncHandler } from '../utils/asyncHandler.ts'
 import { ApiError } from '../utils/ApiError.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
