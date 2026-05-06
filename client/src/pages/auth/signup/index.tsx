@@ -130,7 +130,7 @@ const SignupPage = () => {
       setRegistrationError(error?.message ?? "An unexpected error occurred. Please try again.")
     }
     if (resData){
-      await axios.post("/api/users/send-verification-code")
+      await axios.post(`${process.env.VITE_API_URL}/api/users/send-verification-code`)
       navigate("/verify-email")
     }
     
@@ -140,10 +140,8 @@ const SignupPage = () => {
   const signUpGoogle = async () => {
     await signIn.social({
       provider: "google",
-      callbackURL: "http://localhost:5173/inventory-management"
+      callbackURL: `${process.env.CURRENT_URL}/inventory-management`
     })
-
-
   }
   
 
