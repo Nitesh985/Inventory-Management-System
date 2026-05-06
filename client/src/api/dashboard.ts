@@ -1,7 +1,8 @@
 import axios from "axios";
 
+
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/dashboard`,
   withCredentials: true,
 });
 
@@ -51,13 +52,15 @@ export interface ChartData {
   };
 }
 
+
+
 export async function getDashboardMetrics(period: DashboardPeriod = 'month'): Promise<{ data: DashboardMetricsData }> {
-  const res = await api.get(`/dashboard/metrics?period=${period}`);
+  const res = await api.get(`/metrics?period=${period}`);
   return res.data; // Return { data: ... } so useFetch can access .data
 }
 
 export async function getChartData(range: '7days' | '30days' | '90days'): Promise<{ data: ChartData }> {
-  const res = await api.get(`/dashboard/chart?range=${range}`);
+  const res = await api.get(`/chart?range=${range}`);
   return res.data;
 }
 

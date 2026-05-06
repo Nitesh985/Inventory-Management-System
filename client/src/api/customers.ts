@@ -1,7 +1,9 @@
 import axios from "axios";
 
+
+
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/customers`,
 });
 
 export interface CreateCustomerDTO {
@@ -36,7 +38,7 @@ export interface Customer {
 async function createCustomer(
   data: CreateCustomerDTO
 ): Promise<Customer> {
-  const res = await api.post<Customer>("/customers", data);
+  const res = await api.post<Customer>("/", data);
   return res.data;
 }
 
@@ -45,27 +47,27 @@ async function getCustomers(params?: {
   shopId?: string;
   clientId?: string;
 }) {
-  const res = await api.get("/customers", { params });
+  const res = await api.get("/", { params });
   return res.data;
 }
 
 async function getCustomerById(customerId: string) {
-  const res = await api.get(`/customers/${customerId}`);
+  const res = await api.get(`/${customerId}`);
   return res.data;
 }
 
 async function updateCustomer(customerId: string, data: UpdateCustomerDTO) {
-  const res = await api.put(`/customers/${customerId}`, data);
+  const res = await api.put(`/${customerId}`, data);
   return res.data;
 }
 
 async function deleteCustomer(customerId: string) {
-  const res = await api.delete(`/customers/${customerId}`);
+  const res = await api.delete(`/${customerId}`);
   return res.data;
 }
 
 async function getCustomerOutstanding(customerId: string) {
-  const res = await api.get(`/customers/outstanding/${customerId}`);
+  const res = await api.get(`/outstanding/${customerId}`);
   return res.data;
 }
 

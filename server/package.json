@@ -7,7 +7,7 @@
     "start": "ts-node --esm ./src/index.ts",
     "dev": "nodemon ./src/index.ts",
     "seed": "ts-node src/seed/index.ts",
-    "build": "tsc",
+    "build": "tsc --noEmitOnError false",
     "watch": "tsc --watch"
   },
   "devDependencies": {

@@ -1,7 +1,8 @@
 import axios from "axios";
 
+
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/reviews`,
 });
 
 export interface CreateReviewDTO {
@@ -19,13 +20,14 @@ export interface Review {
   updatedAt: string;
 }
 
+
 export const createReview = async (data: CreateReviewDTO) => {
-  const response = await api.post("/reviews", data, { withCredentials: true });
+  const response = await api.post("/", data, { withCredentials: true });
   return response.data;
 };
 
 export const getMyReview = async () => {
-  const response = await api.get("/reviews/my-review", { withCredentials: true });
+  const response = await api.get("/my-review", { withCredentials: true });
   return response.data;
 };
 

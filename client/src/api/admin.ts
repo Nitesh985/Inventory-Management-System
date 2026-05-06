@@ -1,7 +1,8 @@
 import axios from "axios";
 
+
 const api = axios.create({
-  baseURL: "/api/admin",
+  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/admin`,
 });
 
 // ─── Types ───

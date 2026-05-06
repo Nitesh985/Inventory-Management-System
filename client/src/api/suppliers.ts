@@ -1,7 +1,9 @@
 import axios from "axios";
 
+
+
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/suppliers`,
 });
 
 export interface Supplier {
@@ -36,28 +38,30 @@ export interface UpdateSupplierDTO {
   notes?: string;
 }
 
+
+
 async function createSupplier(data: CreateSupplierDTO): Promise<Supplier> {
-  const res = await api.post("/suppliers", data);
+  const res = await api.post("/", data);
   return res.data;
 }
 
 async function getSuppliers() {
-  const res = await api.get("/suppliers");
+  const res = await api.get("/");
   return res.data;
 }
 
 async function getSupplierById(supplierId: string) {
-  const res = await api.get(`/suppliers/${supplierId}`);
+  const res = await api.get(`/${supplierId}`);
   return res.data;
 }
 
 async function updateSupplier(supplierId: string, data: UpdateSupplierDTO) {
-  const res = await api.put(`/suppliers/${supplierId}`, data);
+  const res = await api.put(`/${supplierId}`, data);
   return res.data;
 }
 
 async function deleteSupplier(supplierId: string) {
-  const res = await api.delete(`/suppliers/${supplierId}`);
+  const res = await api.delete(`/${supplierId}`);
   return res.data;
 }
 

@@ -13,9 +13,9 @@ const client = new MongoClient(`${process.env.MONGODB_URI}/auth`);
 export const db = client.db();
 
 export const auth = betterAuth({
-  baseURL: "http://localhost:3000",
-  trustedOrigins: ["http://localhost:5173"],
-  appUrl: "http://localhost:5173",
+  baseURL: process.env.BACKEND_URL || "http://localhost:3000",
+  trustedOrigins: [process.env.FRONTEND_URL || "http://localhost:5173"],
+  appUrl: process.env.FRONTEND_URL || "http://localhost:5173",
   user:{
     changeEmail:{
       enabled: true,

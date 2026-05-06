@@ -1,7 +1,8 @@
 import axios from "axios";
 
+
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/data-management`,
   withCredentials: true,
 });
 
@@ -57,6 +58,8 @@ export interface ClearDataResult {
   products: number;
 }
 
+
+
 // Export data in specified format - triggers file download
 async function exportData(options: ExportOptions): Promise<void> {
   const params = new URLSearchParams({
@@ -66,7 +69,7 @@ async function exportData(options: ExportOptions): Promise<void> {
     includeMetadata: String(options.includeMetadata || false),
   });
 
-  const response = await api.get(`/data-management/export?${params.toString()}`, {
+  const response = await api.get(`/export?${params.toString()}`, {
     responseType: "blob",
   });
 
@@ -103,13 +106,13 @@ async function exportData(options: ExportOptions): Promise<void> {
 
 // Get backup information
 async function getBackupInfo(): Promise<BackupInfo> {
-  const response = await api.get("/data-management/backup/info");
+  const response = await api.get("/backup/info");
   return response.data.data;
 }
 
 // Create a backup - triggers file download
 async function createBackup(options?: { includeMedia?: boolean; encrypt?: boolean }): Promise<void> {
-  const response = await api.post("/data-management/backup", options || {}, {
+  const response = await api.post("/backup", options || {}, {
     responseType: "blob",
   });
 
@@ -143,7 +146,7 @@ async function restoreBackup(backupFile: File): Promise<RestoreResult> {
     reader.onload = async (event) => {
       try {
         const backupData = JSON.parse(event.target?.result as string);
-        const response = await api.post("/data-management/restore", backupData);
+        const response = await api.post("/restore", backupData);
         resolve(response.data.results);
       } catch (error) {
         reject(new Error("Invalid backup file format"));
@@ -157,13 +160,13 @@ async function restoreBackup(backupFile: File): Promise<RestoreResult> {
 
 // Get storage information
 async function getStorageInfo(): Promise<StorageInfo> {
-  const response = await api.get("/data-management/storage");
+  const response = await api.get("/storage");
   return response.data.data;
 }
 
 // Clear all data for the current shop
 async function clearData(): Promise<ClearDataResult> {
-  const response = await api.post("/data-management/clear", { confirmClear: true });
+  const response = await api.post("/clear", { confirmClear: true });
   return response.data.deleted;
 }
 

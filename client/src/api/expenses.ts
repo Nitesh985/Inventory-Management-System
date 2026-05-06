@@ -1,9 +1,10 @@
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: "/api",
-});
 
+
+const api = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/expenses`,
+});
 
 
 export interface CreateExpenseDTO {
@@ -23,8 +24,10 @@ export interface UpdateExpenseDTO {
 }
 
 
+
+
 async function createExpense(data: CreateExpenseDTO) {
-  const res = await api.post("/expenses", data);
+  const res = await api.post("", data);
   return res.data;
 }
 
@@ -35,25 +38,25 @@ async function getExpenses(params?: {
   from?: string;
   to?: string;
 }) {
-  const res = await api.get("/expenses", { params });
+  const res = await api.get("", { params });
   return res.data;
 }
 
 
 async function getExpenseById(expenseId: string) {
-  const res = await api.get(`/expenses/${expenseId}`);
+  const res = await api.get(`/${expenseId}`);
   return res.data;
 }
 
 
 async function updateExpense(expenseId: string, data: UpdateExpenseDTO) {
-  const res = await api.put(`/expenses/${expenseId}`, data);
+  const res = await api.put(`/${expenseId}`, data);
   return res.data;
 }
 
 
 async function deleteExpense(expenseId: string) {
-  const res = await api.delete(`/expenses/${expenseId}`);
+  const res = await api.delete(`/${expenseId}`);
   return res.data;
 }
 
