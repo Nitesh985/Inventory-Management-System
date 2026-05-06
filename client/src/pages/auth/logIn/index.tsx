@@ -111,7 +111,7 @@ const LoginPage = () => {
     try {
       await signIn.social({
         provider: "google",
-        callbackURL: "http://localhost:5173/business-dashboard"
+        callbackURL: `${process.env.VITE_CLIENT_URL}/business-dashboard` 
       });
     } catch (error: any) {
       setErrors({ general: error?.message || 'Google sign-in failed. Please try again.' });

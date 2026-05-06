@@ -140,7 +140,7 @@ const SignupPage = () => {
   const signUpGoogle = async () => {
     await signIn.social({
       provider: "google",
-      callbackURL: `${process.env.CURRENT_URL}/inventory-management`
+      callbackURL: `${process.env.VITE_CLIENT_URL}/inventory-management`
     })
   }
   
