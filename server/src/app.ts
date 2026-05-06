@@ -14,6 +14,7 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }))
+app.options("*", cors())
 app.all('/api/auth/*splat', toNodeHandler(auth));
 
 
