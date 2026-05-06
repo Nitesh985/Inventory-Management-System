@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import axios from 'axios';
 import type { ChatMessage, ChatResponse } from '../types/chat.types'; // Add 'type'
 
-const API_URL = `${process.env.VITE_API_URL}/api/chatbot`;
+const API_URL = `${import.meta.env.VITE_API_URL}/api/chatbot`;
 
 export const useChatbot = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
