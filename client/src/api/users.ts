@@ -43,7 +43,7 @@ export interface ApiResponse<T> {
 
 async function sendVerificationCode (){
   try{
-    const res = await api.get("/send-verification-code")
+    const res = await api.post("/send-verification-code")
     return res.data
   } catch(error) {
     console.error(error)

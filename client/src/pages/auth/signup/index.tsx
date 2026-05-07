@@ -10,6 +10,7 @@ import Icon from '@/components/AppIcon';
 import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import { signUp, signIn } from '@/lib/auth-client';
+import { sendVerificationCode } from '@/api/users';
 import axios from 'axios';
 
 
@@ -113,24 +114,22 @@ const SignupPage = () => {
 
 
     const signUpUser = async (data:SignupFormData) => {
+      setIsLoading(true)
     const { data:resData, error} = await signUp.email({
       name: data.fullName,
       email: data.email,
       password: data.password
-    }, {
-      onRequest: () => {
-        setIsLoading(true)
-      },
-      onResponse: ()=>{
-        setIsLoading(false)
-      }
     })
 
     if (error){
       setRegistrationError(error?.message ?? "An unexpected error occurred. Please try again.")
+      setIsLoading(false)
+      return
     }
+    
     if (resData){
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/users/send-verification-code`)
+      await sendVerificationCode()
+      setIsLoading(false)
       navigate("/verify-email")
     }
     
