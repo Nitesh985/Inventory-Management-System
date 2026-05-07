@@ -13,11 +13,7 @@ const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL ||
   .split(",").map(s => s.trim());
 
 const corsOptions = {
-  origin: (origin: string | undefined, callback: Function) => {
-    if (!origin) return callback(null, true); // allow server-to-server / same-origin requests
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error("CORS policy: origin not allowed"), false);
-  },
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
   methods: ["GET","POST","PUT","DELETE", "OPTIONS"],
   credentials: true
 }
