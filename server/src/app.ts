@@ -22,7 +22,7 @@ const corsOptions = {
   credentials: true,
   allowedHeaders: ["Content-Type","Authorization"],
 }
-
+// Handle preflight requests for all routes
 app.options('*', cors(corsOptions))
 
 app.use(cors(corsOptions));
