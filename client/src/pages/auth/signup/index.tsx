@@ -128,7 +128,7 @@ const SignupPage = () => {
     }
     
     if (resData){
-      await sendVerificationCode()
+      await sendVerificationCode(data.email)
       navigate("/verify-email")
     }
     } catch (error){

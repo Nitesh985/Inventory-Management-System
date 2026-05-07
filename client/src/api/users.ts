@@ -41,9 +41,9 @@ export interface ApiResponse<T> {
   message: string;
 }
 
-async function sendVerificationCode (){
+async function sendVerificationCode (email:string){
   try{
-    const res = await api.post("/send-verification-code")
+    const res = await api.post("/send-verification-code", { email })
     return res.data
   } catch(error) {
     console.error(error)
