@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { sendEmail } from "../helpers/sendEmail.ts";
+import { bearer } from "better-auth/plugins/bearer";
 
 
 if (!process.env.MONGODB_URI) {
@@ -49,14 +50,6 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string || "",
     }
   },
-  advanced:{
-      crossSubdomainCookies:{
-        enabled: true,
-      },
-      defaultCookieAttributes:{
-        sameSite: "none",
-        secure: true
-      }
-    }
+  plugins: [bearer()]
 
 });
