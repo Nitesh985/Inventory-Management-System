@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
-import { createAuthClient } from 'better-auth/react'
 import { useNavigate } from 'react-router-dom'
-const {useSession} = createAuthClient()
+import { useSession } from '@/lib/auth-client'
 
 // Protected components should be guarded by session.user.isVerified
 
