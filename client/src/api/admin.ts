@@ -1,5 +1,10 @@
-import api from './axiosApi'
+import axios from "axios";
 
+
+const api = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL || ''}/api`,
+  withCredentials: true,
+});
 // ─── Types ───
 
 export interface AdminUser {
@@ -96,7 +101,7 @@ export const deleteShop = async (shopId: string) => {
 };
 
 export const getReviews = async (page = 1, limit = 20) => {
-  const res = await api.get("/reviews", {
+  const res = await api.get("/admin/reviews", {
     params: { page, limit },
     withCredentials: true,
   });
@@ -104,6 +109,6 @@ export const getReviews = async (page = 1, limit = 20) => {
 };
 
 export const deleteReview = async (reviewId: string) => {
-  const res = await api.delete(`/reviews/${reviewId}`, { withCredentials: true });
+  const res = await api.delete(`/admin/reviews/${reviewId}`, { withCredentials: true });
   return res.data;
 };
