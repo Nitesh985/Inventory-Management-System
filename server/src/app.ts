@@ -12,7 +12,8 @@ const app = express()
 app.use(cors({
     origin:process.env.FRONTEND_URL || "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
 }))
 
 app.all('/api/auth/*splat', toNodeHandler(auth));
