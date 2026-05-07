@@ -5,9 +5,10 @@ import { auth } from '../lib/auth.ts';
 import Shop from '../models/shop.models.ts';
 
 const verifyUserAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  
   const session = await auth.api.getSession({
-    headers: req.headers,
-  });
+  headers: new Headers(req.headers as Record<string, string>),
+});
 
   if (!session) {
     throw new ApiError(401, 'Unauthorized access!');
@@ -18,9 +19,10 @@ const verifyUserAuth = asyncHandler(async (req: Request, res: Response, next: Ne
 });
 
 const verifyBusinessAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+
   const session = await auth.api.getSession({
-    headers: req.headers,
-  });
+  headers: new Headers(req.headers as Record<string, string>),
+});
 
   if (!session) {
     throw new ApiError(401, 'Unauthorized access!');
@@ -48,8 +50,9 @@ const verifyBusinessAuth = asyncHandler(async (req: Request, res: Response, next
 });
 
 const verifyAdminAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+
   const session = await auth.api.getSession({
-    headers: req.headers,
+  headers: new Headers(req.headers as Record<string, string>),
   });
 
   if (!session) {
