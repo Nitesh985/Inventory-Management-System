@@ -115,7 +115,8 @@ const SignupPage = () => {
 
     const signUpUser = async (data:SignupFormData) => {
       setIsLoading(true)
-    const { data:resData, error} = await signUp.email({
+    try {
+      const { data:resData, error} = await signUp.email({
       name: data.fullName,
       email: data.email,
       password: data.password
@@ -123,17 +124,19 @@ const SignupPage = () => {
 
     if (error){
       setRegistrationError(error?.message ?? "An unexpected error occurred. Please try again.")
-      setIsLoading(false)
       return
     }
     
     if (resData){
       await sendVerificationCode()
-      setIsLoading(false)
       navigate("/verify-email")
     }
+    } catch (error){
+      setRegistrationError("An unexpected error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
     
-
   }
 
   const signUpGoogle = async () => {
