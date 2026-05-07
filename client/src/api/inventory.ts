@@ -1,11 +1,5 @@
-// src/api.ts
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/inventory`,
-  withCredentials: true,
-});
-
+// inventory
+import api from './axiosApi'
 
 export interface CreateOrUpdateInventoryDTO {
   shopId?: string;

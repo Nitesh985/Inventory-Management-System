@@ -1,10 +1,4 @@
-import axios from "axios";
-
-
-const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/admin`,
-  withCredentials: true,
-});
+import api from './axiosApi'
 
 // ─── Types ───
 
@@ -66,12 +60,12 @@ export interface PaginatedResponse<T> {
 // ─── API Calls ───
 
 export const getAdminStats = async () => {
-  const res = await api.get("/stats", { withCredentials: true });
+  const res = await api.get("/admin/stats", { withCredentials: true });
   return res.data;
 };
 
 export const getUsers = async (page = 1, limit = 20, search = "") => {
-  const res = await api.get("/users", {
+  const res = await api.get("/admin/users", {
     params: { page, limit, search },
     withCredentials: true,
   });
@@ -79,12 +73,12 @@ export const getUsers = async (page = 1, limit = 20, search = "") => {
 };
 
 export const deleteUser = async (userId: string) => {
-  const res = await api.delete(`/users/${userId}`, { withCredentials: true });
+  const res = await api.delete(`/admin/users/${userId}`, { withCredentials: true });
   return res.data;
 };
 
 export const updateUserRole = async (userId: string, role: string) => {
-  const res = await api.put(`/users/${userId}/role`, { role }, { withCredentials: true });
+  const res = await api.put(`/admin/users/${userId}/role`, { role }, { withCredentials: true });
   return res.data;
 };
 

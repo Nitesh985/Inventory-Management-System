@@ -1,10 +1,5 @@
-import axios from "axios";
-
-
-const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/products`,
-  withCredentials: true,
-});
+//products
+import api from './axiosApi'
 
 export interface CreateProductDTO {
   shopId?: string;
