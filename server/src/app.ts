@@ -12,16 +12,20 @@ const app = express()
 const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || "http://localhost:5173")
   .split(",").map(s => s.trim());
 
-app.use(cors({
-  origin: (origin, callback) => {
+const corsOptions = {
+  origin: (origin: string | undefined, callback: Function) => {
     if (!origin) return callback(null, true); // allow server-to-server / same-origin requests
     if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error("CORS policy: origin not allowed"), false);
   },
-  methods: ["GET","POST","PUT","DELETE"],
+  methods: ["GET","POST","PUT","DELETE", "OPTIONS"],
   credentials: true,
   allowedHeaders: ["Content-Type","Authorization"],
-}));
+}
+
+app.options('*', cors(corsOptions))
+
+app.use(cors(corsOptions));
 
 
 app.all('/api/auth/*splat', toNodeHandler(auth));
