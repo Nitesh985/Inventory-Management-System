@@ -9,12 +9,20 @@ import { toNodeHandler } from "better-auth/node";
 
 const app = express()
 
+const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",").map(s => s.trim());
+
 app.use(cors({
-    origin:process.env.FRONTEND_URL || "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-}))
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow server-to-server / same-origin requests
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("CORS policy: origin not allowed"), false);
+  },
+  methods: ["GET","POST","PUT","DELETE"],
+  credentials: true,
+  allowedHeaders: ["Content-Type","Authorization"],
+}));
+
 
 app.all('/api/auth/*splat', toNodeHandler(auth));
 
