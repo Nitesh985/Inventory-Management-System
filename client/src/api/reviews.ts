@@ -44,6 +44,6 @@ export interface PublicReview {
 }
 
 export const getPublicReviews = async (limit: number = 6) => {
-  const response = await api.get(`/reviews/public?limit=${limit}`);
+  const response = await api.get(`/public?limit=${limit}`);
   return response.data;
 };
