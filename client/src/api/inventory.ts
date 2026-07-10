@@ -1,10 +1,4 @@
-import axios from "axios";
-
-
-const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/inventory`,
-  withCredentials: true,
-});
+import api from "./axiosApi";
 
 export interface CreateOrUpdateInventoryDTO {
   shopId?: string;
@@ -30,7 +24,7 @@ export interface Inventory {
 
 
 async function createOrUpdateInventory(data: CreateOrUpdateInventoryDTO) {
-  const res = await api.post("/", data);
+  const res = await api.post("/inventory", data);
   return res.data;
 }
 
@@ -39,25 +33,25 @@ async function getInventory(params?: {
   shopId?: string;
   productId?: string;
 }) {
-  const res = await api.get("/", { params });
+  const res = await api.get("/inventory", { params });
   return res.data;
 }
 
 // 📌 Get Inventory by ID
 async function getInventoryById(inventoryId: string) {
-  const res = await api.get(`/${inventoryId}`);
+  const res = await api.get(`/inventory/${inventoryId}`);
   return res.data;
 }
 
 // ✏️ Update Inventory
 async function updateInventory(inventoryId: string, data: UpdateInventoryDTO) {
-  const res = await api.put(`/${inventoryId}`, data);
+  const res = await api.put(`/inventory/${inventoryId}`, data);
   return res.data;
 }
 
 // 🗑️ Delete Inventory
 async function deleteInventory(inventoryId: string) {
-  const res = await api.delete(`/${inventoryId}`);
+  const res = await api.delete(`/inventory/${inventoryId}`);
   return res.data;
 }
 

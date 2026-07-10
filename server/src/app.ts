@@ -1,8 +1,6 @@
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
-import { auth } from "./lib/auth.ts";
-import { toNodeHandler } from "better-auth/node";
 
 
 
@@ -20,9 +18,6 @@ const corsOptions = {
 
 
 app.use(cors(corsOptions));
-
-
-app.all('/api/auth/*splat', toNodeHandler(auth));
 
 
 app.use(express.json())
@@ -51,6 +46,7 @@ import chatRouter from './routes/chat.routes.ts'
 import chatbotRoutes from './routes/chatbot.routes.ts'
 import reviewRouter from './routes/review.routes.ts'
 import adminRouter from './routes/admin.routes.ts'
+import authRouter from './routes/auth.routes.ts'
 
 
 app.use("/api/customers", customerRouter)
@@ -70,6 +66,7 @@ app.use("/api/suppliers", supplierRouter);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/auth", authRouter);
 
 
 

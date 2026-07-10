@@ -1,10 +1,4 @@
-import axios from "axios";
-
-
-const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/reviews`,
-  withCredentials: true,
-});
+import api from "./axiosApi";
 
 export interface CreateReviewDTO {
   stars: number;
@@ -23,12 +17,12 @@ export interface Review {
 
 
 export const createReview = async (data: CreateReviewDTO) => {
-  const response = await api.post("/", data, { withCredentials: true });
+  const response = await api.post("/reviews", data, { withCredentials: true });
   return response.data;
 };
 
 export const getMyReview = async () => {
-  const response = await api.get("/my-review", { withCredentials: true });
+  const response = await api.get("/reviews/my-review", { withCredentials: true });
   return response.data;
 };
 
@@ -44,6 +38,6 @@ export interface PublicReview {
 }
 
 export const getPublicReviews = async (limit: number = 6) => {
-  const response = await api.get(`/public?limit=${limit}`);
+  const response = await api.get(`/reviews/public?limit=${limit}`);
   return response.data;
 };

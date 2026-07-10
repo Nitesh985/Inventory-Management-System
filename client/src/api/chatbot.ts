@@ -1,10 +1,4 @@
-import axios from "axios";
-
-
-const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/chatbot`,
-  withCredentials: true,
-});
+import api from "./axiosApi";
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -32,11 +26,11 @@ export interface AnalyticsChatResponse {
 }
 
 export async function sendAnalyticsChat(data: AnalyticsChatRequest): Promise<AnalyticsChatResponse> {
-  const res = await api.post("/analytics", data);
+  const res = await api.post("/chatbot/analytics", data);
   return res.data;
 }
 
 export async function sendGeneralChat(message: string, conversationHistory?: ChatMessage[]) {
-  const res = await api.post("/chat", { message, conversationHistory });
+  const res = await api.post("/chatbot/chat", { message, conversationHistory });
   return res.data;
 }

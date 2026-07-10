@@ -7,7 +7,6 @@ import Checkbox from '@/components/ui/Checkbox';
 import FormValidationFeedback from '@/components/ui/FormValidationFeedback';
 import Icon from '@/components/AppIcon';
 import type { RegisterFormData, RegisterFormProps } from '../types';
-import { signIn } from '@/lib/auth-client';
 
 
 
@@ -27,20 +26,6 @@ const RegisterForm = ({
       acceptTerms: false
     }
   });
-
-  const providerSignUp = async () => {
-    await signIn.social({
-      provider: "google",
-      callbackURL: "http://localhost:5173/business-dashboard"
-    }, {
-      onRequest: ()=>{
-        setIsLoading(true)
-      },
-      onResponse: ()=>{
-        setIsLoading(false)
-      }
-    })
-  }
 
   const password = watch("password");
 
@@ -141,39 +126,6 @@ const RegisterForm = ({
           Already have an account?{' '}
           <Link to="/login" className="text-primary font-medium hover:underline">Sign in</Link>
         </div>
-        <div className="relative flex items-center my-6">
-         <div className="flex-grow h-px bg-gray-300/60"></div>
-         <span className="mx-4 text-sm text-gray-500">or</span>
-         <div className="flex-grow h-px bg-gray-300/60"></div>
-       </div>
-        <Button
-          type="button"
-          variant="outline"
-          fullWidth
-          disabled={!isOnline || isLoading}
-          onClick={providerSignUp}
-        >
-          <div className="flex items-center justify-center space-x-2">
-            <Icon name="Shield" size={18} />
-            <span>Sign up with Google</span>
-          </div>
-        </Button>
-
-                  <Button
-          type="button"
-          variant="outline"
-          fullWidth
-          disabled={!isOnline || isLoading}
-          onClick={() => {
-            // Placeholder for Google Sign-Up logic
-          }}
-        >
-          <div className="flex items-center justify-center space-x-2">
-            <Icon name="Apple" size={18} />
-            <span>Sign up with Apple</span>
-          </div>
-        </Button>
-
       </form>
     </div>
   );

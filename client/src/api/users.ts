@@ -1,10 +1,4 @@
-import axios from "axios";
-
-
-const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/users`,
-  withCredentials: true,
-});
+import api from "./axiosApi";
 
 export interface RegisterUserDTO {
   fullName: string;
@@ -43,7 +37,7 @@ export interface ApiResponse<T> {
 
 async function sendVerificationCode (email:string){
   try{
-    const res = await api.post("/send-verification-code", { email })
+    const res = await api.post("/users/send-verification-code", { email })
     return res.data
   } catch(error) {
     console.error(error)
@@ -53,7 +47,7 @@ async function sendVerificationCode (email:string){
 
 async function verifyOtpCode({inputCode}:{inputCode:string}){
   try{
-    const res = await api.get("/verify-code", {inputCode})
+    const res = await api.get("/users/verify-code", {inputCode})
     return res.data
   } catch(error) {
     console.error(error)
@@ -65,7 +59,7 @@ async function registerUser(
   data: RegisterUserDTO
 ): Promise<User> {
   try{
-    const res = await api.post<User>("/register", data);
+    const res = await api.post<User>("/users/register", data);
     return res.data;
 
   } catch(error){
@@ -76,19 +70,19 @@ async function registerUser(
 
 
 async function getUserProfile(): Promise<ApiResponse<UserProfileResponse>> {
-  const res = await api.get<ApiResponse<UserProfileResponse>>("/profile");
+  const res = await api.get<ApiResponse<UserProfileResponse>>("/users/profile");
   return res.data;
 }
 
 
 async function updateUserProfile(data: { contactNo?: string }): Promise<ApiResponse<any>> {
-  const res = await api.patch<ApiResponse<any>>("/profile", data);
+  const res = await api.patch<ApiResponse<any>>("/users/profile", data);
   return res.data;
 }
 
 
 async function updateTourStatus(hasCompletedTour: boolean): Promise<ApiResponse<{ hasCompletedTour: boolean }>> {
-  const res = await api.patch<ApiResponse<{ hasCompletedTour: boolean }>>("/tour-status", { hasCompletedTour });
+  const res = await api.patch<ApiResponse<{ hasCompletedTour: boolean }>>("/users/tour-status", { hasCompletedTour });
   return res.data;
 }
 

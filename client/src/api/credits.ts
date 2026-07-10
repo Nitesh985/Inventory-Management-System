@@ -1,9 +1,4 @@
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/credits`,
-  withCredentials: true,
-});
+import api from './axiosApi';
 
 // Get credit summary (total receivable, collected, etc.)
 export const getCreditSummary = async () => {

@@ -1,10 +1,4 @@
-import axios from "axios";
-
-
-const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/categories`,
-  withCredentials: true,
-});
+import api from "./axiosApi";
 
 export interface Category {
   _id: string;
@@ -12,7 +6,7 @@ export interface Category {
 }
 
 async function getCategories() {
-  const res = await api.get("/");
+  const res = await api.get("/categories");
   console.log(res.data)
   return res.data;
 }

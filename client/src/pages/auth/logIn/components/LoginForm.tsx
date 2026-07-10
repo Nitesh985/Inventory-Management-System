@@ -5,14 +5,12 @@ import Checkbox from '../../../../components/ui/Checkbox';
 import Icon from '../../../../components/AppIcon';
 import FormValidationFeedback from '../../../../components/ui/FormValidationFeedback';
 import type { LoginFormProps, LoginFormData } from '../types';
-import GoogleLogo from '@/assets/google-logo.png';
-import AppleLogo from '@/assets/apple-logo.png';
 import {Link} from "react-router-dom"
 
 
 
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, submitGoogle, errors, isLoading, isOnline, successMessage }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, errors, isLoading, isOnline, successMessage }) => {
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
@@ -38,15 +36,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, submitGoogle, errors, i
     [isOnline, onSubmit, formData]
   );
   
-  const signInWithGoogle = useCallback(
-    async () => {
-      if (!isOnline) return;
-      await submitGoogle(formData);
-    }
-    ,
-    [isOnline, submitGoogle]
-  );
-
     return (
     <div className="w-full max-w-md mx-auto bg-gradient-to-br from-white to-blue-50 rounded-3xl border border-gray-200 shadow-2xl hover:shadow-3xl p-8 sm:p-10 transition-all duration-500 hover:-translate-y-1">
       
@@ -160,27 +149,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, submitGoogle, errors, i
           {isLoading ? 'Signing In...' : 'Sign In'}
         </Button>
 
-        {/* Divider */}
-        <div className="flex items-center my-6">
-          <div className="flex-1 border-t border-gray-300"></div>
-          <span className="px-3 text-sm text-gray-500 font-medium">Or</span>
-          <div className="flex-1 border-t border-gray-300"></div>
-        </div>
-
-        {/* Google Login Button */}
-        <div className="flex items-center justify-center gap-2 animate-fade-in-delay" style={{ animationDelay: '0.4s' }}>
-        <button
-          type="button"
-          className="flex w-full items-center justify-center gap-2 py-2.5 px-4 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md transition-all font-bold text-gray-700 text-sm group space-x-3"
-          disabled={isLoading}
-          onClick={signInWithGoogle}
-        >
-          <img src={GoogleLogo} alt="Google" className="w-5 h-5 object-contain" />
-          <span>Continue with Google</span>
-        </button>
-      </div>
-
-        
       </form>
 
       {/* Offline Notice */}

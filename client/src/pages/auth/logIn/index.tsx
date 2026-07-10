@@ -105,19 +105,8 @@ const LoginPage = () => {
     }
   }
 
-  const submitGoogle = async (data: LoginFormData) => {
-    setIsLoading(true);
-
-    try {
-      await signIn.social({
-        provider: "google",
-        callbackURL: `${import.meta.env.VITE_CLIENT_URL}/business-dashboard` 
-      });
-    } catch (error: any) {
-      setErrors({ general: error?.message || 'Google sign-in failed. Please try again.' });
-    } finally {
-      setIsLoading(false);
-    }
+  const submitGoogle = async () => {
+    setErrors({ general: 'Social sign-in is disabled. Please use email and password.' });
   }
 
   return (

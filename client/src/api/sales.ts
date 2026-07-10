@@ -1,10 +1,4 @@
-import axios from "axios";
-
-
-const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || ''}/api/sales`,
-  withCredentials: true,
-});
+import api from "./axiosApi";
 
 
 export interface SaleItem {
@@ -43,41 +37,41 @@ export interface Sale {
 
 
 async function createSale(data: CreateSaleDTO) {
-  const res = await api.post("/", data);
+  const res = await api.post("/sales", data);
   return res.data;
 }
 
 
 async function getSales(params?: { shopId?: string }) {
-  const res = await api.get("/", { params });
+  const res = await api.get("/sales", { params });
   return res.data;
 }
 
 
 async function getSaleById(saleId: string) {
-  const res = await api.get(`/${saleId}`);
+  const res = await api.get(`/sales/${saleId}`);
   return res.data;
 }
 
 
 async function updateSale(saleId: string, data: UpdateSaleDTO) {
-  const res = await api.put(`/${saleId}`, data);
+  const res = await api.put(`/sales/${saleId}`, data);
   return res.data;
 }
 
 
 async function deleteSale(saleId: string) {
-  const res = await api.delete(`/${saleId}`);
+  const res = await api.delete(`/sales/${saleId}`);
   return res.data;
 }
 
 async function getAllSales(){
-  const res = await api.get("/");
+  const res = await api.get("/sales");
   return res.data.data;
 }
 
 async function updateSaleStatus(saleId: string, status: string) {
-  const res = await api.patch(`/${saleId}/status`, { status });
+  const res = await api.patch(`/sales/${saleId}/status`, { status });
   return res.data;
 }
 
