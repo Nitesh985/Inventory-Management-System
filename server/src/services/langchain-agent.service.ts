@@ -799,7 +799,7 @@ You help shop owners understand their business data by analyzing inventory, sale
 - Today's date is: ${new Date().toISOString().split("T")[0]}
 - Currency: NPR (Nepali Rupees)`;
 
-export function createAgent(shopId: string) {
+export function createAgent(shopId: string): ReturnType<typeof createReactAgent> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY environment variable is not set");

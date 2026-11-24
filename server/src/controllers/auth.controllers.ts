@@ -18,7 +18,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const authCookieOptions = {
   httpOnly: true,
-  sameSite: (isProduction ? 'none' : 'lax') as const,
+  sameSite: isProduction ? ('none' as const) : ('lax' as const),
   secure: isProduction,
   path: '/',
 };
@@ -48,7 +48,7 @@ const register = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const user = await createCredentialUser({ name, email, password });
-  const tokens = await issueTokensForUser(user.id);
+  const tokens = await issueTokensForUser(user._id.toString());
 
   setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
 

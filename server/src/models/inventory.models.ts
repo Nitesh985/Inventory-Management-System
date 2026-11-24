@@ -4,6 +4,7 @@ export interface IInventory extends Document {
   shopId: Types.ObjectId;
   productId: Types.ObjectId;
   stock: number;
+  reserved: number;
   minStock?: number;
   createdAt: Date;
   updatedAt: Date;
@@ -15,6 +16,7 @@ const inventorySchema = new Schema<IInventory>(
     productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     minStock: { type: Number },
     stock: { type: Number, required: true, default: 0 },
+    reserved: { type: Number, required: true, default: 0 },
   },
   { timestamps: true }
 );

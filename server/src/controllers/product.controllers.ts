@@ -27,9 +27,7 @@ const checkSkuAvailability = asyncHandler(async (req: Request, res: Response) =>
     query._id = { $ne: excludeProductId };
   }
 
-  const existingProduct = await Product.findOne(query)
-    .populate('category', 'name')
-    .lean();
+  const existingProduct = await Product.findOne(query).lean();
 
   // If product exists, return its details along with availability status
   if (existingProduct) {
@@ -40,7 +38,7 @@ const checkSkuAvailability = asyncHandler(async (req: Request, res: Response) =>
           _id: existingProduct._id,
           name: existingProduct.name,
           sku: existingProduct.sku,
-          category: existingProduct.category?.name || existingProduct.category,
+          category: existingProduct.category || existingProduct.categoryId?.toString() || '',
           price: existingProduct.price,
           cost: existingProduct.cost,
         }
@@ -81,7 +79,7 @@ const generateSku = async (req, res) => {
     while (true) {
       sku = `${baseSku}-${counter}`;
 
-      const query = { sku, deleted: false };
+      const query: any = { sku, deleted: false };
 
       if (excludeProductId) {
         query._id = { $ne: excludeProductId };
