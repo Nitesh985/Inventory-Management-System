@@ -149,7 +149,7 @@ const updateTourStatus = asyncHandler(async (req: Request, res: Response) => {
   })
   
 
-  return res.status(200).json(new ApiResponse(200, { hasCompletedTour: user?.hasCompletedTour }, 'Tour status updated'))
+  return res.status(200).json(new ApiResponse(200, { hasCompletedTour: updateUser.user?.hasCompletedTour }, 'Tour status updated'))
 })
 
 

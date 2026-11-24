@@ -18,6 +18,7 @@ export interface IShop extends Document {
   province?: string;
   phone?: string;
   email?: string;
+  supplierIds?: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }

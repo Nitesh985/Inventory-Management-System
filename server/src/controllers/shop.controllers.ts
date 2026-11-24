@@ -43,7 +43,7 @@ const createShop = asyncHandler(async (req: Request, res: Response) => {
     vatNumber,
     phone,
     email,
-    ownerId: req.user?.id
+    ownerId: req.user?.id ? new mongoose.Types.ObjectId(req.user.id) : undefined
   })
   
   
@@ -55,7 +55,7 @@ const createShop = asyncHandler(async (req: Request, res: Response) => {
   const updateUser = await auth.api.updateUser({
     body: {
       onBoardingCompleted: true,
-      activeShopId:shop._id
+      activeShopId: shop._id.toString()
     },
     headers: req.headers as any
   }, );

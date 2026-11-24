@@ -4,6 +4,7 @@ export interface IProduct extends Document {
   shopId: Types.ObjectId;
   supplierId: Types.ObjectId;
   categoryId: Types.ObjectId;
+  category: string;
   sku: string;
   name: string;
   description: string;
